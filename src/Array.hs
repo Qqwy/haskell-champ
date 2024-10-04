@@ -2,6 +2,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UnboxedTuples #-}
 {-# LANGUAGE MagicHash #-}
+{-# OPTIONS_GHC -ddump-simpl -dsuppress-all -ddump-to-file #-}
 module Array where
 
 import Data.Coerce (coerce)
@@ -26,22 +27,36 @@ class Array arr where
 
 instance Array (SmallArray a) where
   type Item (SmallArray a) = a
+
+  {-# INLINE empty #-}
   empty = SmallArray.emptySmallArray
+
+  {-# INLINE size #-}
   size = SmallArray.sizeofSmallArray
+
+  {-# INLINE get #-}
   get = SmallArray.indexSmallArray##
+
+  {-# INLINE set #-}
   set src idx item = SmallArray.runSmallArray $ do
     dst <- SmallArray.thawSmallArray src 0 (size src)
     SmallArray.writeSmallArray dst idx item
     pure dst
+
+  {-# INLINE insert #-}
   insert src idx item = SmallArray.runSmallArray $ do
     dst <- SmallArray.newSmallArray (size src + 1) item
     SmallArray.copySmallArray dst 0 src 0 idx
     SmallArray.copySmallArray dst (idx + 1) src idx (size src - idx)
     pure dst
+
+  {-# INLINE snoc #-}
   snoc src item = SmallArray.runSmallArray $ do
     dst <- SmallArray.newSmallArray (size src + 1) item
     SmallArray.copySmallArray dst 0 src 0 (size src)
     pure dst
+
+  {-# INLINE delete #-}
   delete src idx = SmallArray.runSmallArray $ do
     dst <- SmallArray.newSmallArray (size src - 1) undefined
     SmallArray.copySmallArray dst 0 src 0 idx
@@ -50,18 +65,25 @@ instance Array (SmallArray a) where
 
 instance Array (StrictSmallArray a) where
     type Item (StrictSmallArray a) = a
+    {-# INLINE empty #-}
     empty = StrictSmallArray $ empty
+    {-# INLINE size #-}
     size (StrictSmallArray ary) = size ary
     -- | Strict in v
     -- (But as v was in all likelihood set by set or insert before,
     -- it would have been evaluated then already)
+    {-# INLINE get #-}
     get (StrictSmallArray ary) idx = let (# !v #) = get ary idx in (# v #)
     -- | Strict in v
+    {-# INLINE set #-}
     set (StrictSmallArray ary) idx !item = StrictSmallArray $ set ary idx item
     -- | Strict in v
+    {-# INLINE insert #-}
     insert (StrictSmallArray ary) idx !item = StrictSmallArray $ insert ary idx item
     -- | Strict in v
+    {-# INLINE snoc #-}
     snoc (StrictSmallArray ary) !item = StrictSmallArray $ snoc ary item
+    {-# INLINE delete #-}
     delete (StrictSmallArray ary) idx = StrictSmallArray $ delete ary idx
 
 
@@ -76,7 +98,7 @@ foldl' f = \ z0 ary0 -> go ary0 (size ary0) 0 z0
 {-# INLINE foldl' #-}
 
 foldlP' :: (Array aryA, Array aryB) => (b -> Item aryA -> Item aryB -> b) -> b -> aryA -> aryB -> b
-foldlP' f = \ z0 aryA0 aryB0 -> go aryA0 aryB0 (size aryA0) 0 z0
+foldlP' f = \ z0 aryA0 aryB0 -> go aryA0 aryB0 (size aryB0) 0 z0
   where
     go aryA aryB n i !z
         | i >= n = z
@@ -85,6 +107,8 @@ foldlP' f = \ z0 aryA0 aryB0 -> go aryA0 aryB0 (size aryA0) 0 z0
             (# (# x #), (# y #) #) -> go aryA aryB n (i+1) (f z x y)
 {-# INLINE foldlP' #-}
 
+sum :: SmallArray Int -> SmallArray Int -> Int
+sum = Array.foldrP' (const (+)) 0
 
 foldr' :: Array ary => (Item ary -> b -> b) -> b -> ary -> b
 foldr' f = \ z0 ary0 -> go ary0 (size ary0 - 1) z0
@@ -96,7 +120,7 @@ foldr' f = \ z0 ary0 -> go ary0 (size ary0 - 1) z0
 {-# INLINE foldr' #-}
 
 foldrP' :: (Array aryA, Array aryB) => (Item aryA -> Item aryB -> b -> b) -> b -> aryA -> aryB -> b
-foldrP' f = \ z0 aryA0 aryB0 -> go aryA0 aryB0 (size aryA0 - 1) z0
+foldrP' f = \ z0 aryA0 aryB0 -> go aryA0 aryB0 (size aryB0 - 1) z0
   where
     go !_aryA !_aryB (-1) z = z
     go !aryA !aryB i !z
@@ -116,7 +140,7 @@ foldr f = \ z0 ary0 -> go ary0 (size ary0) 0 z0
 {-# INLINE foldr #-}
 
 foldrP :: (Array aryA, Array aryB) => (Item aryA -> Item aryB -> b -> b) -> b -> aryA -> aryB -> b
-foldrP f = \ z0 aryA0 aryB0 -> go aryA0 aryB0 (size aryA0) 0 z0
+foldrP f = \ z0 aryA0 aryB0 -> go aryA0 aryB0 (size aryB0) 0 z0
   where
     go aryA aryB n i z
         | i >= n = z
@@ -136,7 +160,7 @@ foldl f = \ z0 ary0 -> go ary0 (size ary0 - 1) z0
 
 
 foldlP :: (Array aryA, Array aryB) => (b -> Item aryA -> Item aryB -> b) -> b -> aryA -> aryB -> b
-foldlP f = \ z0 aryA0 aryB0 -> go aryA0 aryB0 (size aryA0 - 1) z0
+foldlP f = \ z0 aryA0 aryB0 -> go aryA0 aryB0 (size aryB0 - 1) z0
   where
     go _aryA _aryB (-1) z = z
     go aryA aryB i z
