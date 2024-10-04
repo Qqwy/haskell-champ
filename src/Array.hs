@@ -5,9 +5,9 @@
 {-# OPTIONS_GHC -ddump-simpl -dsuppress-all -ddump-to-file #-}
 module Array where
 
-import Data.Coerce (coerce)
-import Data.Primitive (SmallArray, ByteArray)
+import Data.Primitive (SmallArray, PrimArray, Prim)
 import Data.Primitive.SmallArray qualified as SmallArray
+import Data.Primitive.PrimArray qualified as PrimArray
 
 
 -- | Backing store is a SmallArray,
@@ -85,6 +85,48 @@ instance Array (StrictSmallArray a) where
     snoc (StrictSmallArray ary) !item = StrictSmallArray $ snoc ary item
     {-# INLINE delete #-}
     delete (StrictSmallArray ary) idx = StrictSmallArray $ delete ary idx
+
+instance (Prim a) => Array (PrimArray a) where
+  type Item (PrimArray a) = a
+
+  {-# INLINE empty #-}
+  empty = PrimArray.emptyPrimArray
+
+  {-# INLINE size #-}
+  size = PrimArray.sizeofPrimArray
+
+  {-# INLINE get #-}
+  get ary idx = let v = PrimArray.indexPrimArray ary idx in (# v #)
+
+  {-# INLINE set #-}
+  set src idx item = PrimArray.runPrimArray $ do
+    dst <- PrimArray.thawPrimArray src 0 (size src)
+    PrimArray.writePrimArray dst idx item
+    pure dst
+
+  {-# INLINE insert #-}
+  insert src idx item = PrimArray.runPrimArray $ do
+    dst <- PrimArray.newPrimArray (size src + 1)
+    PrimArray.copyPrimArray dst 0 src 0 idx
+    PrimArray.writePrimArray dst idx item
+    PrimArray.copyPrimArray dst (idx + 1) src idx (size src - idx)
+    pure dst
+
+  {-# INLINE snoc #-}
+  snoc src item = PrimArray.runPrimArray $ do
+    let idx = size src
+    dst <- PrimArray.newPrimArray (size src + 1)
+    PrimArray.copyPrimArray dst 0 src 0 idx
+    PrimArray.writePrimArray dst idx item
+    pure dst
+
+  {-# INLINE delete #-}
+  delete src idx = PrimArray.runPrimArray $ do
+    dst <- PrimArray.newPrimArray (size src - 1)
+    PrimArray.copyPrimArray dst 0 src 0 idx
+    PrimArray.copyPrimArray dst idx src (idx + 1) (size src - idx - 1)
+    pure dst
+
 
 
 foldl' :: Array ary => (b -> Item ary -> b) -> b -> ary -> b
