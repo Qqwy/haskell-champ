@@ -16,8 +16,6 @@ import Data.Primitive
 import Data.Primitive.SmallArray qualified as SmallArray
 import Data.Array.Unboxed (UArray)
 import Foreign.Storable qualified as Storable
-import Data.Tuple (Solo)
-import Data.Functor.Identity (Identity)
 
 -- type LazyChampMap = ChampMap Boxed Lazy
 -- type StrictChampMap = ChampMap Boxed (Strict Boxed)
@@ -25,7 +23,7 @@ import Data.Functor.Identity (Identity)
 -- type UnboxedUnboxedChampMap = ChampMap Unboxed (Strict Unboxed)
 
 data Storage = Lazy | Strict StrictStorage
-data StrictStorage = Boxed | Unboxed | Storable
+data StrictStorage = Boxed | Unboxed -- | Storable
 
 pattern EmptyMap 
   :: forall (keyStorage :: StrictStorage) (valStorage :: Storage) k v.
@@ -110,30 +108,30 @@ instance constraints => MapRepr (keystorage) (valstorage) k v where             
 map_repr_instance(Boxed_Lazy, Boxed, Lazy, ())
 map_repr_instance(Boxed_Boxed, Boxed, Strict Boxed, ())
 map_repr_instance(Boxed_Unboxed, Boxed, Strict Unboxed, (Prim v))
-map_repr_instance(Boxed_Storable, Boxed, Strict Storable, (Storable.Storable v))
+-- map_repr_instance(Boxed_Storable, Boxed, Strict Storable, (Storable.Storable v))
 
 map_repr_instance(Unboxed_Lazy, Unboxed, Lazy, (Prim k))
 map_repr_instance(Unboxed_Boxed, Unboxed, Strict Boxed, (Prim k))
 map_repr_instance(Unboxed_Unboxed, Unboxed, Strict Unboxed, (Prim k, Prim v))
-map_repr_instance(Unboxed_Storable, Unboxed, Strict Storable, (Prim k, Storable.Storable v))
+-- map_repr_instance(Unboxed_Storable, Unboxed, Strict Storable, (Prim k, Storable.Storable v))
 
-map_repr_instance(Storable_Lazy, Storable, Lazy, (Storable.Storable k))
-map_repr_instance(Storable_Boxed, Storable, Strict Boxed, (Storable.Storable k))
-map_repr_instance(Storable_Unboxed, Storable, Strict Unboxed, (Storable.Storable k, Prim v))
-map_repr_instance(Storable_Storable, Storable, Strict Storable, (Storable.Storable k, Storable.Storable v))
+-- map_repr_instance(Storable_Lazy, Storable, Lazy, (Storable.Storable k))
+-- map_repr_instance(Storable_Boxed, Storable, Strict Boxed, (Storable.Storable k))
+-- map_repr_instance(Storable_Unboxed, Storable, Strict Unboxed, (Storable.Storable k, Prim v))
+-- map_repr_instance(Storable_Storable, Storable, Strict Storable, (Storable.Storable k, Storable.Storable v))
 
 type family ArrayOf (s :: Storage) = (r :: Type -> Type) | r -> s where
   ArrayOf Lazy = SmallArray
   ArrayOf (Strict Boxed) = StrictSmallArray
   ArrayOf (Strict Unboxed) = PrimArray
-  ArrayOf (Strict Storable) = StorableArray
+--   ArrayOf (Strict Storable) = StorableArray
 
 newtype Bitmap = Bitmap Int
   deriving (Eq, Ord, Show, Num)
 
--- | Backing store is a ByteArray,
--- but all operations read/write using a's Storable instance
-newtype StorableArray a = StorableArray ByteArray
+-- -- | Backing store is a ByteArray,
+-- -- but all operations read/write using a's Storable instance
+-- newtype StorableArray a = StorableArray ByteArray
 
 -- | Backing store is a SmallArray,
 -- but all reading/writing is strict in `a`
