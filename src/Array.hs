@@ -2,13 +2,16 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UnboxedTuples #-}
 {-# LANGUAGE MagicHash #-}
+{-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE PatternSynonyms #-}
 {-# OPTIONS_GHC -ddump-simpl -dsuppress-all -ddump-to-file #-}
 module Array where
 
 import Data.Primitive (SmallArray, PrimArray, Prim)
 import Data.Primitive.SmallArray qualified as SmallArray
 import Data.Primitive.PrimArray qualified as PrimArray
-
+import Data.Coerce (coerce)
 
 -- | Backing store is a SmallArray,
 -- but all reading/writing is strict in `a`
@@ -127,30 +130,38 @@ instance (Prim a) => Array (PrimArray a) where
     PrimArray.copyPrimArray dst idx src (idx + 1) (size src - idx - 1)
     pure dst
 
-instance (Array a, Array b) => Array (a, b) where
-    type Item (a, b) = (Item a, Item b)
-    {-# INLINE empty #-}
-    empty = (empty, empty)
-    {-# INLINE size #-}
-    size (a, _) = size a
-    {-# INLINE get #-}
-    get (!a, !b) idx =
-        let (# x #) = get a idx
-            (# y #) = get b idx
-        in (# (x, y) #)
-    {-# INLINE set #-}
-    set (!a, !b) idx (x, y) = (set a idx x, set b idx y)
-    {-# INLINE insert #-}
-    insert (!a, !b) idx (x, y) = (insert a idx x, insert b idx y)
-    {-# INLINE snoc #-}
-    snoc (!a, !b) (x, y) = (snoc a x, snoc b y)
-    {-# INLINE delete #-}
-    delete (!a, !b) idx = (delete a idx, delete b idx)
+-- instance (Array a, Array b) => Array (a, b) where
+--     type Item (a, b) = (Item a, Item b)
+--     {-# INLINE empty #-}
+--     empty = (empty, empty)
+--     {-# INLINE size #-}
+--     size (a, _) = size a
+--     {-# INLINE get #-}
+--     get (!a, !b) idx =
+--         let (# x #) = get a idx
+--             (# y #) = get b idx
+--         in (# (x, y) #)
+--     {-# INLINE set #-}
+--     set (!a, !b) idx (x, y) = (set a idx x, set b idx y)
+--     {-# INLINE insert #-}
+--     insert (!a, !b) idx (x, y) = (insert a idx x, insert b idx y)
+--     {-# INLINE snoc #-}
+--     snoc (!a, !b) (x, y) = (snoc a x, snoc b y)
+--     {-# INLINE delete #-}
+--     delete (!a, !b) idx = (delete a idx, delete b idx)
 
 data StrictPair a b = StrictPair !a !b
 
-instance (Array a, Array b) => Array (StrictPair a b) where
-    type Item (StrictPair a b) = StrictPair (Item a) (Item b)
+-- | A pair of arrays can also be considered an array
+--
+-- Note that for effiency reasons, we only consider _strict_
+-- pairs of arrays.
+--
+-- The items stored in these arrays are _normal_ pairs;
+-- the strictness of the elements actually depends
+-- on the the strictness of `aryA` resp. `aryB`.
+instance (Array aryA, Array aryB) => Array (StrictPair aryA aryB) where
+    type Item (StrictPair aryA aryB) = (Item aryA, Item aryB)
     {-# INLINE empty #-}
     empty = StrictPair empty empty
     {-# INLINE size #-}
@@ -159,16 +170,40 @@ instance (Array a, Array b) => Array (StrictPair a b) where
     get (StrictPair a b) idx =
         let (# x #) = get a idx
             (# y #) = get b idx
-        in (# (StrictPair x y) #)
+        in (# (x, y) #)
     {-# INLINE set #-}
-    set (StrictPair a b) idx (StrictPair x y) = StrictPair (set a idx x) (set b idx y)
+    set (StrictPair a b) idx (x, y) = StrictPair (set a idx x) (set b idx y)
     {-# INLINE insert #-}
-    insert (StrictPair a b) idx (StrictPair x y) = StrictPair (insert a idx x) (insert b idx y)
+    insert (StrictPair a b) idx (x, y) = StrictPair (insert a idx x) (insert b idx y)
     {-# INLINE snoc #-}
-    snoc (StrictPair a b) (StrictPair x y) = StrictPair (snoc a x) (snoc b y)
+    snoc (StrictPair a b) (x, y) = StrictPair (snoc a x) (snoc b y)
     {-# INLINE delete #-}
     delete (StrictPair a b) idx = StrictPair (delete a idx) (delete b idx)
 
+newtype StrictTriple a b c = StrictTriple' (StrictPair a (StrictPair b c))
+
+instance (Array aryA, Array aryB, Array aryC) => Array (StrictTriple aryA aryB aryC) where
+    type Item (StrictTriple aryA aryB aryC) = (Item aryA, Item aryB, Item aryC)
+    {-# INLINE empty #-}
+    empty = coerce $ empty @(StrictPair aryA (StrictPair aryB aryC))
+    {-# INLINE size #-}
+    size = coerce $ size  @(StrictPair aryA (StrictPair aryB aryC))
+    {-# INLINE get #-}
+    get ary idx = 
+        let (# (x, (y, z)) #) = (coerce (get @(StrictPair aryA (StrictPair aryB aryC))) ary idx) 
+        in (# (x, y, z) #)
+    {-# INLINE set #-}
+    set ary idx (x, y, z) = coerce (set @(StrictPair aryA (StrictPair aryB aryC))) ary idx (x, (y ,z))
+    {-# INLINE insert #-}
+    insert ary idx (x, y, z) = coerce (insert @(StrictPair aryA (StrictPair aryB aryC))) ary idx (x, (y, z))
+    {-# INLINE snoc #-}
+    snoc ary (x, y, z) = coerce (snoc @(StrictPair aryA (StrictPair aryB aryC))) ary (x, (y, z))
+    {-# INLINE delete #-}
+    delete = coerce $ delete @(StrictPair aryA (StrictPair aryB aryC))
+
+{-# INLINE StrictTriple #-}
+pattern StrictTriple :: a -> b -> c -> StrictTriple a b c
+pattern StrictTriple a b c = StrictTriple' (StrictPair a (StrictPair b c))
 
 foldl' :: Array ary => (b -> Item ary -> b) -> b -> ary -> b
 foldl' f = \ z0 ary0 -> go ary0 (size ary0) 0 z0
@@ -180,21 +215,11 @@ foldl' f = \ z0 ary0 -> go ary0 (size ary0) 0 z0
             (# x #) -> go ary n (i+1) (f z x)
 {-# INLINE foldl' #-}
 
--- foldlP' :: (Array aryA, Array aryB) => (b -> Item aryA -> Item aryB -> b) -> b -> aryA -> aryB -> b
--- foldlP' f = \ z0 aryA0 aryB0 -> go aryA0 aryB0 (size aryB0) 0 z0
---   where
---     go aryA aryB n i !z
---         | i >= n = z
---         | otherwise
---         = case (# get aryA i, get aryB i #) of
---             (# (# x #), (# y #) #) -> go aryA aryB n (i+1) (f z x y)
--- {-# INLINE foldlP' #-}
-
 sum :: SmallArray Int -> SmallArray Int -> Int
-sum !a !b = (Array.foldr' (\(StrictPair k v) acc -> k + v + acc) 0) $ (StrictPair a b)
+sum !a !b = (Array.foldr' (\(k, v) acc -> k + v + acc) 0) $ (StrictPair a b)
 
--- sum2 :: SmallArray Int -> SmallArray Int -> Int
--- sum2 = Array.foldrP' (\k v acc -> k + v + acc) 0
+sum3 :: SmallArray Int -> SmallArray Int -> SmallArray Int -> Int
+sum3 !a !b !c = (Array.foldr' (\(x, y, z) acc -> x + y + z + acc) 0) $ (StrictTriple a b c)
 
 foldr' :: Array ary => (Item ary -> b -> b) -> b -> ary -> b
 foldr' f = \ z0 ary0 -> go ary0 (size ary0 - 1) z0
@@ -204,16 +229,6 @@ foldr' f = \ z0 ary0 -> go ary0 (size ary0 - 1) z0
       | (# x #) <- get ary i
       = go ary (i - 1) (f x z)
 {-# INLINE foldr' #-}
-
--- foldrP' :: (Array aryA, Array aryB) => (Item aryA -> Item aryB -> b -> b) -> b -> aryA -> aryB -> b
--- foldrP' f = \ z0 aryA0 aryB0 -> go aryA0 aryB0 (size aryB0 - 1) z0
---   where
---     go !_aryA !_aryB (-1) z = z
---     go !aryA !aryB i !z
---       | (# x #) <- get aryA i
---       , (# y #) <- get aryB i
---       = go aryA aryB (i - 1) (f x y z)
--- {-# INLINE foldrP' #-}
 
 foldr :: Array ary => (Item ary -> b -> b) -> b -> ary -> b
 foldr f = \ z0 ary0 -> go ary0 (size ary0) 0 z0
@@ -225,16 +240,6 @@ foldr f = \ z0 ary0 -> go ary0 (size ary0) 0 z0
             (# x #) -> f x (go ary n (i+1) z)
 {-# INLINE foldr #-}
 
--- foldrP :: (Array aryA, Array aryB) => (Item aryA -> Item aryB -> b -> b) -> b -> aryA -> aryB -> b
--- foldrP f = \ z0 aryA0 aryB0 -> go aryA0 aryB0 (size aryB0) 0 z0
---   where
---     go aryA aryB n i z
---         | i >= n = z
---         | otherwise
---         = case (# get aryA i, get aryB i #) of
---             (# (# x #), (# y #) #) -> f x y (go aryA aryB n (i+1) z)
--- {-# INLINE foldrP #-}
-
 foldl :: Array ary => (b -> Item ary -> b) -> b -> ary -> b
 foldl f = \ z0 ary0 -> go ary0 (size ary0 - 1) z0
   where
@@ -243,14 +248,3 @@ foldl f = \ z0 ary0 -> go ary0 (size ary0 - 1) z0
       | (# x #) <- get ary i
       = f (go ary (i - 1) z) x
 {-# INLINE foldl #-}
-
-
--- foldlP :: (Array aryA, Array aryB) => (b -> Item aryA -> Item aryB -> b) -> b -> aryA -> aryB -> b
--- foldlP f = \ z0 aryA0 aryB0 -> go aryA0 aryB0 (size aryB0 - 1) z0
---   where
---     go _aryA _aryB (-1) z = z
---     go aryA aryB i z
---       | (# x #) <- get aryA i
---       , (# y #) <- get aryB i
---       = f (go aryA aryB (i - 1) z) x y
--- {-# INLINE foldlP #-}
