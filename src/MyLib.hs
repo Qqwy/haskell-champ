@@ -14,13 +14,14 @@ module MyLib where
 import Data.Kind
 import Data.Primitive
 import Data.Primitive.SmallArray qualified as SmallArray
-import Data.Array.Unboxed (UArray)
 import Foreign.Storable qualified as Storable
 
--- type LazyChampMap = ChampMap Boxed Lazy
--- type StrictChampMap = ChampMap Boxed (Strict Boxed)
--- type UnboxedChampMap = ChampMap Boxed (Strict Unboxed)
--- type UnboxedUnboxedChampMap = ChampMap Unboxed (Strict Unboxed)
+type MapBL = Map Boxed Lazy
+type MapBB = Map Boxed (Strict Boxed)
+type MapBU = Map Boxed (Strict Unboxed)
+type MapUL = Map Unboxed Lazy
+type MapUB = Map Unboxed (Strict Boxed)
+type MapUU = Map Unboxed (Strict Unboxed)
 
 data Storage = Lazy | Strict StrictStorage
 data StrictStorage = Boxed | Unboxed
@@ -28,7 +29,7 @@ data StrictStorage = Boxed | Unboxed
 pattern EmptyMap 
   :: forall (keyStorage :: StrictStorage) (valStorage :: Storage) k v.
    MapRepr keyStorage valStorage k v =>
-   ChampMap keyStorage valStorage k v
+   Map keyStorage valStorage k v
 {-# INLINE EmptyMap #-}
 pattern EmptyMap <- (matchMap -> (# (##) | | #)) where
     EmptyMap = emptyMap
@@ -36,7 +37,7 @@ pattern EmptyMap <- (matchMap -> (# (##) | | #)) where
 pattern SingletonMap 
   :: forall (keyStorage :: StrictStorage) (valStorage :: Storage) k v.
    MapRepr keyStorage valStorage k v =>
-   k -> v -> ChampMap keyStorage valStorage k v
+   k -> v -> Map keyStorage valStorage k v
 {-# INLINE SingletonMap #-}
 pattern SingletonMap k v <- (matchMap -> (#  | (# k, v #) | #)) where
     SingletonMap = singletonMap
@@ -44,7 +45,7 @@ pattern SingletonMap k v <- (matchMap -> (#  | (# k, v #) | #)) where
 pattern ManyMap
   :: forall (keyStorage :: StrictStorage) (valStorage :: Storage) k v.
    MapRepr keyStorage valStorage k v =>
-   MapNode keyStorage valStorage k v -> ChampMap keyStorage valStorage k v
+   MapNode keyStorage valStorage k v -> Map keyStorage valStorage k v
 {-# INLINE ManyMap #-}
 pattern ManyMap node <- (matchMap -> (#  | | node #)) where
     ManyMap = manyMap
@@ -64,14 +65,14 @@ pattern CompactNode bitmap keys vals children <- (unpackNode -> (# bitmap, keys,
 {-# COMPLETE CollisionNode, CompactNode #-}
 
 class MapRepr (keyStorage :: StrictStorage) (valStorage :: Storage) k v where
-  data ChampMap keyStorage valStorage k v
+  data Map keyStorage valStorage k v
   data MapNode keyStorage valStorage k v
   packNode :: (# Bitmap, ArrayOf (Strict keyStorage) k, (ArrayOf valStorage) v, SmallArray (MapNode keyStorage valStorage k v) #) -> MapNode keyStorage valStorage k v
   unpackNode :: MapNode keyStorage valStorage k v -> (# Bitmap, ArrayOf (Strict keyStorage) k, (ArrayOf valStorage) v, SmallArray (MapNode keyStorage valStorage k v) #)
-  manyMap :: MapNode keyStorage valStorage k v -> ChampMap keyStorage valStorage k v
-  emptyMap :: ChampMap keyStorage valStorage k v
-  singletonMap :: k -> v -> ChampMap keyStorage valStorage k v
-  matchMap :: ChampMap keyStorage valStorage k v -> (# (##) | (# k, v #) | MapNode keyStorage valStorage k v #)
+  manyMap :: MapNode keyStorage valStorage k v -> Map keyStorage valStorage k v
+  emptyMap :: Map keyStorage valStorage k v
+  singletonMap :: k -> v -> Map keyStorage valStorage k v
+  matchMap :: Map keyStorage valStorage k v -> (# (##) | (# k, v #) | MapNode keyStorage valStorage k v #)
 
 #define MAP_NODE_NAME(name) MapNode/**/_/**/name
 
@@ -99,7 +100,7 @@ instance constraints => MapRepr (keystorage) (valstorage) k v where             
 ; SingletonMap_/**/name k v -> (#  | (# k, v #) | #)                                                       \
 ; ManyMap_/**/name b keys vals children -> (# | | MAP_NODE_NAME(name) b keys vals children #) }            \
 ; data MapNode (keystorage) (valstorage) k v = MAP_NODE_NAME(name) MAP_NODE_FIELDS(keystorage, valstorage) \
-; data ChampMap (keystorage) (valstorage) k v                                                              \
+; data Map (keystorage) (valstorage) k v                                                              \
   = EmptyMap_/**/name                                                                                      \
   | SingletonMap_/**/name !k v                                                                             \
   | ManyMap_/**/name MAP_NODE_FIELDS(keystorage, valstorage)                                               \
@@ -112,6 +113,12 @@ map_repr_instance(Boxed_Unboxed, Boxed, Strict Unboxed, (Prim v))
 map_repr_instance(Unboxed_Lazy, Unboxed, Lazy, (Prim k))
 map_repr_instance(Unboxed_Boxed, Unboxed, Strict Boxed, (Prim k))
 map_repr_instance(Unboxed_Unboxed, Unboxed, Strict Unboxed, (Prim k, Prim v))
+
+
+-- | Backing store is a SmallArray,
+-- but all reading/writing is strict in `a`,
+-- i.e. `a` is evaluated to WHNF before returning.
+newtype StrictSmallArray a = StrictSmallArray (SmallArray a)
 
 type family ArrayOf (s :: Storage) = (r :: Type -> Type) | r -> s where
   ArrayOf Lazy = SmallArray
@@ -126,12 +133,9 @@ newtype Bitmap = Bitmap Int
 -- -- but all operations read/write using a's Storable instance
 -- newtype StorableArray a = StorableArray ByteArray
 
--- | Backing store is a SmallArray,
--- but all reading/writing is strict in `a`
-newtype StrictSmallArray a = StrictSmallArray (SmallArray a)
 
 someFunc = undefined
 
-null :: ChampMap Boxed Lazy k v -> Bool
+null :: Map Boxed Lazy k v -> Bool
 null EmptyMap = True
 null _ = False

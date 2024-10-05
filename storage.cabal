@@ -59,7 +59,7 @@ library
     import:           warnings
 
     -- Modules exported by the library.
-    exposed-modules:  MyLib, Array
+    exposed-modules:  Storage, MyLib, Array
 
     -- Modules included in this library but not exported.
     -- other-modules:
@@ -71,7 +71,6 @@ library
     build-depends:    
       base ^>=4.19.0.0,
       primitive,
-      array
 
     build-tool-depends: cpphs:cpphs
 

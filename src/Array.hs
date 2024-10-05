@@ -6,15 +6,24 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE PatternSynonyms #-}
 {-# OPTIONS_GHC -ddump-simpl -dsuppress-all -ddump-to-file #-}
-module Array where
+module Array(SmallArray, StrictSmallArray, PrimArray, Array(..)) where
 
 import Data.Primitive (SmallArray, PrimArray, Prim)
 import Data.Primitive.SmallArray qualified as SmallArray
 import Data.Primitive.PrimArray qualified as PrimArray
 import Data.Coerce (coerce)
 
--- | Backing store is a SmallArray,
--- but all reading/writing is strict in `a`
+-- | An array behaving similar to SmallArray,
+-- but all reading/writing of elements first evaluates that element to WHNF.
+--
+-- It would be nice if GHC had separate machinery to turn
+-- values of kind `Type` (AKA `TYPE (BoxedRep Lifted))` 
+-- into values of kind `UnliftedType` (AKA (`TYPE (BoxedRep Unlifted`)))
+-- but as that doesn't currently exist,
+-- this is implemented as a wrapper around the normal SmallArray
+-- with strictness annotations added to the various accessor functions.
+--
+-- TODO: Maybe we can harness the `data-elevator`?
 newtype StrictSmallArray a = StrictSmallArray (SmallArray a)
 
 class Array arr where
