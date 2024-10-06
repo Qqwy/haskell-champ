@@ -10,7 +10,7 @@
 {-# OPTIONS_GHC -ddump-simpl -dsuppress-all -ddump-to-file #-}
 module Array(SmallArray, SmallUnliftedArray,  SmallUnliftedArray_, StrictSmallArray, PrimArray, example, example2, example3, Strictly(..)) where
 
-import Prelude hiding (foldl, foldr, foldl', foldr')
+import Prelude hiding (foldl, foldr, foldl', foldr', null)
 import Data.Primitive (SmallArray, PrimArray, Prim)
 import Data.Primitive.SmallArray qualified as SmallArray
 import Data.Primitive.PrimArray qualified as PrimArray
@@ -23,9 +23,11 @@ import Data.Primitive.Unlifted.Class (PrimUnlifted(..))
 import Data.Primitive.Unlifted.SmallArray (SmallUnliftedArray_, SmallMutableUnliftedArray_)
 import Data.Kind (Type)
 import Data.Elevator (Strict(Strict), UnliftedType)
+import Control.DeepSeq (NFData)
+import Data.Hashable (Hashable)
 
-newtype Strictly a = Strictly a
-  deriving newtype Show
+newtype Strictly a = Strictly {unStrictly :: a}
+  deriving newtype (Show, Eq, Ord, Hashable, NFData)
 instance PrimUnlifted (Strictly a) where
   type Unlifted (Strictly a) = Strict a
   toUnlifted# (Strictly a) = Strict a
@@ -59,6 +61,18 @@ instance Contiguous.Contiguous StrictSmallArray where
   doubleton a b = StrictSmallArray $ doubleton (Strictly a) (Strictly b)
   tripleton a b c = StrictSmallArray $ tripleton (Strictly a) (Strictly b) (Strictly c)
   quadrupleton a b c d = StrictSmallArray $ quadrupleton (Strictly a) (Strictly b) (Strictly c) (Strictly d)
+  quintupleton a b c d e = StrictSmallArray $ quintupleton (Strictly a) (Strictly b) (Strictly c) (Strictly d) (Strictly e)
+  sextupleton a b c d e f = StrictSmallArray $ sextupleton (Strictly a) (Strictly b) (Strictly c) (Strictly d) (Strictly e) (Strictly f)
+  index (StrictSmallArray ary) idx = unStrictly $ index ary idx
+  index# (StrictSmallArray ary) idx | (# v #) <- index# ary idx = (# unStrictly v #)
+  indexM (StrictSmallArray ary) idx = unStrictly <$> indexM ary idx
+  size (StrictSmallArray ary) = size ary
+  sizeMut (StrictSmallMutableArray ary) = sizeMut ary
+  equals (StrictSmallArray lhs) (StrictSmallArray rhs) = equals lhs rhs
+  equalsMut (StrictSmallMutableArray lhs) (StrictSmallMutableArray rhs) = equalsMut lhs rhs
+  rnf (StrictSmallArray ary) = rnf ary
+  null (StrictSmallArray ary) = null ary
+  run _ = error "TODO"
 
 instance Contiguous.ContiguousU StrictSmallArray where
 

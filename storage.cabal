@@ -71,7 +71,11 @@ library
     build-depends:    
       base ^>=4.19.0.0,
       primitive,
+      primitive-unlifted,
       contiguous,
+      data-elevator,
+      deepseq,
+      hashable,
 
     build-tool-depends: cpphs:cpphs
 
