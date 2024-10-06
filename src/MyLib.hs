@@ -17,9 +17,10 @@ import Data.Primitive.SmallArray qualified as SmallArray
 import Data.Function ((&))
 
 import Storage (Storage(..), StrictStorage(..), ArrayOf)
--- import Array (Array)
+import Array (StrictSmallArray)
 import Array qualified
-import Data.Primitive.Contiguous (Contiguous)
+import Data.Primitive.Contiguous (Contiguous, Element)
+import Data.Primitive.Contiguous qualified as Contiguous
 
 type MapBL = Map Boxed Lazy
 type MapBB = Map Boxed (Strict Boxed)
@@ -55,16 +56,16 @@ pattern ManyMap node <- (matchMap -> (#  | | node #)) where
 {-# COMPLETE EmptyMap, SingletonMap, ManyMap #-}
 
 {-# INLINE MapNode #-}
-pattern MapNode :: MapRepr keyStorage valStorage k v => Bitmap -> (ArrayOf (Strict keyStorage) k) -> (ArrayOf valStorage) v -> SmallArray (MapNode keyStorage valStorage k v) -> MapNode keyStorage valStorage k v
+pattern MapNode :: MapRepr keyStorage valStorage k v => Bitmap -> (ArrayOf (Strict keyStorage) k) -> (ArrayOf valStorage) v -> StrictSmallArray (MapNode keyStorage valStorage k v) -> MapNode keyStorage valStorage k v
 pattern MapNode bitmap keys vals children <- (unpackNode -> (# bitmap, keys, vals, children #)) where
     MapNode bitmap keys vals children = packNode (# bitmap, keys, vals, children #)
 
 pattern CollisionNode :: MapRepr keyStorage valStorage k v => (ArrayOf (Strict keyStorage) k) -> (ArrayOf valStorage) v -> MapNode keyStorage valStorage k v
 {-# INLINE CollisionNode #-}
 pattern CollisionNode keys vals <- (unpackNode -> (# _, keys, vals, _ #)) where
-    CollisionNode keys vals = packNode (# 0, keys, vals, SmallArray.emptySmallArray #)
+    CollisionNode keys vals = packNode (# 0, keys, vals, Contiguous.empty #)
 
-pattern CompactNode :: MapRepr keyStorage valStorage k v => Bitmap -> (ArrayOf (Strict keyStorage) k) -> (ArrayOf valStorage) v -> SmallArray (MapNode keyStorage valStorage k v) -> MapNode keyStorage valStorage k v
+pattern CompactNode :: MapRepr keyStorage valStorage k v => Bitmap -> (ArrayOf (Strict keyStorage) k) -> (ArrayOf valStorage) v -> StrictSmallArray (MapNode keyStorage valStorage k v) -> MapNode keyStorage valStorage k v
 {-# INLINE CompactNode #-}
 pattern CompactNode bitmap keys vals children <- (unpackNode -> (# (isNonZeroBitmap -> (# | bitmap #) ), keys, vals, children #)) where
     CompactNode bitmap keys vals children = packNode (# bitmap, keys, vals, children #)
@@ -91,7 +92,7 @@ data Map (keys :: StrictStorage) (vals :: Storage) k v = EmptyMap | SingletonMap
 
 data MapNode keys vals k v
     = CollisionNode !(ArrayOf (Strict keys)) !(ArrayOf vals)
-    | CompactNode !Bitmap !Bitmap !(ArrayOf (Strict keys)) !(ArrayOf vals) !(SmallArray (MapNode keys vals k v))
+    | CompactNode !Bitmap !Bitmap !(ArrayOf (Strict keys)) !(ArrayOf vals) !(StrictSmallArray (MapNode keys vals k v))
 ```
 with the following tricks:
 - We only store a single 64-bit bitmap (taking up one word) rather than two separate 32-bit bitmaps,
@@ -102,12 +103,15 @@ with the following tricks:
 - As mentioned above, we make sure that GHC unpacks the intermediate array boxes,
   so we store the `SmallArray#` resp `ByteArray#` pointers directly.
   This results in one word saved for the outer map and three more words saved per map node.
+- Finally, we make sure that internal map nodes are stored as `UnliftedType` (AKA `TYPE 'BoxedRep 'Unlifted`)
+  inside their array, as we're always strict in the tree-spine of the CHAMP map.
+  This means GHC will skip any thunk-forcing code whenever reading/recursing
 -}
 class (Contiguous (ArrayOf (Strict keyStorage)), Contiguous (ArrayOf (valStorage))) => MapRepr (keyStorage :: StrictStorage) (valStorage :: Storage) k v where
   data Map keyStorage valStorage k v
   data MapNode keyStorage valStorage k v
-  packNode :: (# Bitmap, ArrayOf (Strict keyStorage) k, (ArrayOf valStorage) v, SmallArray (MapNode keyStorage valStorage k v) #) -> MapNode keyStorage valStorage k v
-  unpackNode :: MapNode keyStorage valStorage k v -> (# Bitmap, ArrayOf (Strict keyStorage) k, (ArrayOf valStorage) v, SmallArray (MapNode keyStorage valStorage k v) #)
+  packNode :: (# Bitmap, ArrayOf (Strict keyStorage) k, (ArrayOf valStorage) v, StrictSmallArray (MapNode keyStorage valStorage k v) #) -> MapNode keyStorage valStorage k v
+  unpackNode :: MapNode keyStorage valStorage k v -> (# Bitmap, ArrayOf (Strict keyStorage) k, (ArrayOf valStorage) v, StrictSmallArray (MapNode keyStorage valStorage k v) #)
   manyMap :: MapNode keyStorage valStorage k v -> Map keyStorage valStorage k v
   emptyMap :: Map keyStorage valStorage k v
   singletonMap :: k -> v -> Map keyStorage valStorage k v
@@ -119,7 +123,7 @@ class (Contiguous (ArrayOf (Strict keyStorage)), Contiguous (ArrayOf (valStorage
      !Bitmap \
      !((ArrayOf (Strict (keystorage))) k) \
      !((ArrayOf (valstorage)) v) \
-     !(SmallArray (MapNode (keystorage) (valstorage) k v))
+     !(StrictSmallArray (MapNode (keystorage) (valstorage) k v))
 
 #define map_repr_instance(name, keystorage, valstorage, constraints)                                       \
 instance constraints => MapRepr (keystorage) (valstorage) k v where                                        \
@@ -168,37 +172,37 @@ empty = EmptyMap
 singleton :: MapRepr keys vals k v => k -> v -> Map keys vals k v
 singleton !k v = SingletonMap k v
 
--- {-# INLINE foldr' #-}
--- foldr' :: MapRepr keys vals k v => (v -> r -> r) -> r -> Map keys vals k v -> r
--- foldr' f z0 m = case m of
---    EmptyMap -> z0
---    SingletonMap _k v -> f v z0
---    (ManyMap node0) -> go node0 z0
---    where
---       go (MapNode _bitmap _keys vals children) z = 
+{-# INLINE foldr' #-}
+foldr' :: (Element (ArrayOf (Strict keys)) k, Element (ArrayOf vals) v) => MapRepr keys vals k v => (v -> r -> r) -> r -> Map keys vals k v -> r
+foldr' f z0 m = case m of
+   EmptyMap -> z0
+   SingletonMap _k v -> f v z0
+   (ManyMap node0) -> go node0 z0
+   where
+      go (MapNode _bitmap _keys vals children) z = 
+        z
+        & flip (Contiguous.foldr' f) vals
+        & flip (Contiguous.foldr' go) children
+
+-- foldr' _f z EmptyMap = z
+-- foldr' f !z (SingletonMap _k !v) = f v z
+-- foldr' f z0 (ManyMap !node0) = go z0 node0 where
+--     go z (MapNode _bitmap _keys vals children) = 
 --         z
 --         & flip (Array.foldr' f) vals
---         & flip (Array.foldr' go) children
+--         & flip (Array.foldr' (flip go)) children
 
--- -- foldr' _f z EmptyMap = z
--- -- foldr' f !z (SingletonMap _k !v) = f v z
--- -- foldr' f z0 (ManyMap !node0) = go z0 node0 where
--- --     go z (MapNode _bitmap _keys vals children) = 
--- --         z
--- --         & flip (Array.foldr' f) vals
--- --         & flip (Array.foldr' (flip go)) children
-
--- {-# INLINE foldr'2 #-}
--- foldr'2 :: MapRepr keys vals k v => (v -> r -> r) -> r -> Map keys vals k v -> r
--- foldr'2 f z0 m = case matchMap m of
---   (# (##) | | #) -> z0
---   (# | (# _k, v #) | #) -> f v z0
---   (# | | node0 #) -> go node0 z0
---     where
---       go (MapNode _bitmap _keys vals children) z = 
---         z
---         & flip (Array.foldr' f) vals
---         & flip (Array.foldr' go) children
+{-# INLINE foldr'2 #-}
+foldr'2 :: (Element (ArrayOf (Strict keys)) k, Element (ArrayOf vals) v) => MapRepr keys vals k v => (v -> r -> r) -> r -> Map keys vals k v -> r
+foldr'2 f z0 m = case matchMap m of
+  (# (##) | | #) -> z0
+  (# | (# _k, v #) | #) -> f v z0
+  (# | | node0 #) -> go node0 z0
+    where
+      go (MapNode _bitmap _keys vals children) z = 
+        z
+        & flip (Contiguous.foldr' f) vals
+        & flip (Contiguous.foldr' go) children
 
 -- {-# INLINE foldl'2 #-}
 -- foldl'2 :: MapRepr keys vals k v => (r -> v -> r) -> r -> Map keys vals k v -> r
@@ -213,8 +217,8 @@ singleton !k v = SingletonMap k v
 --         & flip (Array.foldl' go) children
 
 
--- mysum :: MapUU Int Int -> Int
--- mysum = foldl'2 (+) 0
+mysumOne :: MapUU Int Int -> Int
+mysumOne = foldr' (+) 0
 
--- mysumTwo :: MapUU Int Int -> Int
--- mysumTwo = foldr'2 (+) 0
+mysumTwo :: MapUU Int Int -> Int
+mysumTwo = foldr'2 (+) 0

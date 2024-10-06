@@ -40,12 +40,12 @@ instance PrimUnlifted (Strictly a) where
   toUnlifted# (Strictly a) = Strict a
   fromUnlifted# (Strict a) = (Strictly a)
 
--- data MyNode = Foo | Bar !(SmallUnliftedArray (Strictly MyNode))
---   deriving Show
+data MyNode = Foo | Bar !(SmallUnliftedArray (Strictly MyNode))
+  deriving Show
 
--- example = Foo
--- example2 = Bar empty
--- example3 x = Bar (singleton (Strictly x))
+example = Foo
+example2 = Bar empty
+example3 x = Bar (singleton (Strictly x))
 
 
 -- instance PrimUnlifted (StrictSmallArray a) where
