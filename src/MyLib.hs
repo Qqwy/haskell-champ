@@ -101,7 +101,7 @@ with the following tricks:
   so we store the `SmallArray#` resp `ByteArray#` pointers directly.
   This results in one word saved for the outer map and three more words saved per map node.
 -}
-class (Array.Array (ArrayOf (Strict keyStorage) k), Array.Item (ArrayOf (Strict keyStorage) k) ~ k, Array.Array (ArrayOf valStorage v), Array.Item (ArrayOf valStorage v) ~ v) => MapRepr (keyStorage :: StrictStorage) (valStorage :: Storage) k v where
+class (Array.Array (ArrayOf (Strict keyStorage) k) k, Array.Array (ArrayOf valStorage v) v) => MapRepr (keyStorage :: StrictStorage) (valStorage :: Storage) k v where
   data Map keyStorage valStorage k v
   data MapNode keyStorage valStorage k v
   packNode :: (# Bitmap, ArrayOf (Strict keyStorage) k, (ArrayOf valStorage) v, SmallArray (MapNode keyStorage valStorage k v) #) -> MapNode keyStorage valStorage k v
@@ -171,12 +171,12 @@ foldr' :: MapRepr keys vals k v => (v -> r -> r) -> r -> Map keys vals k v -> r
 foldr' f z0 m = case m of
    EmptyMap -> z0
    SingletonMap _k v -> f v z0
-   (ManyMap node0) -> go z0 node0 
+   (ManyMap node0) -> go node0 z0
    where
-      go z (MapNode _bitmap _keys vals children) = 
+      go (MapNode _bitmap _keys vals children) z = 
         z
         & flip (Array.foldr' f) vals
-        & flip (Array.foldr' (flip go)) children
+        & flip (Array.foldr' go) children
 
 -- foldr' _f z EmptyMap = z
 -- foldr' f !z (SingletonMap _k !v) = f v z
@@ -191,15 +191,28 @@ foldr'2 :: MapRepr keys vals k v => (v -> r -> r) -> r -> Map keys vals k v -> r
 foldr'2 f z0 m = case matchMap m of
   (# (##) | | #) -> z0
   (# | (# _k, v #) | #) -> f v z0
+  (# | | node0 #) -> go node0 z0
+    where
+      go (MapNode _bitmap _keys vals children) z = 
+        z
+        & flip (Array.foldr' f) vals
+        & flip (Array.foldr' go) children
+
+{-# INLINE foldl'2 #-}
+foldl'2 :: MapRepr keys vals k v => (r -> v -> r) -> r -> Map keys vals k v -> r
+foldl'2 f z0 m = case matchMap m of
+  (# (##) | | #) -> z0
+  (# | (# _k, v #) | #) -> f z0 v
   (# | | node0 #) -> go z0 node0 
     where
       go z (MapNode _bitmap _keys vals children) = 
         z
-        & flip (Array.foldr' f) vals
-        & flip (Array.foldr' (flip go)) children
+        & flip (Array.foldl' f) vals
+        & flip (Array.foldl' go) children
+
 
 mysum :: MapUU Int Int -> Int
-mysum = foldr' (+) 0
+mysum = foldl'2 (+) 0
 
 mysumTwo :: MapUU Int Int -> Int
 mysumTwo = foldr'2 (+) 0

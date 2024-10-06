@@ -5,6 +5,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE FunctionalDependencies #-}
 {-# OPTIONS_GHC -ddump-simpl -dsuppress-all -ddump-to-file #-}
 module Array(SmallArray, StrictSmallArray, PrimArray, Array(..), foldr, foldl, foldr', foldl') where
 
@@ -27,19 +28,17 @@ import Data.Coerce (coerce)
 -- TODO: Maybe we can harness the `data-elevator`?
 newtype StrictSmallArray a = StrictSmallArray (SmallArray a)
 
-class Array arr where
-  type Item arr
+class Array arr a | arr -> a where
   empty :: arr
   size :: arr -> Int
-  get :: arr -> Int -> (# Item arr #)
-  set :: arr -> Int -> Item arr -> arr
-  insert :: arr -> Int -> Item arr -> arr
+  get :: arr -> Int -> (# a #)
+  set :: arr -> Int -> a -> arr
+  insert :: arr -> Int -> a -> arr
   delete :: arr -> Int -> arr
   -- | Insert at the end. Optimization on insert.
-  snoc :: arr -> Item arr -> arr
+  snoc :: arr -> a -> arr
 
-instance Array (SmallArray a) where
-  type Item (SmallArray a) = a
+instance Array (SmallArray a) a where
 
   {-# INLINE empty #-}
   empty = SmallArray.emptySmallArray
@@ -76,8 +75,7 @@ instance Array (SmallArray a) where
     SmallArray.copySmallArray dst idx src (idx + 1) (size src - idx - 1)
     pure dst
 
-instance Array (StrictSmallArray a) where
-    type Item (StrictSmallArray a) = a
+instance Array (StrictSmallArray a) a where
     {-# INLINE empty #-}
     empty = StrictSmallArray $ empty
     {-# INLINE size #-}
@@ -99,8 +97,7 @@ instance Array (StrictSmallArray a) where
     {-# INLINE delete #-}
     delete (StrictSmallArray ary) idx = StrictSmallArray $ delete ary idx
 
-instance (Prim a) => Array (PrimArray a) where
-  type Item (PrimArray a) = a
+instance (Prim a) => Array (PrimArray a) a where
 
   {-# INLINE empty #-}
   empty = PrimArray.emptyPrimArray
@@ -170,8 +167,7 @@ data StrictPair a b = StrictPair !a !b
 -- The items stored in these arrays are _normal_ pairs;
 -- the strictness of the elements actually depends
 -- on the the strictness of `aryA` resp. `aryB`.
-instance (Array aryA, Array aryB) => Array (StrictPair aryA aryB) where
-    type Item (StrictPair aryA aryB) = (Item aryA, Item aryB)
+instance (Array aryA a, Array aryB b) => Array (StrictPair aryA aryB) (a, b) where
     {-# INLINE empty #-}
     empty = StrictPair empty empty
     {-# INLINE size #-}
@@ -192,8 +188,7 @@ instance (Array aryA, Array aryB) => Array (StrictPair aryA aryB) where
 
 newtype StrictTriple a b c = StrictTriple' (StrictPair a (StrictPair b c))
 
-instance (Array aryA, Array aryB, Array aryC) => Array (StrictTriple aryA aryB aryC) where
-    type Item (StrictTriple aryA aryB aryC) = (Item aryA, Item aryB, Item aryC)
+instance (Array aryA a, Array aryB b, Array aryC c) => Array (StrictTriple aryA aryB aryC) (a, b, c) where
     {-# INLINE empty #-}
     empty = coerce $ empty @(StrictPair aryA (StrictPair aryB aryC))
     {-# INLINE size #-}
@@ -215,7 +210,7 @@ instance (Array aryA, Array aryB, Array aryC) => Array (StrictTriple aryA aryB a
 pattern StrictTriple :: a -> b -> c -> StrictTriple a b c
 pattern StrictTriple a b c = StrictTriple' (StrictPair a (StrictPair b c))
 
-foldl' :: Array ary => (b -> Item ary -> b) -> b -> ary -> b
+foldl' :: Array ary a => (b -> a -> b) -> b -> ary -> b
 foldl' f = \ z0 ary0 -> go ary0 (size ary0) 0 z0
   where
     go ary n i !z
@@ -231,7 +226,7 @@ sum !a !b = (Array.foldr' (\(k, v) acc -> k + v + acc) 0) $ (StrictPair a b)
 sum3 :: SmallArray Int -> SmallArray Int -> SmallArray Int -> Int
 sum3 !a !b !c = (Array.foldr' (\(x, y, z) acc -> x + y + z + acc) 0) $ (StrictTriple a b c)
 
-foldr' :: Array ary => (Item ary -> b -> b) -> b -> ary -> b
+foldr' :: Array ary a => (a -> b -> b) -> b -> ary -> b
 foldr' f = \ z0 ary0 -> go ary0 (size ary0 - 1) z0
   where
     go !_ary (-1) z = z
@@ -240,7 +235,7 @@ foldr' f = \ z0 ary0 -> go ary0 (size ary0 - 1) z0
       = go ary (i - 1) (f x z)
 {-# INLINE foldr' #-}
 
-foldr :: Array ary => (Item ary -> b -> b) -> b -> ary -> b
+foldr :: Array ary a => (a -> b -> b) -> b -> ary -> b
 foldr f = \ z0 ary0 -> go ary0 (size ary0) 0 z0
   where
     go ary n i z
@@ -250,7 +245,7 @@ foldr f = \ z0 ary0 -> go ary0 (size ary0) 0 z0
             (# x #) -> f x (go ary n (i+1) z)
 {-# INLINE foldr #-}
 
-foldl :: Array ary => (b -> Item ary -> b) -> b -> ary -> b
+foldl :: Array ary a => (b -> a -> b) -> b -> ary -> b
 foldl f = \ z0 ary0 -> go ary0 (size ary0 - 1) z0
   where
     go _ary (-1) z = z
