@@ -6,6 +6,7 @@
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE ViewPatterns #-}
 {-# LANGUAGE UnboxedTuples #-}
+{-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -funbox-strict-fields #-}
 {-# LANGUAGE CPP #-}
 {-# OPTIONS_GHC -ddump-simpl -dsuppress-all -ddump-stg-from-core -ddump-to-file #-}
@@ -18,6 +19,7 @@ import Data.Function ((&))
 import Storage (Storage(..), StrictStorage(..), ArrayOf)
 -- import Array (Array)
 import Array qualified
+import Data.Primitive.Contiguous (Contiguous)
 
 type MapBL = Map Boxed Lazy
 type MapBB = Map Boxed (Strict Boxed)
@@ -101,7 +103,7 @@ with the following tricks:
   so we store the `SmallArray#` resp `ByteArray#` pointers directly.
   This results in one word saved for the outer map and three more words saved per map node.
 -}
-class MapRepr (keyStorage :: StrictStorage) (valStorage :: Storage) k v where
+class (Contiguous (ArrayOf (Strict keyStorage)), Contiguous (ArrayOf (valStorage))) => MapRepr (keyStorage :: StrictStorage) (valStorage :: Storage) k v where
   data Map keyStorage valStorage k v
   data MapNode keyStorage valStorage k v
   packNode :: (# Bitmap, ArrayOf (Strict keyStorage) k, (ArrayOf valStorage) v, SmallArray (MapNode keyStorage valStorage k v) #) -> MapNode keyStorage valStorage k v

@@ -8,7 +8,7 @@
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE DataKinds #-}
 {-# OPTIONS_GHC -ddump-simpl -dsuppress-all -ddump-to-file #-}
-module Array(SmallArray, SmallUnliftedArray, SmallUnliftedArray_, PrimArray, example, example2, example3, Strictly(..)) where
+module Array(SmallArray, SmallUnliftedArray,  SmallUnliftedArray_, StrictSmallArray, PrimArray, example, example2, example3, Strictly(..)) where
 
 import Prelude hiding (foldl, foldr, foldl', foldr')
 import Data.Primitive (SmallArray, PrimArray, Prim)
@@ -17,13 +17,15 @@ import Data.Primitive.PrimArray qualified as PrimArray
 import Data.Coerce (coerce)
 import GHC.Exts (TYPE, Levity(..), RuntimeRep(BoxedRep))
 import Data.Primitive.Contiguous qualified as Contiguous
-import Data.Primitive.Contiguous(SmallUnliftedArray)
+import Data.Primitive.Contiguous
+
 import Data.Primitive.Unlifted.Class (PrimUnlifted(..))
-import Data.Primitive.Unlifted.SmallArray (SmallUnliftedArray_)
-import Data.Elevator (Strict(Strict))
+import Data.Primitive.Unlifted.SmallArray (SmallUnliftedArray_, SmallMutableUnliftedArray_)
+import Data.Kind (Type)
+import Data.Elevator (Strict(Strict), UnliftedType)
 
 newtype Strictly a = Strictly a
-  deriving Show
+  deriving newtype Show
 instance PrimUnlifted (Strictly a) where
   type Unlifted (Strictly a) = Strict a
   toUnlifted# (Strictly a) = Strict a
@@ -33,8 +35,33 @@ data MyNode = Foo | Bar !(SmallUnliftedArray (Strictly MyNode))
   deriving Show
 
 example = Foo
-example2 = Bar Contiguous.empty
-example3 x = Bar (Contiguous.singleton (Strictly x))
+example2 = Bar empty
+example3 x = Bar (singleton (Strictly x))
+
+
+newtype StrictSmallArray a = StrictSmallArray (SmallUnliftedArray_ (Strict a) (Strictly a))
+  deriving Show
+newtype StrictSmallMutableArray s a = StrictSmallMutableArray (SmallMutableUnliftedArray_ (Strict a) s (Strictly a))
+
+class IsStrictly a
+instance IsStrictly (Strictly a)
+
+instance Contiguous.Contiguous StrictSmallArray where
+  type Mutable StrictSmallArray  = StrictSmallMutableArray
+  type Element StrictSmallArray = Always
+  type Sliced StrictSmallArray = Slice StrictSmallArray
+  type MutableSliced (StrictSmallArray) = MutableSlice (StrictSmallArray)
+  new n = StrictSmallMutableArray <$> new n
+  replicateMut n x = StrictSmallMutableArray <$> replicateMut n (Strictly x)
+  shrink (StrictSmallMutableArray arr) n = StrictSmallMutableArray <$> shrink arr n
+  empty = StrictSmallArray empty
+  singleton = StrictSmallArray . singleton . Strictly
+  doubleton a b = StrictSmallArray $ doubleton (Strictly a) (Strictly b)
+  tripleton a b c = StrictSmallArray $ tripleton (Strictly a) (Strictly b) (Strictly c)
+  quadrupleton a b c d = StrictSmallArray $ quadrupleton (Strictly a) (Strictly b) (Strictly c) (Strictly d)
+
+instance Contiguous.ContiguousU StrictSmallArray where
+
 
 -- -- | An array behaving similar to SmallArray,
 -- -- but all reading/writing of elements first evaluates that element to WHNF.

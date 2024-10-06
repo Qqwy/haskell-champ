@@ -17,7 +17,7 @@ import Array qualified
 data Storage = Lazy | Strict StrictStorage
 data StrictStorage = Boxed | Unboxed
 
-type family ArrayOf (s :: Storage) a = (r :: Type) | r -> s a where
-  ArrayOf Lazy a = Array.SmallArray a
-  ArrayOf (Strict Boxed) a = Array.SmallUnliftedArray a
-  ArrayOf (Strict Unboxed) a = Array.PrimArray a
+type family ArrayOf (s :: Storage) = (r :: Type -> Type) | r -> s where
+  ArrayOf Lazy = Array.SmallArray
+  ArrayOf (Strict Boxed) = Array.StrictSmallArray
+  ArrayOf (Strict Unboxed) = Array.PrimArray
