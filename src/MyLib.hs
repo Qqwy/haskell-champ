@@ -179,7 +179,7 @@ foldr' f z0 m = case m of
    SingletonMap _k v -> f v z0
    (ManyMap node0) -> go node0 z0
    where
-      go (MapNode _bitmap _keys vals children) z = 
+      go (MapNode _bitmap _keys !vals !children) z = 
         z
         & flip (Contiguous.foldr' f) vals
         & flip (Contiguous.foldr' go) children
@@ -199,7 +199,7 @@ foldr'2 f z0 m = case matchMap m of
   (# | (# _k, v #) | #) -> f v z0
   (# | | node0 #) -> go node0 z0
     where
-      go (MapNode _bitmap _keys vals children) z = 
+      go (MapNode _bitmap _keys !vals !children) z = 
         z
         & flip (Contiguous.foldr' f) vals
         & flip (Contiguous.foldr' go) children
@@ -217,8 +217,8 @@ foldr'2 f z0 m = case matchMap m of
 --         & flip (Array.foldl' go) children
 
 
-mysumOne :: MapUU Int Int -> Int
+mysumOne :: MapBL Int Int -> Int
 mysumOne = foldr' (+) 0
 
-mysumTwo :: MapUU Int Int -> Int
+mysumTwo :: MapBL Int Int -> Int
 mysumTwo = foldr'2 (+) 0
