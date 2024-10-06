@@ -6,8 +6,9 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE PatternSynonyms #-}
 {-# OPTIONS_GHC -ddump-simpl -dsuppress-all -ddump-to-file #-}
-module Array(SmallArray, StrictSmallArray, PrimArray, Array(..)) where
+module Array(SmallArray, StrictSmallArray, PrimArray, Array(..), foldr, foldl, foldr', foldl') where
 
+import Prelude hiding (foldl, foldr, foldl', foldr')
 import Data.Primitive (SmallArray, PrimArray, Prim)
 import Data.Primitive.SmallArray qualified as SmallArray
 import Data.Primitive.PrimArray qualified as PrimArray
