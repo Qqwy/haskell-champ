@@ -7,20 +7,23 @@
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE UnliftedNewtypes #-}
 {-# OPTIONS_GHC -ddump-simpl -dsuppress-all -ddump-to-file #-}
 module Array(SmallArray, SmallUnliftedArray,  SmallUnliftedArray_, StrictSmallArray, PrimArray, example, example2, example3, Strictly(..)) where
 
-import Prelude hiding (foldl, foldr, foldl', foldr', null)
+import Prelude hiding (foldl, foldr, foldl', foldr', null, read)
 import Data.Primitive (SmallArray, PrimArray, Prim)
 import Data.Primitive.SmallArray qualified as SmallArray
 import Data.Primitive.PrimArray qualified as PrimArray
 import Data.Coerce (coerce)
-import GHC.Exts (TYPE, Levity(..), RuntimeRep(BoxedRep))
+import GHC.Exts (TYPE, Levity(..), RuntimeRep(BoxedRep), SmallArray#, SmallMutableArray#)
 import Data.Primitive.Contiguous qualified as Contiguous
 import Data.Primitive.Contiguous
+import Data.Primitive.Contiguous.Class (Slice(..), ContiguousU(..))
 
 import Data.Primitive.Unlifted.Class (PrimUnlifted(..))
-import Data.Primitive.Unlifted.SmallArray (SmallUnliftedArray_, SmallMutableUnliftedArray_)
+import Data.Primitive.Unlifted.SmallArray (SmallUnliftedArray_(..), SmallMutableUnliftedArray_(..))
+import Data.Primitive.Unlifted.SmallArray.Primops (SmallUnliftedArray# (SmallUnliftedArray#), SmallMutableUnliftedArray# (SmallMutableUnliftedArray#))
 import Data.Kind (Type)
 import Data.Elevator (Strict(Strict), UnliftedType)
 import Control.DeepSeq (NFData)
@@ -41,9 +44,20 @@ example2 = Bar empty
 example3 x = Bar (singleton (Strictly x))
 
 
+-- instance PrimUnlifted (StrictSmallArray a) where
+--   type Unlifted (StrictSmallArray a) = SmallUnliftedArray# (Strict a)
+--   toUnlifted# (StrictSmallArray ary) = toUnlifted# ary
+--   fromUnlifted# ary = StrictSmallArray (fromUnlifted# ary)
+
 newtype StrictSmallArray a = StrictSmallArray (SmallUnliftedArray_ (Strict a) (Strictly a))
   deriving Show
 newtype StrictSmallMutableArray s a = StrictSmallMutableArray (SmallMutableUnliftedArray_ (Strict a) s (Strictly a))
+
+newtype StrictSmallArray# (a :: Type)
+  = StrictSmallArray# (SmallArray# (Strict a))
+
+newtype StrictSmallMutableArray# s (a :: Type)
+  = StrictSmallMutableArray# (SmallMutableArray# s (Strict a))
 
 class IsStrictly a
 instance IsStrictly (Strictly a)
@@ -72,9 +86,26 @@ instance Contiguous.Contiguous StrictSmallArray where
   equalsMut (StrictSmallMutableArray lhs) (StrictSmallMutableArray rhs) = equalsMut lhs rhs
   rnf (StrictSmallArray ary) = rnf ary
   null (StrictSmallArray ary) = null ary
+  read (StrictSmallMutableArray ary) idx = unStrictly <$> read ary idx
+  write (StrictSmallMutableArray ary) idx x = write ary idx (Strictly x)
+  slice (StrictSmallArray ary) offset len = error "TODO"
+    -- let (Slice offset' len' (SmallUnliftedArray (SmallUnliftedArray# ary))) = slice ary offset len
+    -- in Slice offset' len' (StrictSmallArray# ary)
   run _ = error "TODO"
 
 instance Contiguous.ContiguousU StrictSmallArray where
+  type Unlifted StrictSmallArray = StrictSmallArray#
+  type UnliftedMut StrictSmallArray = StrictSmallMutableArray#
+  {-# INLINE resize #-}
+  resize (StrictSmallMutableArray ary) size = StrictSmallMutableArray <$> resize ary size
+  {-# INLINE unlift #-}
+  unlift (StrictSmallArray (SmallUnliftedArray (SmallUnliftedArray# x))) = StrictSmallArray# x
+  {-# INLINE unliftMut #-}
+  unliftMut (StrictSmallMutableArray (SmallMutableUnliftedArray (SmallMutableUnliftedArray# x))) = StrictSmallMutableArray# x
+  {-# INLINE lift #-}
+  lift (StrictSmallArray# x) = StrictSmallArray (SmallUnliftedArray (SmallUnliftedArray# x))
+  {-# INLINE liftMut #-}
+  liftMut (StrictSmallMutableArray# x) = StrictSmallMutableArray (SmallMutableUnliftedArray (SmallMutableUnliftedArray# x))
 
 
 -- -- | An array behaving similar to SmallArray,
