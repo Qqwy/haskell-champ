@@ -9,7 +9,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE UnliftedNewtypes #-}
 {-# OPTIONS_GHC -ddump-simpl -ddump-cmm -ddump-stg-tags -ddump-stg-final -ddump-asm -ddump-to-file  #-}
-module Array(SmallArray, SmallUnliftedArray,  SmallUnliftedArray_, StrictSmallArray, PrimArray, Strictly(..), sumStrictArray, sumLazyArray) where
+module Array(SmallArray, SmallUnliftedArray,  SmallUnliftedArray_, StrictSmallArray, PrimArray, Strictly(..), doubletonBranchless, sumStrictArray, sumLazyArray) where
 
 import Prelude hiding (foldl, foldr, foldl', foldr', null, read, length)
 import Data.Primitive (SmallArray, PrimArray, Prim)
@@ -29,6 +29,7 @@ import Data.Elevator (Strict(Strict), UnliftedType)
 import Control.DeepSeq (NFData)
 import Data.Hashable (Hashable)
 import Control.Monad.ST (runST)
+import Control.Monad.Primitive
 
 -- | Helper newtype to implement `PrimUnlifted` for any datatype
 -- to turn it into a `Data.Elevator.Strict`
@@ -158,3 +159,15 @@ sumStrictArray = foldr' (+) 0
 
 sumLazyArray :: SmallArray Int -> Int
 sumLazyArray = foldr' (+) 0
+
+-- | Branchless pair-array creation:
+-- If the int is '1', creates the array [a, b] 
+-- If the int is '0', creates the array [b, a]
+--
+-- Trick copied from Data.Hashmap
+doubletonBranchless :: (Contiguous arr, Element arr a) => Int -> a -> a -> arr a
+doubletonBranchless idx0Or1 a b = run $ do
+    arr <- new 2
+    write arr (1 - idx0Or1) a
+    write arr idx0Or1 b
+    unsafeFreeze arr
