@@ -166,8 +166,9 @@ sumLazyArray = foldr' (+) 0
 --
 -- Trick copied from Data.Hashmap
 doubletonBranchless :: (Contiguous arr, Element arr a) => Int -> a -> a -> arr a
+{-# INLINE doubletonBranchless #-}
 doubletonBranchless idx0Or1 a b = run $ do
     arr <- new 2
-    write arr (1 - idx0Or1) a
-    write arr idx0Or1 b
+    write arr idx0Or1 a
+    write arr (1 - idx0Or1) b
     unsafeFreeze arr

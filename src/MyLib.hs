@@ -15,10 +15,11 @@
 {-# OPTIONS_GHC -ddump-simpl -ddump-stg-from-core -ddump-cmm -ddump-to-file #-}
 module MyLib where
 
+import Prelude hiding (lookup)
 import Data.Primitive
 import Data.Primitive.SmallArray qualified as SmallArray
 import Data.Function ((&))
-import Data.Bits
+import Data.Bits hiding (shift)
 import Data.Hashable (Hashable)
 import Data.Hashable qualified as Hashable
 import Data.Word (Word64)
@@ -195,7 +196,6 @@ toList = foldrWithKey (\k v xs -> (k, v) : xs) []
 insert :: (Hashable k, MapRepr keys vals k v) => k -> v -> Map keys vals k v -> Map keys vals k v
 insert k v EmptyMap = singleton k v
 insert !k2 v2 (SingletonMap k v) = ManyMap $ mergeCompactInline k v (hash k) k2 v2 (hash k2) 0
-
 insert k v (ManyMap node0) = ManyMap $ insert' (hash k) 0 node0
   where
     insert' h shift node@(CollisionNode _ _) = insertCollision k v node
@@ -214,12 +214,12 @@ insert k v (ManyMap node0) = ManyMap $ insert' (hash k) 0 node0
 
            where
             !bitpos = maskToBitpos $ hashToMask shift h
-{-# SPECIALIZE insert :: Hashable k => k -> v -> MapBL k v -> MapBL k v #-}
-{-# SPECIALIZE insert :: Hashable k => k -> v -> MapBB k v -> MapBB k v #-}
-{-# SPECIALIZE insert :: (Hashable k, Prim v) => k -> v -> MapBU k v -> MapBU k v #-}
-{-# SPECIALIZE insert :: (Hashable k, Prim k) => k -> v -> MapUL k v -> MapUL k v #-}
-{-# SPECIALIZE insert :: (Hashable k, Prim k) => k -> v -> MapUB k v -> MapUB k v #-}
-{-# SPECIALIZE insert :: (Hashable k, Prim k, Prim v) => k -> v -> MapUU k v -> MapUU k v #-}
+-- {-# SPECIALIZE insert :: Hashable k => k -> v -> MapBL k v -> MapBL k v #-}
+-- {-# SPECIALIZE insert :: Hashable k => k -> v -> MapBB k v -> MapBB k v #-}
+-- {-# SPECIALIZE insert :: (Hashable k, Prim v) => k -> v -> MapBU k v -> MapBU k v #-}
+-- {-# SPECIALIZE insert :: (Hashable k, Prim k) => k -> v -> MapUL k v -> MapUL k v #-}
+-- {-# SPECIALIZE insert :: (Hashable k, Prim k) => k -> v -> MapUB k v -> MapUB k v #-}
+-- {-# SPECIALIZE insert :: (Hashable k, Prim k, Prim v) => k -> v -> MapUU k v -> MapUU k v #-}
 
 -- Collisions are appended at the end
 -- Note that we cannot insert them in sorted order
@@ -244,6 +244,7 @@ insertNewInline bitpos k v node@(MapNode bitmap keys vals children) =
     in
         MapNode bitmap' keys' vals' children
 
+{-# INLINE insertMergeWithInline #-}
 insertMergeWithInline :: (Hashable k, MapRepr keys vals k v) => Bitmap -> k -> v -> Hash -> Word -> MapNode keys vals k v -> MapNode keys vals k v
 insertMergeWithInline bitpos k v h shift node@(CompactNode bitmap keys vals children) =
     let bitmap' = bitmap .^. bitpos .|. (bitpos `unsafeShiftL` HASH_CODE_LENGTH)
@@ -263,6 +264,7 @@ insertMergeWithInline bitpos k v h shift node@(CompactNode bitmap keys vals chil
             in
                 CompactNode bitmap' keys' vals' children'
 
+{-# INLINE pairNode #-}
 pairNode :: MapRepr keys vals k v => k -> v -> Hash -> k -> v -> Hash -> Word -> MapNode keys vals k v
 pairNode k1 v1 h1 k2 v2 h2 shift 
   | shift >= HASH_CODE_LENGTH = CollisionNode (Contiguous.doubleton k1 k2) (Contiguous.doubleton v1 v2)
@@ -283,6 +285,7 @@ pairNode k1 v1 h1 k2 v2 h2 shift
                 CompactNode bitmap Contiguous.empty Contiguous.empty (Contiguous.singleton child)
 
 
+{-# INLINE mergeCompactInline #-}
 mergeCompactInline k1 v1 h1 k2 v2 h2 shift = 
   let
     !mask0@(Mask (Exts.W# i1)) = hashToMask shift h1
@@ -293,6 +296,37 @@ mergeCompactInline k1 v1 h1 k2 v2 h2 shift =
     vals = Array.doubletonBranchless c v1 v2
   in
     CompactNode bitmap keys vals Contiguous.empty
+
+{-# INLINE lookup #-}
+lookup :: (MapRepr keys vals k v, Eq k, Hashable k) => k -> Map keys vals k v -> Maybe v
+lookup k m = case matchMap m of
+    (# (##) | | #) -> Nothing
+    (# | (# k', v #) | #) -> if k == k' then Just v else Nothing
+    (# | | node0 #) -> go (hash k) 0 node0
+    where
+      go _h _s (CollisionNode keys vals) = error "TODO"
+      go h s node@(CompactNode bitmap keys vals children) =
+        let
+            bitpos = maskToBitpos $ hashToMask s h
+        in
+         if | bitmap .&. bitpos /= 0 ->
+                -- we contain the hash directly.
+                -- Either we contain the key, or a colliding key
+                let
+                  k' = Contiguous.index keys (dataIndex node bitpos)
+                  (# v #) = Contiguous.index# vals (dataIndex node bitpos) -- NOTE: We are careful to force the _access_ of the value but not the value itself
+                in
+                  if k == k' then Just v else Nothing -- TODO: ptrEq optimization
+            | childrenBitmap node .&. bitpos /= 0 ->
+                -- A child contains the hash, recurse
+                let
+                  child = Contiguous.index children (childrenIndex node bitpos)
+                in
+                  go h (nextShift s) child
+            | otherwise -> 
+                -- We don't contain the hash at all,
+                -- so we cannot contain the key either
+                Nothing
 
 
 
