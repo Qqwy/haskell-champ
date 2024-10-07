@@ -7,20 +7,32 @@
 {-# LANGUAGE ViewPatterns #-}
 {-# LANGUAGE UnboxedTuples #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE UndecidableSuperClasses #-}
+{-# LANGUAGE MultiWayIf #-}
 {-# OPTIONS_GHC -funbox-strict-fields #-}
 {-# LANGUAGE CPP #-}
-{-# OPTIONS_GHC -ddump-simpl -dsuppress-all -ddump-stg-from-core -ddump-to-file #-}
+{-# OPTIONS_GHC -ddump-simpl -ddump-stg-from-core -ddump-cmm -ddump-to-file #-}
 module MyLib where
 
 import Data.Primitive
 import Data.Primitive.SmallArray qualified as SmallArray
 import Data.Function ((&))
+import Data.Bits
+import Data.Hashable (Hashable)
+import Data.Hashable qualified as Hashable
+import Data.Word (Word64)
+import Data.Foldable qualified as Foldable
 
 import Storage (Storage(..), StrictStorage(..), ArrayOf)
 import Array (StrictSmallArray)
 import Array qualified
 import Data.Primitive.Contiguous (Contiguous, Element)
 import Data.Primitive.Contiguous qualified as Contiguous
+import GHC.Exts qualified as Exts
+
+#define BIT_PARTITION_SIZE 5
+#define HASH_CODE_LENGTH (1 `unsafeShiftL` BIT_PARTITION_SIZE)
+#define BIT_PARTITION_MASK (HASH_CODE_LENGTH - 1)
 
 type MapBL = Map Boxed Lazy
 type MapBB = Map Boxed (Strict Boxed)
@@ -107,7 +119,7 @@ with the following tricks:
   inside their array, as we're always strict in the tree-spine of the CHAMP map.
   This means GHC will skip any thunk-forcing code whenever reading/recursing
 -}
-class (Contiguous (ArrayOf (Strict keyStorage)), Contiguous (ArrayOf (valStorage))) => MapRepr (keyStorage :: StrictStorage) (valStorage :: Storage) k v where
+class (Contiguous (ArrayOf (Strict keyStorage)), Contiguous (ArrayOf (valStorage)), Element (ArrayOf (Strict keyStorage)) k, Element (ArrayOf valStorage) v) => MapRepr (keyStorage :: StrictStorage) (valStorage :: Storage) k v where
   data Map keyStorage valStorage k v
   data MapNode keyStorage valStorage k v
   packNode :: (# Bitmap, ArrayOf (Strict keyStorage) k, (ArrayOf valStorage) v, StrictSmallArray (MapNode keyStorage valStorage k v) #) -> MapNode keyStorage valStorage k v
@@ -157,9 +169,6 @@ map_repr_instance(Unboxed_Lazy, Unboxed, Lazy, (Prim k))
 map_repr_instance(Unboxed_Boxed, Unboxed, Strict Boxed, (Prim k))
 map_repr_instance(Unboxed_Unboxed, Unboxed, Strict Unboxed, (Prim k, Prim v))
 
-newtype Bitmap = Bitmap Int
-  deriving (Eq, Ord, Show, Num)
-
 someFunc = undefined
 
 null :: MapRepr keys vals k v => Map keys vals k v -> Bool
@@ -172,17 +181,128 @@ empty = EmptyMap
 singleton :: MapRepr keys vals k v => k -> v -> Map keys vals k v
 singleton !k v = SingletonMap k v
 
+naiveFromList :: (Hashable k, MapRepr keys vals k v) => [(k, v)] -> Map keys vals k v
+naiveFromList = Foldable.foldl' (\m (k, v) -> insert k v m) empty
+
+-- TODO use Exts.build to be a good fusion citizen
+toList :: MapRepr keys vals k v => Map keys vals k v -> [(k, v)]
+toList = foldrWithKey (\k v xs -> (k, v) : xs) []
+
+{-# INLINE insert #-}
+insert :: (Hashable k, MapRepr keys vals k v) => k -> v -> Map keys vals k v -> Map keys vals k v
+insert k v EmptyMap = singleton k v
+insert !k2 v2 (SingletonMap k v) = ManyMap $ 
+  let
+    m = maskToBitpos $ hashToMask 0 $ hash k
+    m2 = maskToBitpos $ hashToMask 0 $ hash k2
+  in
+    -- NOTE: This can be made branchless, c.f. HashMap source
+    if m <= m2 then
+      CompactNode (m .|. m2) (Contiguous.doubleton k k2) (Contiguous.doubleton v v2) Contiguous.empty
+    else
+      CompactNode (m .|. m2) (Contiguous.doubleton k2 k) (Contiguous.doubleton v2 v) Contiguous.empty
+
+insert k v (ManyMap node0) = ManyMap $ insert' (hash k) 0 node0
+  where
+    insert' h shift node@(CollisionNode _ _) = insertCollision k v node
+    insert' h shift node@(CompactNode bitmap keys vals children) =
+      case () of 
+        () | bitmap .&. bitpos /= 0 -> insertNewInline bitpos k v node -- insert inline
+           | (childrenBitmap node) .&. bitpos /= 0 -> insertMergeWithInline bitpos k v h shift node -- exists inline; turn inline to subnode with two keys
+           | otherwise -> -- recurse and fixup
+              let child = Contiguous.index children (childrenIndex node bitpos)
+                  child' = insert' h (nextShift shift) child
+              in if False 
+                 then node
+                 else CompactNode bitmap keys vals (Contiguous.replaceAt children (childrenIndex node bitpos) child')
+
+           where
+            !bitpos = maskToBitpos $ hashToMask shift h
+{-# SPECIALIZE insert :: Hashable k => k -> v -> MapBL k v -> MapBL k v #-}
+{-# SPECIALIZE insert :: Hashable k => k -> v -> MapBB k v -> MapBB k v #-}
+{-# SPECIALIZE insert :: (Hashable k, Prim v) => k -> v -> MapBU k v -> MapBU k v #-}
+{-# SPECIALIZE insert :: (Hashable k, Prim k) => k -> v -> MapUL k v -> MapUL k v #-}
+{-# SPECIALIZE insert :: (Hashable k, Prim k) => k -> v -> MapUB k v -> MapUB k v #-}
+{-# SPECIALIZE insert :: (Hashable k, Prim k, Prim v) => k -> v -> MapUU k v -> MapUU k v #-}
+
+-- Collisions are appended at the end
+-- Note that we cannot insert them in sorted order
+-- (which would theoretically allow a binary search on lookup)
+-- because we don't have an `Ord` instance.
+{-# INLINE insertCollision #-}
+insertCollision :: MapRepr keys vals k v => k -> v -> MapNode keys vals k v -> MapNode keys vals k v
+insertCollision k v (CollisionNode keys vals) =
+    let idx = Contiguous.size keys
+        keys' = Contiguous.insertAt keys idx k
+        vals' = Contiguous.insertAt vals idx v
+    in
+        CollisionNode keys' vals'
+
+{-# INLINE insertNewInline #-}
+insertNewInline :: MapRepr keys vals k v => Bitmap -> k -> v -> MapNode keys vals k v -> MapNode keys vals k v
+insertNewInline bitpos k v node@(MapNode bitmap keys vals children) =
+    let bitmap' = bitmap .|. bitpos
+        idx = dataIndex node bitpos
+        keys' = Contiguous.insertAt keys idx k
+        vals' = Contiguous.insertAt vals idx v
+    in
+        MapNode bitmap' keys' vals' children
+
+insertMergeWithInline bitpos k v h shift node@(MapNode bitmap keys vals children) =
+    let bitmap' = bitmap .^. bitpos .|. (bitpos `unsafeShiftL` HASH_CODE_LENGTH)
+        idx = dataIndex node bitpos
+        existingKey = Contiguous.index keys idx
+        existingVal = Contiguous.index vals idx
+    in
+        if | existingKey == k && False -> node -- TODO: ptr eq
+           | existingKey == k -> MapNode bitmap' keys (Contiguous.replaceAt vals idx v) children
+           | otherwise ->
+            let
+                newIdx = childrenIndex node bitpos
+                keys' = Contiguous.deleteAt keys idx
+                vals' = Contiguous.deleteAt vals idx
+                child = pairNode existingKey existingVal (hash existingKey) k v h shift
+                children' = Contiguous.insertAt children newIdx child
+            in
+                MapNode bitmap' keys' vals' children'
+
+pairNode k1 v1 h1 k2 v2 h2 shift 
+  | shift >= HASH_CODE_LENGTH = CollisionNode (Contiguous.doubleton k1 k2) (Contiguous.doubleton v1 v2)
+  | otherwise =
+    let
+        mask1 = hashToMask h1
+        mask2 = hashToMask h2
+    in
+        if mask1 /= mask2
+            -- Both fit on the same level
+            error "TODO"
+        else
+            -- Both fit on the _next_ level
+            error "TODO"
+
+
 {-# INLINE foldr' #-}
-foldr' :: (Element (ArrayOf (Strict keys)) k, Element (ArrayOf vals) v) => MapRepr keys vals k v => (v -> r -> r) -> r -> Map keys vals k v -> r
-foldr' f z0 m = case m of
-   EmptyMap -> z0
-   SingletonMap _k v -> f v z0
-   (ManyMap node0) -> go node0 z0
+foldr' :: MapRepr keys vals k v => (v -> r -> r) -> r -> Map keys vals k v -> r
+foldr' f !z0 m = case matchMap m of
+   (# (##) | | #) -> z0
+   (# |  (# _k, v #) | #) -> f v z0
+   (# | | node0 #) -> Exts.inline go node0 z0
    where
-      go (MapNode _bitmap _keys !vals !children) z = 
+      go (MapNode _bitmap _keys !vals !children) !z = 
         z
         & flip (Contiguous.foldr' f) vals
         & flip (Contiguous.foldr' go) children
+
+{-# INLINE foldrWithKey #-}
+foldrWithKey :: MapRepr keys vals k v => (k -> v -> r -> r) -> r -> Map keys vals k v -> r
+foldrWithKey f z0 m = case matchMap m of
+   (# (##) | | #) -> z0
+   (# | (# k, v #) | #) -> f k v z0
+   (# | |  node0 #) -> Exts.inline go node0 z0
+   where
+      go (MapNode _bitmap keys !vals !children) z = 
+        (Contiguous.foldrZipWith f) z keys vals
+        & flip (Contiguous.foldr go) children
 
 -- foldr' _f z EmptyMap = z
 -- foldr' f !z (SingletonMap _k !v) = f v z
@@ -192,17 +312,17 @@ foldr' f z0 m = case m of
 --         & flip (Array.foldr' f) vals
 --         & flip (Array.foldr' (flip go)) children
 
-{-# INLINE foldr'2 #-}
-foldr'2 :: (Element (ArrayOf (Strict keys)) k, Element (ArrayOf vals) v) => MapRepr keys vals k v => (v -> r -> r) -> r -> Map keys vals k v -> r
-foldr'2 f z0 m = case matchMap m of
-  (# (##) | | #) -> z0
-  (# | (# _k, v #) | #) -> f v z0
-  (# | | node0 #) -> go node0 z0
-    where
-      go (MapNode _bitmap _keys !vals !children) z = 
-        z
-        & flip (Contiguous.foldr' f) vals
-        & flip (Contiguous.foldr' go) children
+-- {-# INLINE foldr'2 #-}
+-- foldr'2 :: (Element (ArrayOf (Strict keys)) k, Element (ArrayOf vals) v) => MapRepr keys vals k v => (v -> r -> r) -> r -> Map keys vals k v -> r
+-- foldr'2 f z0 m = case matchMap m of
+--   (# (##) | | #) -> z0
+--   (# | (# _k, v #) | #) -> f v z0
+--   (# | | node0 #) -> go node0 z0
+--     where
+--       go (MapNode _bitmap _keys !vals !children) z = 
+--         z
+--         & flip (Contiguous.foldr' f) vals
+--         & flip (Contiguous.foldr' go) children
 
 -- {-# INLINE foldl'2 #-}
 -- foldl'2 :: MapRepr keys vals k v => (r -> v -> r) -> r -> Map keys vals k v -> r
@@ -216,9 +336,81 @@ foldr'2 f z0 m = case matchMap m of
 --         & flip (Array.foldl' f) vals
 --         & flip (Array.foldl' go) children
 
+instance (Show k, Show v, MapRepr keys vals k v) => Show (Map keys vals k v) where
+    show m = "fromList " <> show (toList m)
 
 mysumOne :: MapBL Int Int -> Int
 mysumOne = foldr' (+) 0
 
-mysumTwo :: MapBL Int Int -> Int
-mysumTwo = foldr'2 (+) 0
+-- mysumTwo :: MapBL Int Int -> Int
+-- mysumTwo = foldr'2 (+) 0
+
+
+
+-- Helper functions & types:
+
+
+-- Inside a MapNode,
+-- the lower 32 bits indicate the inline leaves
+-- and the higher 32 bits indicate child nodes
+newtype Bitmap = Bitmap Word64
+  deriving (Eq, Ord, Show, Num, Bits, Enum, Real, Integral)
+
+newtype Mask = Mask Word
+  deriving (Eq, Ord, Show)
+
+newtype Hash = Hash Word
+  deriving (Eq, Ord, Show)
+
+
+hash :: Hashable a => a -> Hash
+hash x = Hash $ fromIntegral $ Hashable.hash x
+
+{-# INLINE hashToMask #-}
+hashToMask :: Word -> Hash -> Mask
+hashToMask  (fromIntegral -> depth) (Hash keyhash) = Mask $ (fromIntegral $ keyhash `unsafeShiftR` depth) .&. BIT_PARTITION_MASK
+
+{-# INLINE maskToBitpos #-}
+maskToBitpos :: Mask -> Bitmap
+maskToBitpos (Mask mask) = unsafeShiftL 1 (fromIntegral mask)
+
+{-# INLINE childrenBitmap #-}
+childrenBitmap :: MapRepr keys vals k v => MapNode keys vals k v -> Bitmap
+childrenBitmap (MapNode bitmap _ _ _) = bitmap `unsafeShiftR` 32
+
+{-# INLINE leavesBitmap #-}
+leavesBitmap :: MapRepr keys vals k v => MapNode keys vals k v -> Bitmap
+leavesBitmap (MapNode bitmap _ _ _) = bitmap .&. (1 `unsafeShiftL` 32 - 1)
+
+{-# INLINE leavesCount #-}
+leavesCount :: Element (ArrayOf (Strict keys)) k => MapRepr keys vals k v => MapNode keys vals k v -> Int
+leavesCount (CollisionNode keys _) = Contiguous.size keys `div` 2 -- The count of leaves in a CollisionNode
+leavesCount node = popCount $ leavesBitmap node
+
+{-# INLINE childrenCount #-}
+childrenCount :: MapRepr keys vals k v => MapNode keys vals k v -> Int
+childrenCount node = popCount $ childrenBitmap node
+
+-- | Given a Bitpos, returns the index into the elems array of a node (looking at how many other elems are already in the node's databitmap)
+dataIndex :: MapRepr keys vals k v => MapNode keys vals k v -> Bitmap -> Int
+{-# INLINE dataIndex #-}
+dataIndex (MapNode bitmap _ _ _) bitpos =
+    popCount $ bitmap .&. (bitpos - 1)
+
+-- | Given a Bitpos, returns the index into the elems array of a node (looking at how many other elems are already in the node's nodebitmap)
+childrenIndex :: MapRepr keys vals k v => MapNode keys vals k v -> Bitmap -> Int
+{-# INLINE childrenIndex #-}
+childrenIndex node bitpos =
+    popCount $ (childrenBitmap node) .&. (bitpos - 1)
+
+nextShift :: (Num a) => a -> a
+nextShift s = s + BIT_PARTITION_SIZE
+
+intsToList :: MapBL Int Int -> [(Int, Int)]
+intsToList = toList
+
+sumStrict :: MapBB Int Int -> Int
+sumStrict = foldr' (+) 0
+
+sumLazy :: MapBL Int Int -> Int
+sumLazy = foldr' (+) 0
