@@ -305,7 +305,7 @@ lookup k m = case matchMap m of
     (# | | node0 #) -> go (hash k) 0 node0
     where
       go _h _s (CollisionNode keys vals) = error "TODO"
-      go h s node@(CompactNode bitmap keys vals children) =
+      go !h !s node@(CompactNode bitmap keys vals children) =
         let
             bitpos = maskToBitpos $ hashToMask s h
         in
@@ -328,7 +328,8 @@ lookup k m = case matchMap m of
                 -- so we cannot contain the key either
                 Nothing
 
-
+mylookup :: Int -> MapUU Int Int -> Maybe Int
+mylookup = lookup
 
 {-# INLINE foldr' #-}
 foldr' :: MapRepr keys vals k v => (v -> r -> r) -> r -> Map keys vals k v -> r
