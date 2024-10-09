@@ -195,7 +195,11 @@ toList = foldrWithKey (\k v xs -> (k, v) : xs) []
 {-# INLINE insert #-}
 insert :: (Hashable k, MapRepr keys vals k v) => k -> v -> Map keys vals k v -> Map keys vals k v
 insert k v EmptyMap = singleton k v
-insert !k2 v2 (SingletonMap k v) = ManyMap $ mergeCompactInline k v (hash k) k2 v2 (hash k2) 0
+insert !k2 v2 (SingletonMap k v) = 
+  (MapNode 0 Contiguous.empty Contiguous.empty Contiguous.empty)
+  & insertNewInline (maskToBitpos (hashToMask 0 (hash k))) k v 
+  & ManyMap
+  & insert k2 v2
 insert k v (ManyMap node0) = ManyMap $ insert' (hash k) 0 node0
   where
     insert' h shift node@(CollisionNode _ _) = insertCollision k v node
@@ -259,7 +263,7 @@ insertMergeWithInline bitpos k v h shift node@(CompactNode bitmap keys vals chil
                 newIdx = childrenIndex node bitpos
                 keys' = Contiguous.deleteAt keys idx
                 vals' = Contiguous.deleteAt vals idx
-                child = pairNode existingKey existingVal (hash existingKey) k v h shift
+                child = pairNode existingKey existingVal (hash existingKey) k v h (nextShift shift)
                 children' = Contiguous.insertAt children newIdx child
             in
                 CompactNode bitmap' keys' vals' children'
@@ -279,7 +283,7 @@ pairNode k1 v1 h1 k2 v2 h2 shift
         else
             -- Both fit on the _next_ level
             let 
-                child = mergeCompactInline k1 v1 h1 k2 v2 h2 shift
+                child = mergeCompactInline k1 v1 h1 k2 v2 h2 (nextShift shift)
                 bitmap = maskToBitpos mask1 `unsafeShiftL` HASH_CODE_LENGTH
             in
                 CompactNode bitmap Contiguous.empty Contiguous.empty (Contiguous.singleton child)
@@ -291,7 +295,7 @@ mergeCompactInline k1 v1 h1 k2 v2 h2 shift =
     !mask0@(Mask (Exts.W# i1)) = hashToMask shift h1
     !mask1@(Mask (Exts.W# i2)) = hashToMask shift h2
     !bitmap = Debug.Trace.traceShowId $ maskToBitpos mask0 .|. maskToBitpos mask1
-    !c = Exts.I# (i2 `Exts.ltWord#` i2)
+    !c = Exts.I# (i1 `Exts.ltWord#` i2)
     keys = Array.doubletonBranchless c k1 k2
     vals = Array.doubletonBranchless c v1 v2
   in
@@ -440,7 +444,7 @@ hashToMask  (fromIntegral -> depth) (Hash keyhash) = Mask $ (fromIntegral $ keyh
 
 {-# INLINE maskToBitpos #-}
 maskToBitpos :: Mask -> Bitmap
-maskToBitpos (Mask mask) = unsafeShiftL 1 (fromIntegral mask)
+maskToBitpos (Mask mask) = 1 `unsafeShiftL` (fromIntegral mask)
 
 {-# INLINE childrenBitmap #-}
 childrenBitmap :: MapRepr keys vals k v => MapNode keys vals k v -> Bitmap

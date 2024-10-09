@@ -10,7 +10,7 @@ source-repository-package
 source-repository-package
     type: git
     location: git@github.com:Qqwy/haskell-contiguous.git
-    tag: 3c1a686a82f18fe2c3ad408cba9ecf84a82e6fa5
+    tag: d5787ba4d44bf8ebb65de86e6536499f1ada6942
 
 package *
   ghc-options: -msse4.2 -mavx -mbmi -mbmi2 -optc=-march=native -optc-mtune=native
