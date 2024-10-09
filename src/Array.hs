@@ -12,6 +12,7 @@
 module Array(SmallArray, SmallUnliftedArray,  SmallUnliftedArray_, StrictSmallArray, PrimArray, Strictly(..), doubletonBranchless, sumStrictArray, sumLazyArray) where
 
 import Prelude hiding (foldl, foldr, foldl', foldr', null, read, length)
+import Data.Foldable qualified as Foldable
 import Data.Primitive (SmallArray, PrimArray, Prim)
 import Data.Primitive.SmallArray qualified as SmallArray
 import Data.Primitive.PrimArray qualified as PrimArray
@@ -22,7 +23,7 @@ import Data.Primitive.Contiguous
 import Data.Primitive.Contiguous.Class (Slice(..), MutableSlice(..), ContiguousU(..), Contiguous(..))
 
 import Data.Primitive.Unlifted.Class (PrimUnlifted(..))
-import Data.Primitive.Unlifted.SmallArray (SmallUnliftedArray_(..), SmallMutableUnliftedArray_(..))
+import Data.Primitive.Unlifted.SmallArray (SmallUnliftedArray_(..), SmallMutableUnliftedArray_(..), mapSmallUnliftedArray)
 import Data.Primitive.Unlifted.SmallArray.Primops (SmallUnliftedArray# (SmallUnliftedArray#), SmallMutableUnliftedArray# (SmallMutableUnliftedArray#))
 import Data.Kind (Type)
 import Data.Elevator (Strict(Strict), UnliftedType)
@@ -47,6 +48,22 @@ instance PrimUnlifted (Strictly a) where
 -- allowing storage of _any_ `a` by virtue of `Data.Elevator.Strict`
 newtype StrictSmallArray a = StrictSmallArray (SmallUnliftedArray_ (Strict a) (Strictly a))
   deriving Show
+
+instance Functor StrictSmallArray where
+  fmap f (StrictSmallArray arr) = StrictSmallArray (mapSmallUnliftedArray (Strictly . f . unStrictly) arr)
+
+instance Foldable StrictSmallArray where
+  foldr = Contiguous.foldr
+  foldl = Contiguous.foldl
+  foldr' = Contiguous.foldr'
+  foldl' = Contiguous.foldl'
+  foldMap = Contiguous.foldMap
+
+instance Semigroup (StrictSmallArray a) where
+  a <> b = Contiguous.append a b
+
+instance Monoid (StrictSmallArray a) where
+  mempty = Contiguous.empty
 
 -- | Mutable array type whose elements are guaranteed to be in WHNF
 --

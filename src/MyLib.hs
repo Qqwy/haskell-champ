@@ -175,22 +175,26 @@ map_repr_instance(Unboxed_Unboxed, Unboxed, Strict Unboxed, (Prim k, Prim v))
 
 someFunc = undefined
 
+{-# INLINE null #-}
 null :: MapRepr keys vals k v => Map keys vals k v -> Bool
 null EmptyMap = True
 null _ = False
 
+{-# INLINE empty #-}
 empty :: MapRepr keys vals k v => Map keys vals k v
 empty = EmptyMap
 
+{-# INLINE singleton #-}
 singleton :: MapRepr keys vals k v => k -> v -> Map keys vals k v
 singleton !k v = SingletonMap k v
 
+{-# INLINE naiveFromList #-}
 naiveFromList :: (Show (ArrayOf (Strict keys) k), Show (ArrayOf vals v), Show k, Show v, Hashable k, MapRepr keys vals k v) => [(k, v)] -> Map keys vals k v
 naiveFromList = Foldable.foldl' (\m (k, v) -> Debug.Trace.traceShowId $ insert k v m) empty
 
--- TODO use Exts.build to be a good fusion citizen
+{-# INLINE toList #-}
 toList :: MapRepr keys vals k v => Map keys vals k v -> [(k, v)]
-toList = foldrWithKey (\k v xs -> (k, v) : xs) []
+toList hashmap = Exts.build (\fusedCons fusedNil -> foldrWithKey (\k v xs -> (k, v) `fusedCons` xs) fusedNil hashmap)
 
 {-# INLINE insert #-}
 insert :: (Hashable k, MapRepr keys vals k v) => k -> v -> Map keys vals k v -> Map keys vals k v
@@ -331,6 +335,17 @@ lookup k m = case matchMap m of
                 -- We don't contain the hash at all,
                 -- so we cannot contain the key either
                 Nothing
+
+-- | Contrary to unordered-containers, this is O(log32(n))
+{-# INLINE size #-}
+size :: MapRepr keys vals k v => Map keys vals k v -> Int
+size EmptyMap = 0
+size (SingletonMap _ _) = 1
+size (ManyMap node0) = Exts.inline size' node0
+  where
+    size' (MapNode _ keys _vals children) =
+      Contiguous.size keys + sum (size' <$> children)
+
 
 mylookup :: Int -> MapUU Int Int -> Maybe Int
 mylookup = lookup
