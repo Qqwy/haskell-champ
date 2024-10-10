@@ -8,16 +8,19 @@
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE UnliftedNewtypes #-}
+{-# LANGUAGE UnliftedDatatypes #-}
 {-# OPTIONS_GHC -ddump-simpl -ddump-cmm -ddump-stg-tags -ddump-stg-final -ddump-asm -ddump-to-file  #-}
-module Array(SmallArray, SmallUnliftedArray,  SmallUnliftedArray_, StrictSmallArray, PrimArray, Strictly(..), doubletonBranchless, sumStrictArray, sumLazyArray) where
+module Array(SmallArray, SmallUnliftedArray,  SmallUnliftedArray_, StrictSmallArray, PrimArray, Strictly(..), doubletonBranchless, sumStrictArray, sumLazyArray, UnitArray, MutableUnitArray) where
 
 import Prelude hiding (foldl, foldr, foldl', foldr', null, read, length)
+import Prelude qualified
 import Data.Foldable qualified as Foldable
 import Data.Primitive (SmallArray, PrimArray, Prim)
 import Data.Primitive.SmallArray qualified as SmallArray
 import Data.Primitive.PrimArray qualified as PrimArray
 import Data.Coerce (coerce)
-import GHC.Exts (TYPE, Levity(..), RuntimeRep(BoxedRep), SmallArray#, SmallMutableArray#)
+import GHC.IsList (IsList(..))
+import GHC.Exts (TYPE, Levity(..), RuntimeRep(BoxedRep), SmallArray#, SmallMutableArray#, Int#, State#(..))
 import Data.Primitive.Contiguous qualified as Contiguous
 import Data.Primitive.Contiguous
 import Data.Primitive.Contiguous.Class (Slice(..), MutableSlice(..), ContiguousU(..), Contiguous(..))
@@ -189,3 +192,137 @@ doubletonBranchless idx0Or1 a b = run $ do
     write arr (1 - idx0Or1) a
     write arr idx0Or1 b
     unsafeFreeze arr
+
+-- | Type class for all types
+-- that don't carry any special runtime value.
+class IsUnit a where
+  produceFromThinAir :: a
+
+instance IsUnit () where
+  produceFromThinAir = ()
+
+-- | An array storing values that don't carry runtime information.
+-- 
+-- This means that such an 'array' can be represented 
+-- by only an integer storing the 'length'
+-- of the array,
+-- and we can reproduce elements using `produceFromThinAir`
+-- whenever 'reading' from the array.
+--
+-- In an effort to not accidentally swallow bottoms however,
+-- writing to the array is strict in the passed element(s).
+newtype UnitArray a = UnitArray Int
+
+type MutableUnitArray :: Type -> Type -> Type
+data MutableUnitArray s a = MutableUnitArray (State# s) !Int
+
+type UnitArray# :: Type -> UnliftedType
+newtype UnitArray# (a :: Type) = UnitArray# (Strict Int)
+
+type MutableUnitArray# :: Type -> Type -> UnliftedType
+data MutableUnitArray# s (a :: Type) = MutableUnitArray# (State# s) (Strict Int)
+
+instance Contiguous.Contiguous UnitArray where
+  type Mutable UnitArray  = MutableUnitArray
+  type Element UnitArray = IsUnit
+  type Sliced UnitArray = Slice UnitArray
+  type MutableSliced UnitArray = MutableSlice UnitArray
+  {-# INLINE new #-}
+  new n = primitive $ \s -> (# s, MutableUnitArray s n #)
+  {-# INLINE replicateMut #-}
+  replicateMut n _x = primitive $ \s -> (# s, MutableUnitArray s n #)
+  {-# INLINE shrink #-}
+  shrink (MutableUnitArray s _len) n = pure $ MutableUnitArray s n
+  {-# INLINE empty #-}
+  empty = UnitArray 0
+  {-# INLINE singleton #-}
+  singleton !_a = UnitArray 1
+  {-# INLINE doubleton #-}
+  doubleton !_a !_b = UnitArray 2
+  {-# INLINE tripleton #-}
+  tripleton !_a !_b !_c = UnitArray 3
+  {-# INLINE quadrupleton #-}
+  quadrupleton !_a !_b !_c !_d = UnitArray 4
+  {-# INLINE quintupleton #-}
+  quintupleton !_a !_b !_c !_d !_e = UnitArray 5
+  {-# INLINE sextupleton #-}
+  sextupleton !_a !_b !_c !_d !_e !_f = UnitArray 6
+  {-# INLINE index #-}
+  index _arr _idx = produceFromThinAir
+  {-# INLINE index# #-}
+  index# _arr _idx = (# produceFromThinAir #)
+  {-# INLINE indexM #-}
+  indexM _arr _idx = pure produceFromThinAir
+  {-# INLINE size #-}
+  size (UnitArray n) = n
+  {-# INLINE sizeMut #-}
+  sizeMut (MutableUnitArray _s n) = pure n
+  {-# INLINE equals #-}
+  equals (UnitArray len1) (UnitArray len2) = len1 == len2
+  {-# INLINE equalsMut #-}
+  equalsMut (MutableUnitArray _ len1) (MutableUnitArray _ len2) = len1 == len2
+  {-# INLINE rnf #-}
+  rnf (UnitArray n) = n `seq` ()
+  {-# INLINE null #-}
+  null (UnitArray n) = n == 0
+  {-# INLINE read #-}
+  read (MutableUnitArray _s _len) _idx = pure produceFromThinAir
+  {-# INLINE write #-}
+  write (MutableUnitArray _s _len) _idx !_x = pure ()
+  {-# INLINE slice #-}
+  slice base offset length = Slice {offset, length, base = unlift base}
+  {-# INLINE sliceMut #-}
+  sliceMut baseMut offsetMut lengthMut = MutableSlice {offsetMut, lengthMut, baseMut = unliftMut baseMut}
+  {-# INLINE toSlice #-}
+  toSlice base = Slice {offset = 0, length = size base, base = unlift base}
+  {-# INLINE toSliceMut #-}
+  toSliceMut baseMut = do
+    lengthMut <- sizeMut baseMut
+    pure MutableSlice {offsetMut = 0, lengthMut, baseMut = unliftMut baseMut}
+  {-# INLINE clone_ #-}
+  clone_ (UnitArray _len) _offset length = UnitArray length
+  {-# INLINE cloneMut_ #-}
+  cloneMut_ (MutableUnitArray s _len) _offset length = pure $ MutableUnitArray s length
+  {-# INLINE copy_ #-}
+  copy_ !_dst _dstOffset !_src _srcOffset _length = pure ()
+  {-# INLINE copyMut_ #-}
+  copyMut_ !_dst _dstOffset !_src _srcOffset _length = pure ()
+  {-# INLINE freeze_ #-}
+  freeze_ !_src _offset length = pure $ UnitArray length
+  {-# INLINE unsafeFreeze #-}
+  unsafeFreeze !(MutableUnitArray _s len) = pure $ UnitArray len
+  {-# INLINE unsafeShrinkAndFreeze #-}
+  unsafeShrinkAndFreeze (MutableUnitArray _s _len) length = pure $ UnitArray length
+  {-# INLINE thaw_ #-}
+  thaw_ !_dst _offset length = primitive $ \s -> (# s, MutableUnitArray s length #)
+  run = runST -- NOTE: not relying on a manually-written run-st here as modern GHCs inline runST properly.
+
+
+instance Contiguous.ContiguousU UnitArray where
+  type Unlifted UnitArray = UnitArray#
+  type UnliftedMut UnitArray = MutableUnitArray#
+  {-# INLINE resize #-}
+  resize (MutableUnitArray s _len) length = pure $ MutableUnitArray s length
+  {-# INLINE unlift #-}
+  unlift (UnitArray x) = UnitArray# (Strict x)
+  {-# INLINE unliftMut #-}
+  unliftMut (MutableUnitArray s x) = MutableUnitArray# s (Strict x)
+  {-# INLINE lift #-}
+  lift (UnitArray# (Strict x)) = UnitArray x
+  {-# INLINE liftMut #-}
+  liftMut (MutableUnitArray# s (Strict x)) = MutableUnitArray s x
+
+instance IsUnit a => Semigroup (UnitArray a) where
+  a <> b = Contiguous.append a b
+
+instance IsUnit a => Monoid (UnitArray a) where
+  mempty = Contiguous.empty
+
+instance (IsUnit a, Show a) => Show (UnitArray a) where
+  show arr = "fromList " <> show (GHC.IsList.toList arr)
+
+instance IsUnit a => IsList (UnitArray a) where
+  type Item (UnitArray a) = a
+  toList (UnitArray n) = Prelude.replicate n produceFromThinAir
+  fromListN n _ = UnitArray n -- TODO: might hide bottoms, we may need to force the whole list
+  fromList list = GHC.IsList.fromListN (Prelude.length list) list
