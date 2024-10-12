@@ -197,6 +197,14 @@ empty = EmptyMap
 singleton :: (MapRepr keys vals k v) => k -> v -> Map keys vals k v
 singleton !k v = SingletonMap k v
 
+data Location = Inline | InChild | Nowhere
+
+{-# INLINE bitposLocation #-}
+bitposLocation node@(CompactNode bitmap _ _ _) bitpos
+  | bitmap .&. bitpos /= 0 = Inline
+  | (childrenBitmap node) .&. bitpos /= 0 = InChild
+  | otherwise = Nowhere
+
 naiveFromList :: (Show (ArrayOf (Strict keys) k), Show (ArrayOf vals v), Show k, Show v, Hashable k, MapRepr keys vals k v) => [(k, v)] -> Map keys vals k v
 naiveFromList = Foldable.foldl' (\m (k, v) -> Debug.Trace.traceShowId $ insert k v m) empty
 
@@ -218,20 +226,20 @@ insert k v (ManyMap node0) = ManyMap $ insert' 0 node0
     insert' shift node@(CollisionNode _ _) = insertCollision k v node
     insert' shift node@(CompactNode bitmap keys vals children) =
       let !bitpos = maskToBitpos $ hashToMask shift h
-       in if
-            | bitmap .&. bitpos /= 0 ->
-                -- exists inline; turn inline to subnode with two keys
-                insertMergeWithInline bitpos k v h shift node
-            | (childrenBitmap node) .&. bitpos /= 0 ->
-                -- Exists in child, insert in there and make sure this node contains the updated child
-                let child = Contiguous.index children (childrenIndex node bitpos)
-                    child' = insert' (nextShift shift) child
-                 in if False -- TODO PtrEq
-                      then node
-                      else CompactNode bitmap keys vals (Contiguous.replaceAt children (childrenIndex node bitpos) child')
-            | otherwise ->
-                -- Doesn't exist yet, we can insert inline
-                insertNewInline bitpos k v node
+       in case bitposLocation node bitpos of
+            Inline ->
+              -- exists inline; turn inline to subnode with two keys
+              insertMergeWithInline bitpos k v h shift node
+            InChild ->
+              -- Exists in child, insert in there and make sure this node contains the updated child
+              let child = Contiguous.index children (childrenIndex node bitpos)
+                  child' = insert' (nextShift shift) child
+               in if False -- TODO PtrEq
+                    then node
+                    else CompactNode bitmap keys vals (Contiguous.replaceAt children (childrenIndex node bitpos) child')
+            Nowhere ->
+              -- Doesn't exist yet, we can insert inline
+              insertNewInline bitpos k v node
 
 -- {-# SPECIALIZE insert :: Hashable k => k -> v -> MapBL k v -> MapBL k v #-}
 -- {-# SPECIALIZE insert :: Hashable k => k -> v -> MapBB k v -> MapBB k v #-}
