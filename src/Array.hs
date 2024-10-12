@@ -34,6 +34,7 @@ import Data.Primitive.Unlifted.Class (PrimUnlifted (..))
 import Data.Primitive.Unlifted.SmallArray (SmallMutableUnliftedArray_ (..), SmallUnliftedArray_ (..), mapSmallUnliftedArray)
 import Data.Primitive.Unlifted.SmallArray.Primops (SmallMutableUnliftedArray# (SmallMutableUnliftedArray#), SmallUnliftedArray# (SmallUnliftedArray#))
 import GHC.Exts (Levity (..), RuntimeRep (BoxedRep), SmallArray#, SmallMutableArray#, TYPE)
+import GHC.Exts qualified as Exts
 import Prelude hiding (foldl, foldl', foldr, foldr', length, null, read)
 
 -- | Helper newtype to implement `PrimUnlifted` for any datatype
@@ -211,3 +212,22 @@ doubletonBranchless idx0Or1 a b = run $ do
   write arr (1 - idx0Or1) a
   write arr idx0Or1 b
   unsafeFreeze arr
+
+-- modifyAtIfChanged :: (Contiguous arr, Element arr a) => (a -> a) -> arr a -> Int -> arr a
+-- modifyAtIfChanged f arr idx =
+--   let
+--     !elem = Contiguous.index arr idx
+--     !elem' = f elem
+--   in if elem' `ptrEq` elem
+--      then arr
+--      else Contiguous.replaceAt arr idx elem'
+
+------------------------------------------------------------------------
+-- Pointer equality
+
+-- | Check if two the two arguments are the same value.  N.B. This
+-- function might give false negatives (due to GC moving objects, or things being unpacked/repacked.)
+-- but never false positives
+ptrEq :: a -> a -> Bool
+ptrEq x y = Exts.isTrue# (Exts.reallyUnsafePtrEquality# x y Exts.==# 1#)
+{-# INLINE ptrEq #-}
