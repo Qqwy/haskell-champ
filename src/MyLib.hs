@@ -234,7 +234,7 @@ insert k v (ManyMap node0) = ManyMap $ insert' 0 node0
               -- Exists in child, insert in there and make sure this node contains the updated child
               let child = Contiguous.index children (childrenIndex node bitpos)
                   child' = insert' (nextShift shift) child
-               in if False -- TODO PtrEq
+               in if child' `ptrEq` child
                     then node
                     else CompactNode bitmap keys vals (Contiguous.replaceAt children (childrenIndex node bitpos) child')
             Nowhere ->
@@ -329,21 +329,21 @@ lookup k m = case matchMap m of
         & fmap (Contiguous.index vals)
     go !s node@(CompactNode bitmap keys vals children) =
       let !bitpos = maskToBitpos $ hashToMask s h
-       in if
-            | bitmap .&. bitpos /= 0 ->
-                -- we contain the hash directly.
-                -- Either we contain the key, or a colliding key
-                let k' = Contiguous.index keys (dataIndex node bitpos)
-                    -- NOTE: We are careful to force the _access_ of the value but not the value itself
-                    (# v #) = Contiguous.index# vals (dataIndex node bitpos)
-                 in if (k `ptrEq` k' || k == k') then Just v else Nothing
-            | childrenBitmap node .&. bitpos /= 0 ->
-                -- A child contains the hash, recurse
-                go (nextShift s) (Contiguous.index children (childrenIndex node bitpos))
-            | otherwise ->
-                -- We don't contain the hash at all,
-                -- so we cannot contain the key either
-                Nothing
+       in case bitposLocation node bitpos of
+            Inline ->
+              -- we contain the hash directly.
+              -- Either we contain the key, or a colliding key
+              let k' = Contiguous.index keys (dataIndex node bitpos)
+                  -- NOTE: We are careful to force the _access_ of the value but not the value itself
+                  (# v #) = Contiguous.index# vals (dataIndex node bitpos)
+               in if (k `ptrEq` k' || k == k') then Just v else Nothing
+            InChild ->
+              -- A child contains the hash, recurse
+              go (nextShift s) (Contiguous.index children (childrenIndex node bitpos))
+            Nowhere ->
+              -- We don't contain the hash at all,
+              -- so we cannot contain the key either
+              Nothing
 
 mylookup :: Int -> MapUU Int Int -> Maybe Int
 mylookup = lookup
