@@ -302,34 +302,33 @@ lookup :: (MapRepr keys vals k v, Eq k, Hashable k) => k -> Map keys vals k v ->
 lookup k m = case matchMap m of
     (# (##) | | #) -> Nothing
     (# | (# k', v #) | #) -> if k == k' then Just v else Nothing
-    (# | | node0 #) -> go (hash k) 0 node0
-    where
-      go _h _s (CollisionNode keys vals) = 
-        keys
-        & Contiguous.findIndex (\k' -> k' == k) -- TODO ptrEq optimization
-        & fmap (Contiguous.index vals)
-      go !h !s node@(CompactNode bitmap keys vals children) =
-        let
-            bitpos = maskToBitpos $ hashToMask s h
-        in
-         if | bitmap .&. bitpos /= 0 ->
-                -- we contain the hash directly.
-                -- Either we contain the key, or a colliding key
-                let
-                  k' = Contiguous.index keys (dataIndex node bitpos)
-                  (# v #) = Contiguous.index# vals (dataIndex node bitpos) -- NOTE: We are careful to force the _access_ of the value but not the value itself
-                in
+    (# | | node0 #) -> go 0 node0
+      where
+        h = hash k
+        go _s (CollisionNode keys vals) = 
+            -- We resort to a linear search, because we only have `Eq` and not `Ord`
+            keys
+            & Contiguous.findIndex (\k' -> k' == k) -- TODO ptrEq optimization
+            & fmap (Contiguous.index vals)
+        go !s node@(CompactNode bitmap keys vals children) =
+            let
+                bitpos = maskToBitpos $ hashToMask s h
+            in
+            if | bitmap .&. bitpos /= 0 ->
+                    -- we contain the hash directly.
+                    -- Either we contain the key, or a colliding key
+                  let
+                    k' = Contiguous.index keys (dataIndex node bitpos)
+                    (# v #) = Contiguous.index# vals (dataIndex node bitpos) -- NOTE: We are careful to force the _access_ of the value but not the value itself
+                  in
                   if k == k' then Just v else Nothing -- TODO: ptrEq optimization
-            | childrenBitmap node .&. bitpos /= 0 ->
-                -- A child contains the hash, recurse
-                let
-                  child = Contiguous.index children (childrenIndex node bitpos)
-                in
-                  go h (nextShift s) child
-            | otherwise -> 
-                -- We don't contain the hash at all,
-                -- so we cannot contain the key either
-                Nothing
+                | childrenBitmap node .&. bitpos /= 0 ->
+                    -- A child contains the hash, recurse
+                    go (nextShift s) (Contiguous.index children (childrenIndex node bitpos))
+                | otherwise -> 
+                    -- We don't contain the hash at all,
+                    -- so we cannot contain the key either
+                    Nothing
 
 mylookup :: Int -> MapUU Int Int -> Maybe Int
 mylookup = lookup
