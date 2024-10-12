@@ -204,30 +204,34 @@ insert !k2 v2 (SingletonMap k v) =
   & insertNewInline (maskToBitpos (hashToMask 0 (hash k))) k v 
   & ManyMap
   & insert k2 v2
-insert k v (ManyMap node0) = ManyMap $ insert' (hash k) 0 node0
+insert k v (ManyMap node0) = ManyMap $ insert' 0 node0
   where
-    insert' h shift node@(CollisionNode _ _) = insertCollision k v node
-    insert' h shift node@(CompactNode bitmap keys vals children) =
-        if | bitmap .&. bitpos /= 0 -> 
-             insertMergeWithInline bitpos k v h shift node -- exists inline; turn inline to subnode with two keys
-           | (childrenBitmap node) .&. bitpos /= 0 -> 
-              -- recurse and fixup
-              let child = Contiguous.index children (childrenIndex node bitpos)
-                  child' = insert' h (nextShift shift) child
-              in if False 
-                 then node
-                 else CompactNode bitmap keys vals (Contiguous.replaceAt children (childrenIndex node bitpos) child')
-           | otherwise -> 
-             insertNewInline bitpos k v node -- insert inline
+    !h = hash k
+    insert' shift node@(CollisionNode _ _) = insertCollision k v node
+    insert' shift node@(CompactNode bitmap keys vals children) = 
+        let !bitpos = maskToBitpos $ hashToMask shift h
+        in if
+                | bitmap .&. bitpos /= 0 ->
+                    -- exists inline; turn inline to subnode with two keys
+                    insertMergeWithInline bitpos k v h shift node 
+                | (childrenBitmap node) .&. bitpos /= 0 ->
+                    -- Exists in child, insert in there and make sure this node contains the updated child
+                    let child = Contiguous.index children (childrenIndex node bitpos)
+                        child' = insert' (nextShift shift) child
+                    in if False -- TODO PtrEq
+                        then node
+                        else CompactNode bitmap keys vals (Contiguous.replaceAt children (childrenIndex node bitpos) child')
+                | otherwise ->
+                    -- Doesn't exist yet, we can insert inline
+                    insertNewInline bitpos k v node
 
-           where
-            !bitpos = maskToBitpos $ hashToMask shift h
 -- {-# SPECIALIZE insert :: Hashable k => k -> v -> MapBL k v -> MapBL k v #-}
 -- {-# SPECIALIZE insert :: Hashable k => k -> v -> MapBB k v -> MapBB k v #-}
 -- {-# SPECIALIZE insert :: (Hashable k, Prim v) => k -> v -> MapBU k v -> MapBU k v #-}
 -- {-# SPECIALIZE insert :: (Hashable k, Prim k) => k -> v -> MapUL k v -> MapUL k v #-}
 -- {-# SPECIALIZE insert :: (Hashable k, Prim k) => k -> v -> MapUB k v -> MapUB k v #-}
 -- {-# SPECIALIZE insert :: (Hashable k, Prim k, Prim v) => k -> v -> MapUU k v -> MapUU k v #-}
+-- {-# SPECIALIZE insert :: Int -> Int -> MapUU Int Int -> MapUU Int Int #-}
 
 -- Collisions are appended at the end
 -- Note that we cannot insert them in sorted order
@@ -310,34 +314,32 @@ lookup :: (MapRepr keys vals k v, Eq k, Hashable k) => k -> Map keys vals k v ->
 lookup k m = case matchMap m of
     (# (##) | | #) -> Nothing
     (# | (# k', v #) | #) -> if k == k' then Just v else Nothing
-    (# | | node0 #) -> go (hash k) 0 node0
+    (# | | node0 #) -> go 0 node0
     where
-      go _h _s (CollisionNode keys vals) = 
+      !h = hash k
+      go _s (CollisionNode keys vals) = 
         keys
         & Contiguous.findIndex (\k' -> k' == k) -- TODO ptrEq optimization
         & fmap (Contiguous.index vals)
-      go !h !s node@(CompactNode bitmap keys vals children) =
-        let
-            bitpos = maskToBitpos $ hashToMask s h
-        in
-         if | bitmap .&. bitpos /= 0 ->
-                -- we contain the hash directly.
-                -- Either we contain the key, or a colliding key
-                let
-                  k' = Contiguous.index keys (dataIndex node bitpos)
-                  (# v #) = Contiguous.index# vals (dataIndex node bitpos) -- NOTE: We are careful to force the _access_ of the value but not the value itself
-                in
-                  if k == k' then Just v else Nothing -- TODO: ptrEq optimization
-            | childrenBitmap node .&. bitpos /= 0 ->
-                -- A child contains the hash, recurse
-                let
-                  child = Contiguous.index children (childrenIndex node bitpos)
-                in
-                  go h (nextShift s) child
-            | otherwise -> 
-                -- We don't contain the hash at all,
-                -- so we cannot contain the key either
-                Nothing
+      go !s node@(CompactNode bitmap keys vals children) =
+        let !bitpos = maskToBitpos $ hashToMask s h
+        in if
+                | bitmap .&. bitpos /= 0 ->
+                    -- we contain the hash directly.
+                    -- Either we contain the key, or a colliding key
+                    let
+                        k' = Contiguous.index keys (dataIndex node bitpos)
+                        -- NOTE: We are careful to force the _access_ of the value but not the value itself
+                        (# v #) = Contiguous.index# vals (dataIndex node bitpos) 
+                    in
+                        if k == k' then Just v else Nothing -- TODO: ptrEq optimization
+                | childrenBitmap node .&. bitpos /= 0 ->
+                    -- A child contains the hash, recurse
+                    go (nextShift s) (Contiguous.index children (childrenIndex node bitpos))
+                | otherwise ->
+                    -- We don't contain the hash at all,
+                    -- so we cannot contain the key either
+                    Nothing
 
 -- | Contrary to unordered-containers, this is O(log32(n))
 {-# INLINE size #-}
