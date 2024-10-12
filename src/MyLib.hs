@@ -24,11 +24,12 @@ import Data.Hashable (Hashable)
 import Data.Hashable qualified as Hashable
 import Data.Word (Word64)
 import Data.Foldable qualified as Foldable
+import Data.Maybe qualified as Maybe
 
 import Storage (Storage(..), StrictStorage(..), ArrayOf)
 import Array (StrictSmallArray)
 import Array qualified
-import Data.Primitive.Contiguous (Contiguous, Element)
+import Data.Primitive.Contiguous (Contiguous, ContiguousU, Element)
 import Data.Primitive.Contiguous qualified as Contiguous
 import GHC.Exts qualified as Exts
 import Numeric (showBin)
@@ -123,7 +124,7 @@ with the following tricks:
   inside their array, as we're always strict in the tree-spine of the CHAMP map.
   This means GHC will skip any thunk-forcing code whenever reading/recursing
 -}
-class (Contiguous (ArrayOf (Strict keyStorage)), Contiguous (ArrayOf (valStorage)), Element (ArrayOf (Strict keyStorage)) k, Element (ArrayOf valStorage) v) => MapRepr (keyStorage :: StrictStorage) (valStorage :: Storage) k v where
+class (ContiguousU (ArrayOf (Strict keyStorage)), ContiguousU (ArrayOf (valStorage)), Element (ArrayOf (Strict keyStorage)) k, Element (ArrayOf valStorage) v) => MapRepr (keyStorage :: StrictStorage) (valStorage :: Storage) k v where
   data Map keyStorage valStorage k v
   data MapNode keyStorage valStorage k v
   packNode :: (# Bitmap, ArrayOf (Strict keyStorage) k, (ArrayOf valStorage) v, StrictSmallArray (MapNode keyStorage valStorage k v) #) -> MapNode keyStorage valStorage k v
@@ -328,7 +329,7 @@ lookup k m = case matchMap m of
                         -- NOTE: We are careful to force the _access_ of the value but not the value itself
                         (# v #) = Contiguous.index# vals (dataIndex node bitpos) 
                     in
-                        if k == k' then Just v else Nothing -- TODO: ptrEq optimization
+                        if (k `ptrEq` k' || k == k') then Just v else Nothing
                 | childrenBitmap node .&. bitpos /= 0 ->
                     -- A child contains the hash, recurse
                     go (nextShift s) (Contiguous.index children (childrenIndex node bitpos))
@@ -339,6 +340,40 @@ lookup k m = case matchMap m of
 
 mylookup :: Int -> MapUU Int Int -> Maybe Int
 mylookup = lookup
+
+member ::  (MapRepr keys vals k v, Eq k, Hashable k) => k -> Map keys vals k v -> Bool
+{-# INLINABLE member #-}
+member k v = Maybe.isJust $ lookup k v
+
+instance (MapRepr keys vals k v, Eq v, Eq k) => Eq (Map keys vals k v) where
+    {-# INLINABLE (==) #-}
+    EmptyMap == EmptyMap = True
+    (SingletonMap k v) == (SingletonMap k' v') = (k == k') && (v == v')
+    (ManyMap node) == (ManyMap node') = node == node'
+    _ == _ = False
+
+instance (MapRepr keys vals k v, Eq v, Eq k) => Eq (MapNode keys vals k v) where
+    {-# INLINABLE (==) #-}
+    n1 == n2 | n1 `ptrEq` n2 = True
+    (CollisionNode keys vals) == (CollisionNode keys' vals') = error "TODO: equality for collision nodes"
+    (CompactNode b1 k1 v1 c1) == (CompactNode b2 k2 v2 c2) =
+        b1 == b2
+        && (k1 `Contiguous.same` k2 || k1 `Contiguous.equals` k2)
+        && (v1 `Contiguous.same` v2 || v1 `Contiguous.equals` v2)
+        && (c1 `Contiguous.same` c2 || c1 `Contiguous.equals` c2) -- Here we recurse
+    _ == _ = False
+
+myeq :: MapUU Int Int -> MapUU Int Int -> Bool
+myeq a b = a == b
+------------------------------------------------------------------------
+-- Pointer equality
+
+-- | Check if two the two arguments are the same value.  N.B. This
+-- function might give false negatives (due to GC moving objects, or things being unpacked/repacked.)
+-- but never false positives
+ptrEq :: a -> a -> Bool
+ptrEq x y = Exts.isTrue# (Exts.reallyUnsafePtrEquality# x y Exts.==# 1#)
+{-# INLINE ptrEq #-}
 
 {-# INLINE foldr' #-}
 foldr' :: MapRepr keys vals k v => (v -> r -> r) -> r -> Map keys vals k v -> r
