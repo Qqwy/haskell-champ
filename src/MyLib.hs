@@ -304,7 +304,10 @@ lookup k m = case matchMap m of
     (# | (# k', v #) | #) -> if k == k' then Just v else Nothing
     (# | | node0 #) -> go (hash k) 0 node0
     where
-      go _h _s (CollisionNode keys vals) = error "TODO"
+      go _h _s (CollisionNode keys vals) = 
+        keys
+        & Contiguous.findIndex (\k' -> k' == k) -- TODO ptrEq optimization
+        & fmap (Contiguous.index vals)
       go !h !s node@(CompactNode bitmap keys vals children) =
         let
             bitpos = maskToBitpos $ hashToMask s h
