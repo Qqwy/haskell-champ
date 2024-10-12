@@ -1,35 +1,35 @@
 {-# LANGUAGE GHC2021 #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE FunctionalDependencies #-}
+{-# LANGUAGE MagicHash #-}
+{-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UnboxedTuples #-}
-{-# LANGUAGE MagicHash #-}
-{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE UndecidableInstances #-}
-{-# LANGUAGE PatternSynonyms #-}
-{-# LANGUAGE FunctionalDependencies #-}
-{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE UnliftedNewtypes #-}
-{-# OPTIONS_GHC -ddump-simpl -ddump-cmm -ddump-stg-tags -ddump-stg-final -ddump-asm -ddump-to-file  #-}
-module Array(SmallArray, SmallUnliftedArray,  SmallUnliftedArray_, StrictSmallArray, PrimArray, Strictly(..), doubletonBranchless, sumStrictArray, sumLazyArray) where
+{-# OPTIONS_GHC -ddump-simpl -ddump-cmm -ddump-stg-tags -ddump-stg-final -ddump-asm -ddump-to-file #-}
 
-import Prelude hiding (foldl, foldr, foldl', foldr', null, read, length)
-import Data.Primitive (SmallArray, PrimArray, Prim)
-import Data.Primitive.SmallArray qualified as SmallArray
-import Data.Primitive.PrimArray qualified as PrimArray
-import Data.Coerce (coerce)
-import GHC.Exts (TYPE, Levity(..), RuntimeRep(BoxedRep), SmallArray#, SmallMutableArray#)
-import Data.Primitive.Contiguous qualified as Contiguous
-import Data.Primitive.Contiguous
-import Data.Primitive.Contiguous.Class (Slice(..), MutableSlice(..), ContiguousU(..), Contiguous(..))
+module Array (SmallArray, SmallUnliftedArray, SmallUnliftedArray_, StrictSmallArray, PrimArray, Strictly (..), doubletonBranchless, sumStrictArray, sumLazyArray) where
 
-import Data.Primitive.Unlifted.Class (PrimUnlifted(..))
-import Data.Primitive.Unlifted.SmallArray (SmallUnliftedArray_(..), SmallMutableUnliftedArray_(..))
-import Data.Primitive.Unlifted.SmallArray.Primops (SmallUnliftedArray# (SmallUnliftedArray#), SmallMutableUnliftedArray# (SmallMutableUnliftedArray#))
-import Data.Kind (Type)
-import Data.Elevator (Strict(Strict), UnliftedType)
 import Control.DeepSeq (NFData)
-import Data.Hashable (Hashable)
-import Control.Monad.ST (runST)
 import Control.Monad.Primitive
+import Control.Monad.ST (runST)
+import Data.Coerce (coerce)
+import Data.Elevator (Strict (Strict), UnliftedType)
+import Data.Hashable (Hashable)
+import Data.Kind (Type)
+import Data.Primitive (Prim, PrimArray, SmallArray)
+import Data.Primitive.Contiguous
+import Data.Primitive.Contiguous qualified as Contiguous
+import Data.Primitive.Contiguous.Class (Contiguous (..), ContiguousU (..), MutableSlice (..), Slice (..))
+import Data.Primitive.PrimArray qualified as PrimArray
+import Data.Primitive.SmallArray qualified as SmallArray
+import Data.Primitive.Unlifted.Class (PrimUnlifted (..))
+import Data.Primitive.Unlifted.SmallArray (SmallMutableUnliftedArray_ (..), SmallUnliftedArray_ (..))
+import Data.Primitive.Unlifted.SmallArray.Primops (SmallMutableUnliftedArray# (SmallMutableUnliftedArray#), SmallUnliftedArray# (SmallUnliftedArray#))
+import GHC.Exts (Levity (..), RuntimeRep (BoxedRep), SmallArray#, SmallMutableArray#, TYPE)
+import Prelude hiding (foldl, foldl', foldr, foldr', length, null, read)
 
 -- | Helper newtype to implement `PrimUnlifted` for any datatype
 -- to turn it into a `Data.Elevator.Strict`
@@ -46,7 +46,7 @@ instance PrimUnlifted (Strictly a) where
 -- An easier to use version of `SmallUnliftedArray`,
 -- allowing storage of _any_ `a` by virtue of `Data.Elevator.Strict`
 newtype StrictSmallArray a = StrictSmallArray (SmallUnliftedArray_ (Strict a) (Strictly a))
-  deriving Show
+  deriving (Show)
 
 -- | Mutable array type whose elements are guaranteed to be in WHNF
 --
@@ -65,7 +65,7 @@ newtype StrictSmallMutableArray# s (a :: Type)
   = StrictSmallMutableArray# (SmallMutableArray# s (Strict a))
 
 instance Contiguous.Contiguous StrictSmallArray where
-  type Mutable StrictSmallArray  = StrictSmallMutableArray
+  type Mutable StrictSmallArray = StrictSmallMutableArray
   type Element StrictSmallArray = Always
   type Sliced StrictSmallArray = Slice StrictSmallArray
   type MutableSliced (StrictSmallArray) = MutableSlice (StrictSmallArray)
@@ -163,14 +163,14 @@ sumLazyArray :: SmallArray Int -> Int
 sumLazyArray = foldr' (+) 0
 
 -- | Branchless pair-array creation:
--- If the int is '1', creates the array [a, b] 
+-- If the int is '1', creates the array [a, b]
 -- If the int is '0', creates the array [b, a]
 --
 -- Trick copied from Data.Hashmap
 doubletonBranchless :: (Contiguous arr, Element arr a) => Int -> a -> a -> arr a
 {-# INLINE doubletonBranchless #-}
 doubletonBranchless idx0Or1 a b = run $ do
-    arr <- new 2
-    write arr (1 - idx0Or1) a
-    write arr idx0Or1 b
-    unsafeFreeze arr
+  arr <- new 2
+  write arr (1 - idx0Or1) a
+  write arr idx0Or1 b
+  unsafeFreeze arr
