@@ -170,6 +170,8 @@ instance Contiguous.ContiguousU StrictSmallArray where
   {-# INLINE liftMut #-}
   liftMut (StrictSmallMutableArray# x) = StrictSmallMutableArray (SmallMutableUnliftedArray (SmallMutableUnliftedArray# x))
 
+instance (Eq a) => Eq (StrictSmallArray a) where
+  (StrictSmallArray l) == (StrictSmallArray r) = l == r
 
 sumStrictArray :: StrictSmallArray Int -> Int
 sumStrictArray = foldr' (+) 0
