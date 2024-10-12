@@ -1,20 +1,22 @@
 {-# LANGUAGE GHC2021 #-}
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeFamilyDependencies #-}
-{-# LANGUAGE PatternSynonyms #-}
-{-# LANGUAGE ViewPatterns #-}
 {-# LANGUAGE UnboxedTuples #-}
-{-# OPTIONS_GHC -funbox-strict-fields #-}
-{-# LANGUAGE CPP #-}
+{-# LANGUAGE ViewPatterns #-}
 {-# OPTIONS_GHC -ddump-simpl -ddump-stg-from-core -ddump-to-file #-}
+{-# OPTIONS_GHC -funbox-strict-fields #-}
+
 module Storage where
-import Data.Kind (Type)
 
 import Array qualified
+import Data.Kind (Type)
 
 data Storage = Lazy | Strict StrictStorage
+
 data StrictStorage = Boxed | Unboxed
 
 type family ArrayOf (s :: Storage) = (r :: Type -> Type) | r -> s where
