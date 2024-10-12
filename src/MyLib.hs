@@ -72,9 +72,9 @@ pattern SingletonMap k v <- (matchMap -> (# | (# k, v #) | #))
 pattern ManyMap ::
   forall (keyStorage :: StrictStorage) (valStorage :: Storage) k v.
   (MapRepr keyStorage valStorage k v) =>
-  MapNode keyStorage valStorage k v -> Map keyStorage valStorage k v
+  Word -> MapNode keyStorage valStorage k v -> Map keyStorage valStorage k v
 {-# INLINE ManyMap #-}
-pattern ManyMap node <- (matchMap -> (# | | node #))
+pattern ManyMap mapsize node <- (matchMap -> (# | | (# mapsize, node #) #))
   where
     ManyMap = manyMap
 
@@ -140,10 +140,10 @@ class (ContiguousU (ArrayOf (Strict keyStorage)), ContiguousU (ArrayOf (valStora
   data MapNode keyStorage valStorage k v
   packNode :: (# Bitmap, ArrayOf (Strict keyStorage) k, (ArrayOf valStorage) v, StrictSmallArray (MapNode keyStorage valStorage k v) #) -> MapNode keyStorage valStorage k v
   unpackNode :: MapNode keyStorage valStorage k v -> (# Bitmap, ArrayOf (Strict keyStorage) k, (ArrayOf valStorage) v, StrictSmallArray (MapNode keyStorage valStorage k v) #)
-  manyMap :: MapNode keyStorage valStorage k v -> Map keyStorage valStorage k v
+  manyMap :: Word -> MapNode keyStorage valStorage k v -> Map keyStorage valStorage k v
   emptyMap :: Map keyStorage valStorage k v
   singletonMap :: k -> v -> Map keyStorage valStorage k v
-  matchMap :: Map keyStorage valStorage k v -> (# (# #) | (# k, v #) | MapNode keyStorage valStorage k v #)
+  matchMap :: Map keyStorage valStorage k v -> (# (# #) | (# k, v #) | (# Word, MapNode keyStorage valStorage k v #) #)
 
 #define MAP_NODE_NAME(name) MapNode/**/_/**/name
 
@@ -164,17 +164,17 @@ instance constraints => MapRepr (keystorage) (valstorage) k v where             
 ; {-# INLINE singletonMap #-}                                                                              \
 ; singletonMap !k v = SingletonMap_/**/name k v                                                            \
 ; {-# INLINE manyMap #-}                                                                                   \
-; manyMap (MAP_NODE_NAME(name) b keys vals children) = ManyMap_/**/name b keys vals children               \
+; manyMap mapsize (MAP_NODE_NAME(name) b keys vals children) = ManyMap_/**/name mapsize b keys vals children \
 ; {-# INLINE matchMap #-}                                                                                  \
 ; matchMap = \case {                                                                                       \
 ; EmptyMap_/**/name -> (# (# #) | | #)                                                                     \
 ; SingletonMap_/**/name k v -> (#  | (# k, v #) | #)                                                       \
-; ManyMap_/**/name b keys vals children -> (# | | MAP_NODE_NAME(name) b keys vals children #) }            \
+; ManyMap_/**/name mapsize b keys vals children -> (# | | (# mapsize, MAP_NODE_NAME(name) b keys vals children #) #) }            \
 ; data MapNode (keystorage) (valstorage) k v = MAP_NODE_NAME(name) MAP_NODE_FIELDS(keystorage, valstorage) \
 ; data Map (keystorage) (valstorage) k v                                                              \
   = EmptyMap_/**/name                                                                                      \
   | SingletonMap_/**/name !k v                                                                             \
-  | ManyMap_/**/name MAP_NODE_FIELDS(keystorage, valstorage)                                               \
+  | ManyMap_/**/name !Word MAP_NODE_FIELDS(keystorage, valstorage)                                               \
 }
 
 map_repr_instance (Boxed_Lazy, Boxed, Lazy, ())
@@ -191,6 +191,12 @@ someFunc = undefined
 null :: MapRepr keys vals k v => Map keys vals k v -> Bool
 null EmptyMap = True
 null _ = False
+
+size :: (MapRepr keys vals k v) => Map keys vals k v -> Int
+{-# INLINE size #-}
+size EmptyMap = 0
+size (SingletonMap _k _v) = 1
+size (ManyMap s _) = fromIntegral s
 
 {-# INLINE empty #-}
 empty :: MapRepr keys vals k v => Map keys vals k v
@@ -222,28 +228,30 @@ insert k v EmptyMap = singleton k v
 insert !k2 v2 (SingletonMap k v) =
   (MapNode 0 Contiguous.empty Contiguous.empty Contiguous.empty)
     & insertNewInline (maskToBitpos (hashToMask 0 (hash k))) k v
-    & ManyMap
+    & ManyMap 1
     & insert k2 v2
-insert k v (ManyMap node0) = ManyMap $ insert' 0 node0
+insert k v (ManyMap size node0) =
+  let (# didIGrow, node' #) = insert' 0 node0
+   in ManyMap (size + fromIntegral (fromEnum didIGrow)) node'
   where
     !h = hash k
-    insert' shift node@(CollisionNode _ _) = insertCollision k v node
+    insert' shift node@(CollisionNode _ _) = (# True, insertCollision k v node #)
     insert' shift node@(CompactNode bitmap keys vals children) =
       let !bitpos = maskToBitpos $ hashToMask shift h
        in case bitposLocation node bitpos of
             Inline ->
-              -- exists inline; turn inline to subnode with two keys
+              -- exists inline; potentially turn inline to subnode with two keys
               insertMergeWithInline bitpos k v h shift node
             InChild ->
               -- Exists in child, insert in there and make sure this node contains the updated child
               let child = Contiguous.index children (childrenIndex node bitpos)
-                  child' = insert' (nextShift shift) child
+                  (# didIGrow, child' #) = insert' (nextShift shift) child
                in if child' `ptrEq` child
-                    then node
-                    else CompactNode bitmap keys vals (Contiguous.replaceAt children (childrenIndex node bitpos) child')
+                    then (# False, node #)
+                    else (# didIGrow, CompactNode bitmap keys vals (Contiguous.replaceAt children (childrenIndex node bitpos) child') #)
             Nowhere ->
               -- Doesn't exist yet, we can insert inline
-              insertNewInline bitpos k v node
+              (# True, insertNewInline bitpos k v node #)
 
 -- {-# SPECIALIZE insert :: Hashable k => k -> v -> MapBL k v -> MapBL k v #-}
 -- {-# SPECIALIZE insert :: Hashable k => k -> v -> MapBB k v -> MapBB k v #-}
@@ -275,22 +283,22 @@ insertNewInline bitpos k v node@(MapNode bitmap keys vals children) =
    in MapNode bitmap' keys' vals' children
 
 {-# INLINE insertMergeWithInline #-}
-insertMergeWithInline :: (Hashable k, MapRepr keys vals k v) => Bitmap -> k -> v -> Hash -> Word -> MapNode keys vals k v -> MapNode keys vals k v
+insertMergeWithInline :: (Hashable k, MapRepr keys vals k v) => Bitmap -> k -> v -> Hash -> Word -> MapNode keys vals k v -> (# Bool, MapNode keys vals k v #)
 insertMergeWithInline bitpos k v h shift node@(CompactNode bitmap keys vals children) =
   let bitmap' = bitmap .^. bitpos .|. (bitpos `unsafeShiftL` HASH_CODE_LENGTH)
       idx = dataIndex node bitpos
       existingKey = Contiguous.index keys idx
       existingVal = Contiguous.index vals idx
    in if
-        | existingKey == k && False -> node -- TODO: ptr eq
-        | existingKey == k -> CompactNode bitmap' keys (Contiguous.replaceAt vals idx v) children
+        | existingKey == k && False -> (# False, node #) -- TODO: ptr eq
+        | existingKey == k -> (# False, CompactNode bitmap' keys (Contiguous.replaceAt vals idx v) children #)
         | otherwise ->
             let newIdx = childrenIndex node bitpos
                 keys' = Contiguous.deleteAt keys idx
                 vals' = Contiguous.deleteAt vals idx
                 child = pairNode existingKey existingVal (hash existingKey) k v h (nextShift shift)
                 children' = Contiguous.insertAt children newIdx child
-             in CompactNode bitmap' keys' vals' children'
+             in (# True, CompactNode bitmap' keys' vals' children' #)
 
 {-# INLINE pairNode #-}
 pairNode :: (MapRepr keys vals k v) => k -> v -> Hash -> k -> v -> Hash -> Word -> MapNode keys vals k v
@@ -324,7 +332,7 @@ lookup :: (MapRepr keys vals k v, Eq k, Hashable k) => k -> Map keys vals k v ->
 lookup k m = case matchMap m of
   (# (# #) | | #) -> Nothing
   (# | (# k', v #) | #) -> if k == k' then Just v else Nothing
-  (# | | node0 #) -> go 0 node0
+  (# | | (# _size, node0 #) #) -> go 0 node0
   where
     !h = hash k
     go _s (CollisionNode keys vals) =
@@ -371,7 +379,7 @@ instance (MapRepr keys vals k v, Eq v, Eq k) => Eq (Map keys vals k v) where
   {-# INLINEABLE (==) #-}
   EmptyMap == EmptyMap = True
   (SingletonMap k v) == (SingletonMap k' v') = (k == k') && (v == v')
-  (ManyMap node) == (ManyMap node') = node == node'
+  (ManyMap size node) == (ManyMap size' node') = size == size' && node == node'
   _ == _ = False
 
 instance (MapRepr keys vals k v, Eq v, Eq k) => Eq (MapNode keys vals k v) where
@@ -403,7 +411,7 @@ foldr' :: (MapRepr keys vals k v) => (v -> r -> r) -> r -> Map keys vals k v -> 
 foldr' f !z0 m = case matchMap m of
   (# (# #) | | #) -> z0
   (# | (# _k, v #) | #) -> f v z0
-  (# | | node0 #) -> Exts.inline go node0 z0
+  (# | | (# _size, node0 #) #) -> Exts.inline go node0 z0
   where
     go (MapNode _bitmap _keys !vals !children) !z =
       z
@@ -415,7 +423,7 @@ foldrWithKey :: (MapRepr keys vals k v) => (k -> v -> r -> r) -> r -> Map keys v
 foldrWithKey f z0 m = case matchMap m of
   (# (# #) | | #) -> z0
   (# | (# k, v #) | #) -> f k v z0
-  (# | | node0 #) -> Exts.inline go node0 z0
+  (# | | (# _size, node0 #) #) -> Exts.inline go node0 z0
   where
     go (MapNode _bitmap keys !vals !children) z =
       (Contiguous.foldrZipWith f) z keys vals
@@ -459,7 +467,7 @@ foldrWithKey f z0 m = case matchMap m of
 instance (Show (ArrayOf (Strict keys) k), Show (ArrayOf vals v), Show k, Show v, MapRepr keys vals k v) => Show (Map keys vals k v) where
   show EmptyMap = "EmptyMap"
   show (SingletonMap k v) = "(SingletonMap " <> show k <> " " <> show v <> ")"
-  show (ManyMap node) = "(ManyMap " <> show node <> ")"
+  show (ManyMap _size node) = "(ManyMap " <> show node <> ")"
 
 instance (Show (ArrayOf (Strict keys) k), Show (ArrayOf vals v), Show k, Show v, MapRepr keys vals k v) => Show (MapNode keys vals k v) where
   show (CollisionNode keys vals) = "(CollisionNode " <> show keys <> " " <> show vals <> ")"
