@@ -1,0 +1,5 @@
+Name,Mean (ps),2*Stdev (ps)
+All.insert (small).HashMapLazy.0,11575,1100
+All.insert (small).HashMapStrict.0,11546,1048
+All.insert (small).MapBL.0,6562,504
+All.insert (small).MapBB.0,6186,474

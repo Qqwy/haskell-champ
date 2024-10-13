@@ -13,17 +13,34 @@ import Test.Tasty.Bench qualified as Bench
 main :: IO ()
 main =
   Bench.defaultMain
-    [ -- insertBench
+    [ insertSmallBench
+    , insertBench
       -- foldrBench
-      lookupBench
+      -- lookupBench
     ]
+
+insertSmallBench :: Bench.Benchmark
+insertSmallBench =
+  Bench.bgroup "insert (small)" $
+    mconcat
+      [ [ Bench.bench ("HashMapLazy." <> show n) $ Bench.nf (HashMap.Lazy.insert n n) (buildN n),
+          Bench.bench ("HashMapStrict." <> show n) $ Bench.nf (HashMap.Strict.insert n n) (buildN n),
+          Bench.bench ("MapBL." <> show n) $ Bench.nf (MyLib.insert n n) (buildN @MyLib.MapBL n),
+          Bench.bench ("MapBB." <> show n) $ Bench.nf (MyLib.insert n n) (buildN @MyLib.MapBB n),
+          Bench.bench ("MapBU." <> show n) $ Bench.nf (MyLib.insert n n) (buildN @MyLib.MapBU n),
+          Bench.bench ("MapUL." <> show n) $ Bench.nf (MyLib.insert n n) (buildN @MyLib.MapUL n),
+          Bench.bench ("MapUB." <> show n) $ Bench.nf (MyLib.insert n n) (buildN @MyLib.MapUB n),
+          Bench.bench ("MapUU." <> show n) $ Bench.nf (MyLib.insert n n) (buildN @MyLib.MapUU n)
+        ]
+      | n <- ([0..32])
+      ]
 
 insertBench :: Bench.Benchmark
 insertBench =
-  Bench.bgroup "Inserting a single (new) element in a hashmap of size N" $
+  Bench.bgroup "insert (powers of two)" $
     mconcat
-      [ [ Bench.bench ("HashMap.Lazy." <> show n) $ Bench.nf (HashMap.Lazy.insert n n) (buildN n),
-          Bench.bench ("HashMap.Strict." <> show n) $ Bench.nf (HashMap.Strict.insert n n) (buildN n),
+      [ [ Bench.bench ("HashMapLazy." <> show n) $ Bench.nf (HashMap.Lazy.insert n n) (buildN n),
+          Bench.bench ("HashMapStrict." <> show n) $ Bench.nf (HashMap.Strict.insert n n) (buildN n),
           Bench.bench ("MapBL." <> show n) $ Bench.nf (MyLib.insert n n) (buildN @MyLib.MapBL n),
           Bench.bench ("MapBB." <> show n) $ Bench.nf (MyLib.insert n n) (buildN @MyLib.MapBB n),
           Bench.bench ("MapBU." <> show n) $ Bench.nf (MyLib.insert n n) (buildN @MyLib.MapBU n),
