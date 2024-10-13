@@ -10,23 +10,24 @@ function splitup(name)::Tuple{String,String,UInt}
 end
 
 benches = 
-  "insert_bench.csv" |> CSV.File |> DataFrame |> frame -> select(frame,
+  "benches.csv" |> CSV.File |> DataFrame |> frame -> select(frame,
               :Name => ByRow(splitup) => [:Benchmark, :DataStructure, :Size],
               :"Mean (ps)" => ByRow(x -> x / 10^3) => :Mean,
             )
 
 for bench in unique(benches.Benchmark)
-  plot(xlabel="Hashmap size (No. of elements)", ylabel="Mean cputime (ns)", title=bench, palette=:twelvebitrainbow, xminorgrid=true, yminorgrid=true)
-  for name in unique(benches.DataStructure)
-      current_data = benches[benches.DataStructure .== name, :]
-      plot!(current_data.Size, current_data.Mean, label=name, add_marker=true)
+  data = benches[benches.Benchmark .== bench, :]
+  p = plot(xlabel="Hashmap size (No. of elements)", ylabel="Mean cputime (ns)", title=bench, palette=:twelvebitrainbow, xminorgrid=true, yminorgrid=true)
+  for name in unique(data.DataStructure)
+      current_data = data[data.DataStructure .== name, :]
+      plot!(p, current_data.Size, current_data.Mean, label=name, add_marker=true)
   end
-  savefig(bench * ".svg")
+  savefig(p, bench * ".svg")
 
-  plot(xlabel="Hashmap size (No. of elements)", ylabel="Mean cputime (ns)", title=bench, palette=:twelvebitrainbow, yaxis=:log10, xaxis=:log2, xlims=(1, 1024), xminorgrid=true, yminorgrid=true)
-  for name in unique(benches.DataStructure)
-      current_data = benches[benches.DataStructure .== name, :]
-      plot!(current_data.Size, current_data.Mean, label=name, add_marker=true)
+  plog = plot(xlabel="Hashmap size (No. of elements)", ylabel="Mean cputime (ns)", title=bench, palette=:twelvebitrainbow, yaxis=:log10, xaxis=:log2, xlims=(1, 1024), xminorgrid=true, yminorgrid=true)
+  for name in unique(data.DataStructure)
+      current_data = data[data.DataStructure .== name, :]
+      plot!(plog, current_data.Size, current_data.Mean, label=name, add_marker=true)
   end
-  savefig(bench * "_loglog.svg")
+  savefig(plog, bench * "_loglog.svg")
 end
