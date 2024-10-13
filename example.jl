@@ -24,7 +24,7 @@ for bench in unique(benches.Benchmark)
   end
   savefig(p, bench * ".svg")
 
-  plog = plot(xlabel="Hashmap size (No. of elements)", ylabel="Mean cputime (ns)", title=bench, palette=:twelvebitrainbow, yaxis=:log10, xaxis=:log2, xlims=(1, 1024), xminorgrid=true, yminorgrid=true)
+  plog = plot(xlabel="Hashmap size (No. of elements)", ylabel="Mean cputime (ns)", title=bench, palette=:twelvebitrainbow, yaxis=:log10, xaxis=:log2, xlims=(1, Inf), xminorgrid=true, yminorgrid=true)
   for name in unique(data.DataStructure)
       current_data = data[data.DataStructure .== name, :]
       plot!(plog, current_data.Size, current_data.Mean, label=name, add_marker=true)

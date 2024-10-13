@@ -13,9 +13,9 @@ import Test.Tasty.Bench qualified as Bench
 main :: IO ()
 main =
   Bench.defaultMain
-    [ insertSmallBench
-    , insertBench
-      -- foldrBench
+    [ -- insertSmallBench
+    -- , insertBench
+      foldrBench
       -- lookupBench
     ]
 
@@ -74,11 +74,14 @@ foldrBench =
         bench :: forall map. (NFData (map Int Int), IsList (map Int Int), Item (map Int Int) ~ (Int, Int), Foldable (map Int)) => Int -> Bench.Benchmarkable
         bench n = Bench.nf (foldr (+) 0) (buildN @map n)
      in mconcat
-          [ [ Bench.bench ("HashMap." <> show n) $ bench @HashMap n,
-              Bench.bench ("MapBL." <> show n) $ bench @MyLib.MapBL n,
-              Bench.bench ("MapBB." <> show n) $ bench @MyLib.MapBB n,
-              Bench.bench ("MapUL." <> show n) $ bench @MyLib.MapUL n,
-              Bench.bench ("MapUB." <> show n) $ bench @MyLib.MapUB n
+          [ [ Bench.bench ("HashMapLazy." <> show n) $ Bench.nf (HashMap.Lazy.foldr (+) 0) (buildN @HashMap n),
+              Bench.bench ("HashMapStrict." <> show n) $ Bench.nf (HashMap.Strict.foldr (+) 0) (buildN @HashMap n),
+              Bench.bench ("MapBL." <> show n) $ Bench.nf (MyLib.foldr (+) 0) (buildN @MyLib.MapBL n),
+              Bench.bench ("MapBB." <> show n) $ Bench.nf (MyLib.foldr (+) 0) (buildN @MyLib.MapBB n),
+              Bench.bench ("MapBU." <> show n) $ Bench.nf (MyLib.foldr (+) 0) (buildN @MyLib.MapBU n),
+              Bench.bench ("MapUL." <> show n) $ Bench.nf (MyLib.foldr (+) 0) (buildN @MyLib.MapUL n),
+              Bench.bench ("MapUB." <> show n) $ Bench.nf (MyLib.foldr (+) 0) (buildN @MyLib.MapUB n),
+              Bench.bench ("MapUU." <> show n) $ Bench.nf (MyLib.foldr (+) 0) (buildN @MyLib.MapUU n)
             ]
           | n <- ([0] <> powersOfTwo)
           ]
