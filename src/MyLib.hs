@@ -11,7 +11,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE UndecidableSuperClasses #-}
 {-# LANGUAGE ViewPatterns #-}
-{-# OPTIONS_GHC -ddump-simpl -ddump-stg-from-core -ddump-cmm -ddump-to-file #-}
+{-# OPTIONS_GHC -ddump-simpl -dsuppress-all -ddump-stg-from-core -ddump-cmm -ddump-to-file #-}
 {-# OPTIONS_GHC -funbox-strict-fields #-}
 
 module MyLib where
@@ -29,11 +29,12 @@ import Data.Primitive.Contiguous (Contiguous, ContiguousU, Element)
 import Data.Primitive.Contiguous qualified as Contiguous
 import Data.Primitive.SmallArray qualified as SmallArray
 import Data.Word (Word64)
-import Debug.Trace qualified
 import GHC.Exts qualified as Exts
+import GHC.IsList (IsList(..))
 import Numeric (showBin)
 import Storage (ArrayOf, Storage (..), StrictStorage (..))
 import Prelude hiding (lookup)
+import Control.DeepSeq (NFData(..))
 
 #define BIT_PARTITION_SIZE 5
 #define HASH_CODE_LENGTH (1 `unsafeShiftL` BIT_PARTITION_SIZE)
@@ -187,6 +188,7 @@ map_repr_instance (Unboxed_Unboxed, Unboxed, Strict Unboxed, (Prim k, Prim v))
 
 someFunc = undefined
 
+{-# INLINE null #-}
 null :: (MapRepr keys vals k v) => Map keys vals k v -> Bool
 null EmptyMap = True
 null _ = False
@@ -197,9 +199,11 @@ size EmptyMap = 0
 size (SingletonMap _k _v) = 1
 size (ManyMap s _) = fromIntegral s
 
+{-# INLINE empty #-}
 empty :: (MapRepr keys vals k v) => Map keys vals k v
 empty = EmptyMap
 
+{-# INLINE singleton #-}
 singleton :: (MapRepr keys vals k v) => k -> v -> Map keys vals k v
 singleton !k v = SingletonMap k v
 
@@ -211,8 +215,12 @@ bitposLocation node@(CompactNode bitmap _ _ _) bitpos
   | (childrenBitmap node) .&. bitpos /= 0 = InChild
   | otherwise = Nowhere
 
-naiveFromList :: (Show (ArrayOf (Strict keys) k), Show (ArrayOf vals v), Show k, Show v, Hashable k, MapRepr keys vals k v) => [(k, v)] -> Map keys vals k v
-naiveFromList = Foldable.foldl' (\m (k, v) -> Debug.Trace.traceShowId $ insert k v m) empty
+naiveFromList :: (Hashable k, MapRepr keys vals k v) => [(k, v)] -> Map keys vals k v
+{-# INLINE naiveFromList #-}
+naiveFromList = Foldable.foldl' (\m (k, v) -> insert k v m) empty
+
+myNaiveFromList :: [(Int, Word)] -> MapUU Int Word
+myNaiveFromList = naiveFromList
 
 -- TODO use Exts.build to be a good fusion citizen
 toList :: (MapRepr keys vals k v) => Map keys vals k v -> [(k, v)]
@@ -220,34 +228,35 @@ toList = foldrWithKey (\k v xs -> (k, v) : xs) []
 
 {-# INLINE insert #-}
 insert :: (Hashable k, MapRepr keys vals k v) => k -> v -> Map keys vals k v -> Map keys vals k v
-insert k v EmptyMap = singleton k v
-insert !k2 v2 (SingletonMap k v) =
-  (MapNode 0 Contiguous.empty Contiguous.empty Contiguous.empty)
-    & insertNewInline (maskToBitpos (hashToMask 0 (hash k))) k v
-    & ManyMap 1
-    & insert k2 v2
-insert k v (ManyMap size node0) =
-  let (# didIGrow, node' #) = insert' 0 node0
-   in ManyMap (size + fromIntegral (fromEnum didIGrow)) node'
-  where
-    !h = hash k
-    insert' shift node@(CollisionNode _ _) = (# True, insertCollision k v node #)
-    insert' shift node@(CompactNode bitmap keys vals children) =
-      let !bitpos = maskToBitpos $ hashToMask shift h
-       in case bitposLocation node bitpos of
-            Inline ->
-              -- exists inline; potentially turn inline to subnode with two keys
-              insertMergeWithInline bitpos k v h shift node
-            InChild ->
-              -- Exists in child, insert in there and make sure this node contains the updated child
-              let child = Contiguous.index children (childrenIndex node bitpos)
-                  (# didIGrow, child' #) = insert' (nextShift shift) child
-               in if child' `ptrEq` child
-                    then (# False, node #)
+insert !k v !m = case matchMap m of
+    (# (##) | | #) -> singleton k v
+    (# | (# k', v' #) | #) -> 
+        if k == k' then singleton k' v'
+        else
+            let (# size, node #) = insert' (hash k) k v 0 $ (MapNode (maskToBitpos (hashToMask 0 (hash k'))) (Contiguous.singleton k) (Contiguous.singleton v) Contiguous.empty)
+            in ManyMap (1 +  Exts.W# size) node
+    (# | | (# size,  node0 #) #) ->
+        let (# didIGrow, node' #) = insert' (hash k) k v 0 node0
+        in ManyMap (size + Exts.W# didIGrow) node'
+
+{-# INLINABLE insert' #-}
+insert' !h !k v !shift !node@(CollisionNode _ _) = (# 1##, insertCollision k v node #)
+insert' !h !k v !shift !node@(CompactNode !bitmap !keys !vals !children) =
+    let !bitpos = maskToBitpos $ hashToMask shift h
+    in case bitposLocation node bitpos of
+        Inline ->
+            -- exists inline; potentially turn inline to subnode with two keys
+            insertMergeWithInline bitpos k v h shift node
+        InChild ->
+            -- Exists in child, insert in there and make sure this node contains the updated child
+            let child = Contiguous.index children (childrenIndex node bitpos)
+                (# didIGrow, child' #) = insert' h k v (nextShift shift) child
+            in if child' `ptrEq` child
+                    then (# 0##, node #)
                     else (# didIGrow, CompactNode bitmap keys vals (Contiguous.replaceAt children (childrenIndex node bitpos) child') #)
-            Nowhere ->
-              -- Doesn't exist yet, we can insert inline
-              (# True, insertNewInline bitpos k v node #)
+        Nowhere ->
+            -- Doesn't exist yet, we can insert inline
+            (# 1##, insertNewInline bitpos k v node #)
 
 -- {-# SPECIALIZE insert :: Hashable k => k -> v -> MapBL k v -> MapBL k v #-}
 -- {-# SPECIALIZE insert :: Hashable k => k -> v -> MapBB k v -> MapBB k v #-}
@@ -279,22 +288,22 @@ insertNewInline bitpos k v node@(MapNode bitmap keys vals children) =
    in MapNode bitmap' keys' vals' children
 
 {-# INLINE insertMergeWithInline #-}
-insertMergeWithInline :: (Hashable k, MapRepr keys vals k v) => Bitmap -> k -> v -> Hash -> Word -> MapNode keys vals k v -> (# Bool, MapNode keys vals k v #)
+insertMergeWithInline :: (Hashable k, MapRepr keys vals k v) => Bitmap -> k -> v -> Hash -> Word -> MapNode keys vals k v -> (# Exts.Word#, MapNode keys vals k v #)
 insertMergeWithInline bitpos k v h shift node@(CompactNode bitmap keys vals children) =
   let bitmap' = bitmap .^. bitpos .|. (bitpos `unsafeShiftL` HASH_CODE_LENGTH)
       idx = dataIndex node bitpos
       existingKey = Contiguous.index keys idx
       existingVal = Contiguous.index vals idx
    in if
-        | existingKey == k && False -> (# False, node #) -- TODO: ptr eq
-        | existingKey == k -> (# False, CompactNode bitmap' keys (Contiguous.replaceAt vals idx v) children #)
+        | existingKey == k && False -> (# 0##, node #) -- TODO: ptr eq
+        | existingKey == k -> (# 1##, CompactNode bitmap' keys (Contiguous.replaceAt vals idx v) children #)
         | otherwise ->
             let newIdx = childrenIndex node bitpos
                 keys' = Contiguous.deleteAt keys idx
                 vals' = Contiguous.deleteAt vals idx
                 child = pairNode existingKey existingVal (hash existingKey) k v h (nextShift shift)
                 children' = Contiguous.insertAt children newIdx child
-             in (# True, CompactNode bitmap' keys' vals' children' #)
+             in (# 1##, CompactNode bitmap' keys' vals' children' #)
 
 {-# INLINE pairNode #-}
 pairNode :: (MapRepr keys vals k v) => k -> v -> Hash -> k -> v -> Hash -> Word -> MapNode keys vals k v
@@ -317,7 +326,7 @@ pairNode k1 v1 h1 k2 v2 h2 shift
 mergeCompactInline k1 v1 h1 k2 v2 h2 shift =
   let !mask0@(Mask (Exts.W# i1)) = hashToMask shift h1
       !mask1@(Mask (Exts.W# i2)) = hashToMask shift h2
-      !bitmap = Debug.Trace.traceShowId $ maskToBitpos mask0 .|. maskToBitpos mask1
+      !bitmap = maskToBitpos mask0 .|. maskToBitpos mask1
       !c = Exts.I# (i1 `Exts.ltWord#` i2)
       keys = Array.doubletonBranchless c k1 k2
       vals = Array.doubletonBranchless c v1 v2
@@ -381,6 +390,22 @@ instance (MapRepr keys vals k v, Eq v, Eq k) => Eq (MapNode keys vals k v) where
 myeq :: MapUU Int Int -> MapUU Int Int -> Bool
 myeq a b = a == b
 
+instance (Hashable k, Eq k, MapRepr keys vals k v) => IsList (Map keys vals k v) where
+    type Item (Map keys vals k v) = (k, v)
+    {-# INLINE toList #-}
+    toList = MyLib.toList
+    {-# INLINE fromList #-}
+    fromList = naiveFromList
+
+instance (NFData k, NFData v, MapRepr keys vals k v) => NFData (Map keys vals k v) where
+  -- TODO:
+  -- - Can be faster using strict fold (possibly foldlWithKey'), 
+  --   which seems to not fully be implemented in Contiguous yet
+  -- - Skip for keys resp values if those are Unboxed
+  --   and skip alltogether for MapUU
+  {-# INLINE rnf #-}
+  rnf m = foldrWithKey (\k v () -> rnf k `seq` rnf v) () m
+
 ------------------------------------------------------------------------
 -- Pointer equality
 
@@ -413,6 +438,7 @@ foldrWithKey f z0 m = case matchMap m of
     go (MapNode _bitmap keys !vals !children) z =
       (Contiguous.foldrZipWith f) z keys vals
         & flip (Contiguous.foldr go) children
+
 
 -- foldr' _f z EmptyMap = z
 -- foldr' f !z (SingletonMap _k !v) = f v z
@@ -530,7 +556,7 @@ nextShift :: (Num a) => a -> a
 nextShift s = s + BIT_PARTITION_SIZE
 
 intsToList :: MapBL Int Int -> [(Int, Int)]
-intsToList = toList
+intsToList = MyLib.toList
 
 sumStrict :: MapBB Int Int -> Int
 sumStrict = foldr' (+) 0
