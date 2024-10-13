@@ -70,22 +70,6 @@ instance Semigroup (StrictSmallArray a) where
 instance Monoid (StrictSmallArray a) where
   mempty = Contiguous.empty
 
-instance Functor StrictSmallArray where
-  fmap f (StrictSmallArray arr) = StrictSmallArray (mapSmallUnliftedArray (Strictly . f . unStrictly) arr)
-
-instance Foldable StrictSmallArray where
-  foldr = Contiguous.foldr
-  foldl = Contiguous.foldl
-  foldr' = Contiguous.foldr'
-  foldl' = Contiguous.foldl'
-  foldMap = Contiguous.foldMap
-
-instance Semigroup (StrictSmallArray a) where
-  a <> b = Contiguous.append a b
-
-instance Monoid (StrictSmallArray a) where
-  mempty = Contiguous.empty
-
 -- | Mutable array type whose elements are guaranteed to be in WHNF
 --
 -- An easier to use version of `SmallMutableUnliftedArray`,
