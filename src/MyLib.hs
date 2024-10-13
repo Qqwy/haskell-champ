@@ -250,7 +250,7 @@ insert' !h !k v !shift !node@(CompactNode !bitmap !keys !vals !children) =
           insertMergeWithInline bitpos k v h shift node
         InChild ->
           -- Exists in child, insert in there and make sure this node contains the updated child
-          let child = Contiguous.index children (childrenIndex node bitpos)
+          let child = indexChild node bitpos
               (# didIGrow, child' #) = insert' h k v (nextShift shift) child
            in if child' `ptrEq` child
                 then (# 0##, node #)
@@ -293,8 +293,8 @@ insertMergeWithInline :: (Hashable k, MapRepr keys vals k v) => Bitmap -> k -> v
 insertMergeWithInline bitpos k v h shift node@(CompactNode bitmap keys vals children) =
   let bitmap' = bitmap .^. bitpos .|. (bitpos `unsafeShiftL` HASH_CODE_LENGTH)
       idx = dataIndex node bitpos
-      existingKey = Contiguous.index keys idx
-      existingVal = Contiguous.index vals idx
+      existingKey = indexKey node bitpos
+      (# existingVal #) = indexVal# node bitpos
    in if
         | existingKey == k && False -> (# 0##, node #) -- TODO: ptr eq
         | existingKey == k -> (# 1##, CompactNode bitmap' keys (Contiguous.replaceAt vals idx v) children #)
@@ -333,37 +333,58 @@ mergeCompactInline k1 v1 h1 k2 v2 h2 shift =
       vals = Array.doubletonBranchless c v1 v2
    in CompactNode bitmap keys vals Contiguous.empty
 
-{-# INLINEABLE lookup #-}
+{-# INLINE lookup #-}
 lookup :: (MapRepr keys vals k v, Eq k, Hashable k) => k -> Map keys vals k v -> Maybe v
-lookup !k0 m = case matchMap m of
+lookup !k m = case matchMap m of
   (# (# #) | | #) -> Nothing
-  (# | (# k', v #) | #) -> if k0 == k' then Just v else Nothing
-  (# | | (# _size, node0 #) #) -> lookup' (hash k0) k0 0 node0
-  where
-    lookup' !_h !k !_s !(CollisionNode keys vals) =
-      keys
-        & Contiguous.findIndex (\k' -> k' == k) -- TODO ptrEq optimization
-        & fmap (Contiguous.index vals)
-    lookup' !h !k !s !node@(CompactNode bitmap keys vals children) =
-      let !bitpos = maskToBitpos $ hashToMask s h
-       in case bitposLocation node bitpos of
-            Inline ->
-              -- we contain the hash directly.
-              -- Either we contain the key, or a colliding key
-              let k' = Contiguous.index keys (dataIndex node bitpos)
-                  -- NOTE: We are careful to force the _access_ of the value but not the value itself
-                  (# v #) = Contiguous.index# vals (dataIndex node bitpos)
-               in if k == k' then Just v else Nothing
-            InChild ->
-              -- A child contains the hash, recurse
-              lookup' h k (nextShift s) (Contiguous.index children (childrenIndex node bitpos))
-            Nowhere ->
-              -- We don't contain the hash at all,
-              -- so we cannot contain the key either
-              Nothing
+  (# | (# k', v #) | #) -> if k == k' then Just v else Nothing
+  (# | | (# _size, node0 #) #) -> -- lookup' (hash k0) k0 0 node0
+    let !h = hash k 
+        !bitpos = maskToBitpos $ hashToMask 0 h
+    in case bitposLocation node0 bitpos of
+        Nowhere -> Nothing
+        Inline ->
+            let k' = indexKey node0 bitpos
+                (# v #) = indexVal# node0 bitpos
+            in if k == k' then Just v else Nothing
+        InChild -> lookup' (nextShift 0) (indexChild node0 bitpos)
+            where
+                {-# INLINEABLE lookup' #-}
+                lookup' !_s !(CollisionNode keys vals) =
+                    keys
+                        & Contiguous.findIndex (\k' -> k' == k) -- TODO ptrEq optimization
+                        & fmap (Contiguous.index vals)
+                lookup' !s !node@(CompactNode _bitmap _keys _vals _children) =
+                    let !bitpos = maskToBitpos $ hashToMask s h
+                    in case bitposLocation node bitpos of
+                            Nowhere -> Nothing
+                            Inline ->
+                                let k' = indexKey node bitpos
+                                    -- NOTE: We are careful to force the _access_ of the value but not the value itself
+                                    (# v #) = indexVal# node bitpos
+                                in if k == k' then Just v else Nothing
+                            InChild -> lookup' (nextShift s) (indexChild node bitpos)
 
 mylookup :: Int -> MapUU Int Int -> Maybe Int
 mylookup = lookup
+
+{-# INLINE indexKey #-}
+indexKey :: MapRepr keys vals k v => MapNode keys vals k v -> Bitmap -> k
+-- indexKey node@(CollisionNode keys _vals) ix = Contiguous.index keys ix
+indexKey node@(CompactNode _bitmap keys _vals _children) bitpos =
+    Contiguous.index keys (dataIndex node bitpos)
+
+{-# INLINE indexVal# #-}
+indexVal# :: MapRepr keys vals k v => MapNode keys vals k v -> Bitmap -> (# v #)
+--indexVal# node@(CollisionNode _keys vals) ix = Contiguous.index# vals ix
+indexVal# node@(CompactNode _bitmap _keys vals _children) bitpos =
+    Contiguous.index# vals (dataIndex node bitpos)
+
+{-# INLINE indexChild #-}
+indexChild :: MapRepr keys vals k v => MapNode keys vals k v -> Bitmap -> MapNode keys vals k v
+indexChild node@(CollisionNode _keys _vals) _ix = error "Should only be called on CompactNodes"
+indexChild node@(CompactNode _bitmap _keys _vals children) bitpos =
+    Contiguous.index children (childrenIndex node bitpos)
 
 member :: (MapRepr keys vals k v, Eq k, Hashable k) => k -> Map keys vals k v -> Bool
 {-# INLINEABLE member #-}

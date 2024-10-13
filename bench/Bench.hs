@@ -38,14 +38,14 @@ lookupBench :: Bench.Benchmark
 lookupBench =
   Bench.bgroup "Looking up an element which exists in a hashmap of size N" $
     mconcat
-      [ [ Bench.bench ("HashMap.Lazy." <> show n) $ Bench.nf (theirlookup 0) (buildN n),
-          Bench.bench ("HashMap.Strict." <> show n) $ Bench.nf (HashMap.Strict.lookup 0) (buildN n),
-          Bench.bench ("MapBL." <> show n) $ Bench.nf (mylookup 0) (buildN @MyLib.MapBL n),
-          Bench.bench ("MapBB." <> show n) $ Bench.nf (MyLib.lookup 0) (buildN @MyLib.MapBB n),
-          Bench.bench ("MapBU." <> show n) $ Bench.nf (MyLib.lookup 0) (buildN @MyLib.MapBU n),
-          Bench.bench ("MapUL." <> show n) $ Bench.nf (MyLib.lookup 0) (buildN @MyLib.MapUL n),
-          Bench.bench ("MapUB." <> show n) $ Bench.nf (MyLib.lookup 0) (buildN @MyLib.MapUB n),
-          Bench.bench ("MapUU." <> show n) $ Bench.nf (MyLib.lookup 0) (buildN @MyLib.MapUU n)
+      [ [ Bench.bench ("HashMap.Lazy." <> show n) $ Bench.nf (HashMap.Lazy.lookup (n)) (buildN n),
+          Bench.bench ("HashMap.Strict." <> show n) $ Bench.nf (HashMap.Strict.lookup (n)) (buildN n),
+          Bench.bench ("MapBL." <> show n) $ Bench.nf (mylookup (n)) (buildN @MyLib.MapBL n),
+          Bench.bench ("MapBB." <> show n) $ Bench.nf (MyLib.lookup (n)) (buildN @MyLib.MapBB n),
+          Bench.bench ("MapBU." <> show n) $ Bench.nf (MyLib.lookup (n)) (buildN @MyLib.MapBU n),
+          Bench.bench ("MapUL." <> show n) $ Bench.nf (MyLib.lookup (n)) (buildN @MyLib.MapUL n),
+          Bench.bench ("MapUB." <> show n) $ Bench.nf (MyLib.lookup (n)) (buildN @MyLib.MapUB n),
+          Bench.bench ("MapUU." <> show n) $ Bench.nf (MyLib.lookup (n)) (buildN @MyLib.MapUU n)
         ]
       | n <- powersOfTwo
       ]
@@ -78,9 +78,9 @@ mylookup :: Int -> MyLib.MapBL Int Int -> Maybe Int
 {-# NOINLINE mylookup #-}
 mylookup = MyLib.lookup
 
-theirlookup :: Int -> HashMap Int Int -> Maybe Int
-{-# NOINLINE theirlookup #-}
-theirlookup = HashMap.Lazy.lookup
+-- theirlookup :: Int -> HashMap Int Int -> Maybe Int
+-- {-# NOINLINE theirlookup #-}
+-- theirlookup = HashMap.Lazy.lookup
 
 buildN :: forall map. (NFData (map Int Int), IsList (map Int Int), Item (map Int Int) ~ (Int, Int)) => Int -> (map Int Int)
 buildN n = force $ fromList [(x, x) | x <- [0 .. (n - 1)]]
