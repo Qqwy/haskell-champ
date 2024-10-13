@@ -1,62 +1,70 @@
-{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE TypeApplications #-}
 {-# OPTIONS_GHC -ddump-simpl -dsuppress-all -ddump-stg-from-core -ddump-cmm -ddump-to-file #-}
-import Test.Tasty.Bench qualified as Bench
-import GHC.IsList
-import Control.DeepSeq (force, NFData)
-import MyLib qualified
+
+import Control.DeepSeq (NFData, force)
 import Data.HashMap.Lazy (HashMap)
 import Data.HashMap.Lazy qualified as HashMap.Lazy
 import Data.HashMap.Lazy qualified as HashMap.Strict
+import GHC.IsList
+import MyLib qualified
+import Test.Tasty.Bench qualified as Bench
 
 main :: IO ()
-main = Bench.defaultMain 
-  [ -- insertBench
-  -- foldrBench
-  lookupBench
-  ]
+main =
+  Bench.defaultMain
+    [ -- insertBench
+      -- foldrBench
+      lookupBench
+    ]
 
 insertBench :: Bench.Benchmark
-insertBench = Bench.bgroup "Inserting a single (new) element in a hashmap of size N" $
-  mconcat [
-    [ Bench.bench ("HashMap.Lazy." <> show n) $ Bench.nf (HashMap.Lazy.insert n n) (buildN n)
-    , Bench.bench ("HashMap.Strict." <> show n) $ Bench.nf (HashMap.Strict.insert n n) (buildN n)
-    , Bench.bench ("MapBL." <> show n) $ Bench.nf (MyLib.insert n n) (buildN @MyLib.MapBL n)
-    , Bench.bench ("MapBB." <> show n) $ Bench.nf (MyLib.insert n n) (buildN @MyLib.MapBB n)
-    , Bench.bench ("MapBU." <> show n) $ Bench.nf (MyLib.insert n n) (buildN @MyLib.MapBU n)
-    , Bench.bench ("MapUL." <> show n) $ Bench.nf (MyLib.insert n n) (buildN @MyLib.MapUL n)
-    , Bench.bench ("MapUB." <> show n) $ Bench.nf (MyLib.insert n n) (buildN @MyLib.MapUB n)
-    , Bench.bench ("MapUU." <> show n) $ Bench.nf (MyLib.insert n n) (buildN @MyLib.MapUU n)
-    ] | n <- ([0] <> powersOfTwo)]
+insertBench =
+  Bench.bgroup "Inserting a single (new) element in a hashmap of size N" $
+    mconcat
+      [ [ Bench.bench ("HashMap.Lazy." <> show n) $ Bench.nf (HashMap.Lazy.insert n n) (buildN n),
+          Bench.bench ("HashMap.Strict." <> show n) $ Bench.nf (HashMap.Strict.insert n n) (buildN n),
+          Bench.bench ("MapBL." <> show n) $ Bench.nf (MyLib.insert n n) (buildN @MyLib.MapBL n),
+          Bench.bench ("MapBB." <> show n) $ Bench.nf (MyLib.insert n n) (buildN @MyLib.MapBB n),
+          Bench.bench ("MapBU." <> show n) $ Bench.nf (MyLib.insert n n) (buildN @MyLib.MapBU n),
+          Bench.bench ("MapUL." <> show n) $ Bench.nf (MyLib.insert n n) (buildN @MyLib.MapUL n),
+          Bench.bench ("MapUB." <> show n) $ Bench.nf (MyLib.insert n n) (buildN @MyLib.MapUB n),
+          Bench.bench ("MapUU." <> show n) $ Bench.nf (MyLib.insert n n) (buildN @MyLib.MapUU n)
+        ]
+      | n <- ([0] <> powersOfTwo)
+      ]
 
 lookupBench :: Bench.Benchmark
-lookupBench = Bench.bgroup "Looking up an element which exists in a hashmap of size N" $
-  mconcat [
-    [ Bench.bench ("HashMap.Lazy." <> show n) $ Bench.nf (theirlookup 0) (buildN n)
-    , Bench.bench ("HashMap.Strict." <> show n) $ Bench.nf (HashMap.Strict.lookup 0) (buildN n)
-    , Bench.bench ("MapBL." <> show n) $ Bench.nf (mylookup 0) (buildN @MyLib.MapBL n)
-    , Bench.bench ("MapBB." <> show n) $ Bench.nf (MyLib.lookup 0) (buildN @MyLib.MapBB n)
-    , Bench.bench ("MapBU." <> show n) $ Bench.nf (MyLib.lookup 0) (buildN @MyLib.MapBU n)
-    , Bench.bench ("MapUL." <> show n) $ Bench.nf (MyLib.lookup 0) (buildN @MyLib.MapUL n)
-    , Bench.bench ("MapUB." <> show n) $ Bench.nf (MyLib.lookup 0) (buildN @MyLib.MapUB n)
-    , Bench.bench ("MapUU." <> show n) $ Bench.nf (MyLib.lookup 0) (buildN @MyLib.MapUU n)
-    ] | n <- powersOfTwo]
-
+lookupBench =
+  Bench.bgroup "Looking up an element which exists in a hashmap of size N" $
+    mconcat
+      [ [ Bench.bench ("HashMap.Lazy." <> show n) $ Bench.nf (theirlookup 0) (buildN n),
+          Bench.bench ("HashMap.Strict." <> show n) $ Bench.nf (HashMap.Strict.lookup 0) (buildN n),
+          Bench.bench ("MapBL." <> show n) $ Bench.nf (mylookup 0) (buildN @MyLib.MapBL n),
+          Bench.bench ("MapBB." <> show n) $ Bench.nf (MyLib.lookup 0) (buildN @MyLib.MapBB n),
+          Bench.bench ("MapBU." <> show n) $ Bench.nf (MyLib.lookup 0) (buildN @MyLib.MapBU n),
+          Bench.bench ("MapUL." <> show n) $ Bench.nf (MyLib.lookup 0) (buildN @MyLib.MapUL n),
+          Bench.bench ("MapUB." <> show n) $ Bench.nf (MyLib.lookup 0) (buildN @MyLib.MapUB n),
+          Bench.bench ("MapUU." <> show n) $ Bench.nf (MyLib.lookup 0) (buildN @MyLib.MapUU n)
+        ]
+      | n <- powersOfTwo
+      ]
 
 foldrBench :: Bench.Benchmark
-foldrBench = Bench.bgroup "Foldr (+) 0 on a hashmap of size N" $
-  let 
-    {-# INLINE bench #-}
-    bench :: forall map. (NFData (map Int Int), IsList (map Int Int), Item (map Int Int) ~ (Int, Int), Foldable (map Int)) => Int -> Bench.Benchmarkable
-    bench n = Bench.nf (foldr (+) 0) (buildN @map n)
-  in
-  mconcat [
-    [ Bench.bench ("HashMap." <> show n) $ bench @HashMap n
-    , Bench.bench ("MapBL." <> show n) $ bench @MyLib.MapBL n
-    , Bench.bench ("MapBB." <> show n) $ bench @MyLib.MapBB n
-    , Bench.bench ("MapUL." <> show n) $ bench @MyLib.MapUL n
-    , Bench.bench ("MapUB." <> show n) $ bench @MyLib.MapUB n
-    ] | n <- ([0] <> powersOfTwo)]
+foldrBench =
+  Bench.bgroup "Foldr (+) 0 on a hashmap of size N" $
+    let {-# INLINE bench #-}
+        bench :: forall map. (NFData (map Int Int), IsList (map Int Int), Item (map Int Int) ~ (Int, Int), Foldable (map Int)) => Int -> Bench.Benchmarkable
+        bench n = Bench.nf (foldr (+) 0) (buildN @map n)
+     in mconcat
+          [ [ Bench.bench ("HashMap." <> show n) $ bench @HashMap n,
+              Bench.bench ("MapBL." <> show n) $ bench @MyLib.MapBL n,
+              Bench.bench ("MapBB." <> show n) $ bench @MyLib.MapBB n,
+              Bench.bench ("MapUL." <> show n) $ bench @MyLib.MapUL n,
+              Bench.bench ("MapUB." <> show n) $ bench @MyLib.MapUB n
+            ]
+          | n <- ([0] <> powersOfTwo)
+          ]
 
 -- myinsert :: Int -> Int -> MyLib.MapBL Int Int -> MyLib.MapBL Int Int
 -- {-# NOINLINE myinsert #-}
@@ -75,7 +83,7 @@ theirlookup :: Int -> HashMap Int Int -> Maybe Int
 theirlookup = HashMap.Lazy.lookup
 
 buildN :: forall map. (NFData (map Int Int), IsList (map Int Int), Item (map Int Int) ~ (Int, Int)) => Int -> (map Int Int)
-buildN n = force $ fromList [(x, x) | x <- [0..(n - 1)]]
+buildN n = force $ fromList [(x, x) | x <- [0 .. (n - 1)]]
 
 powersOfTwo :: [Int]
-powersOfTwo = [2 ^ (x :: Int) | x <- [0..10]]
+powersOfTwo = [2 ^ (x :: Int) | x <- [0 .. 10]]

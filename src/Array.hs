@@ -15,13 +15,9 @@ module Array (SmallArray, SmallUnliftedArray, SmallUnliftedArray_, StrictSmallAr
 import Control.DeepSeq (NFData)
 import Control.Monad.Primitive
 import Control.Monad.ST (runST)
-import Prelude hiding (foldl, foldr, foldl', foldr', null, read, length)
-import Data.Foldable qualified as Foldable
-import Data.Primitive (SmallArray, PrimArray, Prim)
-import Data.Primitive.SmallArray qualified as SmallArray
-import Data.Primitive.PrimArray qualified as PrimArray
 import Data.Coerce (coerce)
 import Data.Elevator (Strict (Strict), UnliftedType)
+import Data.Foldable qualified as Foldable
 import Data.Hashable (Hashable)
 import Data.Kind (Type)
 import Data.Primitive (Prim, PrimArray, SmallArray)
@@ -52,7 +48,7 @@ instance PrimUnlifted (Strictly a) where
 -- An easier to use version of `SmallUnliftedArray`,
 -- allowing storage of _any_ `a` by virtue of `Data.Elevator.Strict`
 newtype StrictSmallArray a = StrictSmallArray (SmallUnliftedArray_ (Strict a) (Strictly a))
-  deriving Show
+  deriving (Show)
 
 instance Functor StrictSmallArray where
   fmap f (StrictSmallArray arr) = StrictSmallArray (mapSmallUnliftedArray (Strictly . f . unStrictly) arr)
