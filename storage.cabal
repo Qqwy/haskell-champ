@@ -76,6 +76,7 @@ library
       data-elevator,
       deepseq,
       hashable,
+      template-haskell,
 
     build-tool-depends: cpphs:cpphs
 

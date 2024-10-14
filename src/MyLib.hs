@@ -216,19 +216,29 @@ bitposLocation node@(CompactNode bitmap _ _ _) bitpos
   | (childrenBitmap node) .&. bitpos /= 0 = InChild
   | otherwise = Nowhere
 
-naiveFromList :: (Hashable k, MapRepr keys vals k v) => [(k, v)] -> Map keys vals k v
-{-# INLINE naiveFromList #-}
-naiveFromList = Foldable.foldl' (\m (k, v) -> insert k v m) empty
+-- \(O(n)\) Construct a map with the supplied key-value mappings.
+-- 
+-- If the list contains duplicate keys, later mappings take precedence.
+--
+-- NOTE: Since there is no unsafeInsert yet,
+-- the current implementation is slower than necessary.
+fromList :: (Hashable k, MapRepr keys vals k v) => [(k, v)] -> Map keys vals k v
+{-# INLINE fromList #-}
+fromList = Foldable.foldl' (\m (k, v) -> insert k v m) empty
 
-myNaiveFromList :: [(Int, Word)] -> MapUU Int Word
-myNaiveFromList = naiveFromList
-
-{-# INLINE toList #-}
+-- | \(O(n)\) Return a list of this map's elements (key-value pairs).
+--
+-- The resulting list is produced lazily and may participate in list fusion.
+-- The order of its elements is unspecified.
 toList :: (MapRepr keys vals k v) => Map keys vals k v -> [(k, v)]
+{-# INLINE toList #-}
 toList hashmap = Exts.build (\fusedCons fusedNil -> foldrWithKey (\k v xs -> (k, v) `fusedCons` xs) fusedNil hashmap)
 
-{-# INLINE insert #-}
+-- | \(O(\log32 n)\) Associate the specified value with the specified
+-- key in this map.  If this map previously contained a mapping for
+-- the key, the old value is replaced.
 insert :: (Hashable k, MapRepr keys vals k v) => k -> v -> Map keys vals k v -> Map keys vals k v
+{-# INLINE insert #-}
 insert !k v !m = case matchMap m of
   (# (# #) | | #) -> singleton k v
   (# | (# k', v' #) | #) ->
@@ -368,8 +378,8 @@ lookup !k m = case matchMap m of
                                 in if k == k' then Just v else Nothing
                             InChild -> lookup' (nextShift s) (indexChild node bitpos)
 
-mylookup :: Int -> MapUU Int Int -> Maybe Int
-mylookup = lookup
+-- mylookup :: Int -> MapUU Int Int -> Maybe Int
+-- mylookup = lookup
 
 {-# INLINE indexKey #-}
 indexKey :: MapRepr keys vals k v => MapNode keys vals k v -> Bitmap -> k
@@ -424,7 +434,7 @@ instance (Hashable k, Eq k, MapRepr keys vals k v) => IsList (Map keys vals k v)
   {-# INLINE toList #-}
   toList = MyLib.toList
   {-# INLINE fromList #-}
-  fromList = naiveFromList
+  fromList = MyLib.fromList
 
 instance (NFData k, NFData v, MapRepr keys vals k v) => NFData (Map keys vals k v) where
   {-# INLINE rnf #-}
@@ -507,6 +517,10 @@ instance Foldable (MapBL k) where
   foldl = MyLib.foldl
   {-# INLINE foldl' #-}
   foldl' = MyLib.foldl'
+  {-# INLINE null #-}
+  null = MyLib.null
+  {-# INLINE length #-}
+  length = MyLib.size
 
 -- TODO: manual impls of the other funs
 -- as those are more efficient
@@ -520,6 +534,10 @@ instance Foldable (MapBB k) where
   foldl = MyLib.foldl
   {-# INLINE foldl' #-}
   foldl' = MyLib.foldl'
+  {-# INLINE null #-}
+  null = MyLib.null
+  {-# INLINE length #-}
+  length = MyLib.size
 
 -- TODO: manual impls of the other funs
 -- as those are more efficient
@@ -534,6 +552,10 @@ instance (Prim k) => Foldable (MapUL k) where
   foldl = MyLib.foldl
   {-# INLINE foldl' #-}
   foldl' = MyLib.foldl'
+  {-# INLINE null #-}
+  null = MyLib.null
+  {-# INLINE length #-}
+  length = MyLib.size
 
 -- TODO: manual impls of the other funs
 -- as those are more efficient
@@ -547,6 +569,10 @@ instance (Prim k) => Foldable (MapUB k) where
   foldl = MyLib.foldl
   {-# INLINE foldl' #-}
   foldl' = MyLib.foldl'
+  {-# INLINE null #-}
+  null = MyLib.null
+  {-# INLINE length #-}
+  length = MyLib.size
 
 -- TODO: manual impls of the other funs
 -- as those are more efficient
@@ -638,6 +664,21 @@ foldlWithKey' f !z0 m = case matchMap m of
       (Contiguous.foldlZipWith' f) z keys vals
         & flip (Contiguous.foldl' go) children
 
+-- | \(O(n)\) Returns a list of the map's keys.
+--
+-- The resulting list is produced lazily and participates in list fusion.
+-- The order of keys is unspecified.
+keys :: MapRepr keys vals k v => Map keys vals k v -> [k]
+{-# INLINE keys #-}
+keys = Prelude.map fst . MyLib.toList
+
+-- | \(O(n)\) Returns a list of the map's elements (or values).
+--
+-- The resulting list is produced lazily and participates in list fusion.
+-- The order of elements is unspecified.
+elems :: MapRepr keys vals k v => Map keys vals k v -> [v]
+{-# INLINE elems #-}
+elems = Prelude.map snd . MyLib.toList
 
 instance (Show k, Show v, MapRepr keys vals k v) => Show (Map keys vals k v) where
     show m = "fromList " <> show (MyLib.toList m)
