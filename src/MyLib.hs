@@ -155,28 +155,28 @@ class (ContiguousU (ArrayOf (Strict keyStorage)), ContiguousU (ArrayOf (valStora
      {-# UNPACK #-} !((ArrayOf (valstorage)) v) \
      {-# UNPACK #-} !(StrictSmallArray (MapNode (keystorage) (valstorage) k v))
 
-#define map_repr_instance(name, keystorage, valstorage, constraints)                                       \
-instance constraints => MapRepr (keystorage) (valstorage) k v where                                        \
-{ {-# INLINE unpackNode #-}                                                                                \
-; unpackNode (MAP_NODE_NAME(name) b keys vals children) = (# b, keys, vals, children #)                    \
-; {-# INLINE packNode #-}                                                                                  \
-; packNode (# b, keys, vals, children #) = (MAP_NODE_NAME(name) b keys vals children)                      \
-; {-# INLINE emptyMap #-}                                                                                  \
-; emptyMap = EmptyMap_/**/name                                                                             \
-; {-# INLINE singletonMap #-}                                                                              \
-; singletonMap !k v = SingletonMap_/**/name k v                                                            \
-; {-# INLINE manyMap #-}                                                                                   \
-; manyMap mapsize (MAP_NODE_NAME(name) b keys vals children) = ManyMap_/**/name mapsize b keys vals children \
-; {-# INLINE matchMap #-}                                                                                  \
-; matchMap = \case {                                                                                       \
-; EmptyMap_/**/name -> (# (# #) | | #)                                                                     \
-; SingletonMap_/**/name k v -> (#  | (# k, v #) | #)                                                       \
-; ManyMap_/**/name mapsize b keys vals children -> (# | | (# mapsize, MAP_NODE_NAME(name) b keys vals children #) #) }            \
-; data MapNode (keystorage) (valstorage) k v = MAP_NODE_NAME(name) MAP_NODE_FIELDS(keystorage, valstorage) \
-; data Map (keystorage) (valstorage) k v                                                              \
-  = EmptyMap_/**/name                                                                                      \
-  | SingletonMap_/**/name !k v                                                                             \
-  | ManyMap_/**/name !Word MAP_NODE_FIELDS(keystorage, valstorage)                                               \
+#define map_repr_instance(name, keystorage, valstorage, constraints)                                                     \
+instance constraints => MapRepr (keystorage) (valstorage) k v where                                                      \
+{ {-# INLINE unpackNode #-}                                                                                              \
+; unpackNode (MAP_NODE_NAME(name) b keys vals children) = (# b, keys, vals, children #)                                  \
+; {-# INLINE packNode #-}                                                                                                \
+; packNode (# b, keys, vals, children #) = (MAP_NODE_NAME(name) b keys vals children)                                    \
+; {-# INLINE emptyMap #-}                                                                                                \
+; emptyMap = EmptyMap_/**/name                                                                                           \
+; {-# INLINE singletonMap #-}                                                                                            \
+; singletonMap !k v = SingletonMap_/**/name k v                                                                          \
+; {-# INLINE manyMap #-}                                                                                                 \
+; manyMap mapsize (MAP_NODE_NAME(name) b keys vals children) = ManyMap_/**/name mapsize b keys vals children             \
+; {-# INLINE matchMap #-}                                                                                                \
+; matchMap = \case {                                                                                                     \
+; EmptyMap_/**/name -> (# (# #) | | #)                                                                                   \
+; SingletonMap_/**/name k v -> (#  | (# k, v #) | #)                                                                     \
+; ManyMap_/**/name mapsize b keys vals children -> (# | | (# mapsize, MAP_NODE_NAME(name) b keys vals children #) #) }   \
+; data MapNode (keystorage) (valstorage) k v = MAP_NODE_NAME(name) MAP_NODE_FIELDS(keystorage, valstorage)               \
+; data Map (keystorage) (valstorage) k v                                                                                 \
+  = EmptyMap_/**/name                                                                                                    \
+  | SingletonMap_/**/name !k v                                                                                           \
+  | ManyMap_/**/name !Word MAP_NODE_FIELDS(keystorage, valstorage)                                                       \
 }
 
 map_repr_instance (Boxed_Lazy, Boxed, Lazy, ())
