@@ -13,10 +13,16 @@ import Test.Tasty.Bench qualified as Bench
 main :: IO ()
 main =
   Bench.defaultMain
-    [ -- insertSmallBench
-    -- , insertBench
-      foldrBench
-      -- lookupBench
+    [ insertSmallBench
+    , insertBench
+    , lookupSmallBench
+    , lookupBench
+    , foldrSmallBench
+    , foldrBench
+    , foldl'SmallBench
+    , foldl'Bench
+    , toListSmallBench
+    , toListBench
     ]
 
 insertSmallBench :: Bench.Benchmark
@@ -51,9 +57,25 @@ insertBench =
       | n <- ([0] <> powersOfTwo)
       ]
 
+lookupSmallBench :: Bench.Benchmark
+lookupSmallBench =
+  Bench.bgroup "Lookup (powers of two)" $
+    mconcat
+      [ [ Bench.bench ("HashMap.Lazy." <> show n) $ Bench.nf (HashMap.Lazy.lookup (n)) (buildN n),
+          Bench.bench ("HashMap.Strict." <> show n) $ Bench.nf (HashMap.Strict.lookup (n)) (buildN n),
+          Bench.bench ("MapBL." <> show n) $ Bench.nf (mylookup (n)) (buildN @MyLib.MapBL n),
+          Bench.bench ("MapBB." <> show n) $ Bench.nf (MyLib.lookup (n)) (buildN @MyLib.MapBB n),
+          Bench.bench ("MapBU." <> show n) $ Bench.nf (MyLib.lookup (n)) (buildN @MyLib.MapBU n),
+          Bench.bench ("MapUL." <> show n) $ Bench.nf (MyLib.lookup (n)) (buildN @MyLib.MapUL n),
+          Bench.bench ("MapUB." <> show n) $ Bench.nf (MyLib.lookup (n)) (buildN @MyLib.MapUB n),
+          Bench.bench ("MapUU." <> show n) $ Bench.nf (MyLib.lookup (n)) (buildN @MyLib.MapUU n)
+        ]
+      | n <- [0..32]
+      ]
+
 lookupBench :: Bench.Benchmark
 lookupBench =
-  Bench.bgroup "Looking up an element which exists in a hashmap of size N" $
+  Bench.bgroup "Lookup (powers of two)" $
     mconcat
       [ [ Bench.bench ("HashMap.Lazy." <> show n) $ Bench.nf (HashMap.Lazy.lookup (n)) (buildN n),
           Bench.bench ("HashMap.Strict." <> show n) $ Bench.nf (HashMap.Strict.lookup (n)) (buildN n),
@@ -67,13 +89,27 @@ lookupBench =
       | n <- powersOfTwo
       ]
 
+foldrSmallBench :: Bench.Benchmark
+foldrSmallBench =
+  Bench.bgroup "Foldr (+) 0 (small)" $
+    mconcat
+          [ [ Bench.bench ("HashMapLazy." <> show n) $ Bench.nf (HashMap.Lazy.foldr (+) 0) (buildN @HashMap n),
+              Bench.bench ("HashMapStrict." <> show n) $ Bench.nf (HashMap.Strict.foldr (+) 0) (buildN @HashMap n),
+              Bench.bench ("MapBL." <> show n) $ Bench.nf (MyLib.foldr (+) 0) (buildN @MyLib.MapBL n),
+              Bench.bench ("MapBB." <> show n) $ Bench.nf (MyLib.foldr (+) 0) (buildN @MyLib.MapBB n),
+              Bench.bench ("MapBU." <> show n) $ Bench.nf (MyLib.foldr (+) 0) (buildN @MyLib.MapBU n),
+              Bench.bench ("MapUL." <> show n) $ Bench.nf (MyLib.foldr (+) 0) (buildN @MyLib.MapUL n),
+              Bench.bench ("MapUB." <> show n) $ Bench.nf (MyLib.foldr (+) 0) (buildN @MyLib.MapUB n),
+              Bench.bench ("MapUU." <> show n) $ Bench.nf (MyLib.foldr (+) 0) (buildN @MyLib.MapUU n)
+            ]
+          | n <- [0..32]
+          ]
+
+
 foldrBench :: Bench.Benchmark
 foldrBench =
-  Bench.bgroup "Foldr (+) 0 on a hashmap of size N" $
-    let {-# INLINE bench #-}
-        bench :: forall map. (NFData (map Int Int), IsList (map Int Int), Item (map Int Int) ~ (Int, Int), Foldable (map Int)) => Int -> Bench.Benchmarkable
-        bench n = Bench.nf (foldr (+) 0) (buildN @map n)
-     in mconcat
+  Bench.bgroup "Foldr (+) 0 (powers of two)" $
+    mconcat
           [ [ Bench.bench ("HashMapLazy." <> show n) $ Bench.nf (HashMap.Lazy.foldr (+) 0) (buildN @HashMap n),
               Bench.bench ("HashMapStrict." <> show n) $ Bench.nf (HashMap.Strict.foldr (+) 0) (buildN @HashMap n),
               Bench.bench ("MapBL." <> show n) $ Bench.nf (MyLib.foldr (+) 0) (buildN @MyLib.MapBL n),
@@ -85,6 +121,74 @@ foldrBench =
             ]
           | n <- ([0] <> powersOfTwo)
           ]
+
+foldl'SmallBench :: Bench.Benchmark
+foldl'SmallBench =
+  Bench.bgroup "foldl' (+) 0 (small)" $
+    mconcat
+          [ [ Bench.bench ("HashMapLazy." <> show n) $ Bench.nf (HashMap.Lazy.foldl' (+) 0) (buildN @HashMap n),
+              Bench.bench ("HashMapStrict." <> show n) $ Bench.nf (HashMap.Strict.foldl' (+) 0) (buildN @HashMap n),
+              Bench.bench ("MapBL." <> show n) $ Bench.nf (MyLib.foldl' (+) 0) (buildN @MyLib.MapBL n),
+              Bench.bench ("MapBB." <> show n) $ Bench.nf (MyLib.foldl' (+) 0) (buildN @MyLib.MapBB n),
+              Bench.bench ("MapBU." <> show n) $ Bench.nf (MyLib.foldl' (+) 0) (buildN @MyLib.MapBU n),
+              Bench.bench ("MapUL." <> show n) $ Bench.nf (MyLib.foldl' (+) 0) (buildN @MyLib.MapUL n),
+              Bench.bench ("MapUB." <> show n) $ Bench.nf (MyLib.foldl' (+) 0) (buildN @MyLib.MapUB n),
+              Bench.bench ("MapUU." <> show n) $ Bench.nf (MyLib.foldl' (+) 0) (buildN @MyLib.MapUU n)
+            ]
+          | n <- [0..32]
+          ]
+
+
+foldl'Bench :: Bench.Benchmark
+foldl'Bench =
+  Bench.bgroup "foldl' (+) 0 (powers of two)" $
+    mconcat
+          [ [ Bench.bench ("HashMapLazy." <> show n) $ Bench.nf (HashMap.Lazy.foldl' (+) 0) (buildN @HashMap n),
+              Bench.bench ("HashMapStrict." <> show n) $ Bench.nf (HashMap.Strict.foldl' (+) 0) (buildN @HashMap n),
+              Bench.bench ("MapBL." <> show n) $ Bench.nf (MyLib.foldl' (+) 0) (buildN @MyLib.MapBL n),
+              Bench.bench ("MapBB." <> show n) $ Bench.nf (MyLib.foldl' (+) 0) (buildN @MyLib.MapBB n),
+              Bench.bench ("MapBU." <> show n) $ Bench.nf (MyLib.foldl' (+) 0) (buildN @MyLib.MapBU n),
+              Bench.bench ("MapUL." <> show n) $ Bench.nf (MyLib.foldl' (+) 0) (buildN @MyLib.MapUL n),
+              Bench.bench ("MapUB." <> show n) $ Bench.nf (MyLib.foldl' (+) 0) (buildN @MyLib.MapUB n),
+              Bench.bench ("MapUU." <> show n) $ Bench.nf (MyLib.foldl' (+) 0) (buildN @MyLib.MapUU n)
+            ]
+          | n <- ([0] <> powersOfTwo)
+          ]
+
+toListSmallBench :: Bench.Benchmark
+toListSmallBench =
+  Bench.bgroup "toList (small)" $
+     mconcat
+          [ [ Bench.bench ("HashMapLazy." <> show n) $ Bench.nf (HashMap.Lazy.toList) (buildN @HashMap n),
+              Bench.bench ("HashMapStrict." <> show n) $ Bench.nf (HashMap.Strict.toList) (buildN @HashMap n),
+              Bench.bench ("MapBL." <> show n) $ Bench.nf (MyLib.toList) (buildN @MyLib.MapBL n),
+              Bench.bench ("MapBB." <> show n) $ Bench.nf (MyLib.toList) (buildN @MyLib.MapBB n),
+              Bench.bench ("MapBU." <> show n) $ Bench.nf (MyLib.toList) (buildN @MyLib.MapBU n),
+              Bench.bench ("MapUL." <> show n) $ Bench.nf (MyLib.toList) (buildN @MyLib.MapUL n),
+              Bench.bench ("MapUB." <> show n) $ Bench.nf (MyLib.toList) (buildN @MyLib.MapUB n),
+              Bench.bench ("MapUU." <> show n) $ Bench.nf (MyLib.toList) (buildN @MyLib.MapUU n)
+            ]
+          | n <- [0..32]
+          ]
+
+
+toListBench :: Bench.Benchmark
+toListBench =
+  Bench.bgroup "toList (powers of two)" $
+     mconcat
+          [ [ Bench.bench ("HashMapLazy." <> show n) $ Bench.nf (HashMap.Lazy.toList) (buildN @HashMap n),
+              Bench.bench ("HashMapStrict." <> show n) $ Bench.nf (HashMap.Strict.toList) (buildN @HashMap n),
+              Bench.bench ("MapBL." <> show n) $ Bench.nf (MyLib.toList) (buildN @MyLib.MapBL n),
+              Bench.bench ("MapBB." <> show n) $ Bench.nf (MyLib.toList) (buildN @MyLib.MapBB n),
+              Bench.bench ("MapBU." <> show n) $ Bench.nf (MyLib.toList) (buildN @MyLib.MapBU n),
+              Bench.bench ("MapUL." <> show n) $ Bench.nf (MyLib.toList) (buildN @MyLib.MapUL n),
+              Bench.bench ("MapUB." <> show n) $ Bench.nf (MyLib.toList) (buildN @MyLib.MapUB n),
+              Bench.bench ("MapUU." <> show n) $ Bench.nf (MyLib.toList) (buildN @MyLib.MapUU n)
+            ]
+          | n <- ([0] <> powersOfTwo)
+          ]
+
+
 
 -- myinsert :: Int -> Int -> MyLib.MapBL Int Int -> MyLib.MapBL Int Int
 -- {-# NOINLINE myinsert #-}
