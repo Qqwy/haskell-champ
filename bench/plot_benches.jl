@@ -1,3 +1,10 @@
+#! /usr/bin/env nix-shell
+#! nix-shell -i julia -p julia
+
+# Make sure that when execute this script
+# we look for files relative to the script's location
+cd(dirname(@__FILE__))
+
 using Pkg
 Pkg.add("CSV")
 Pkg.add("DataFrames")
