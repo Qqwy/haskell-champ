@@ -35,6 +35,7 @@ import GHC.IsList (IsList (..))
 import Numeric (showBin)
 import Storage (ArrayOf, Storage (..), StrictStorage (..))
 import Prelude hiding (lookup)
+import Collision qualified
 
 #define BIT_PARTITION_SIZE 5
 #define HASH_CODE_LENGTH (1 `unsafeShiftL` BIT_PARTITION_SIZE)
@@ -296,7 +297,7 @@ insertMergeWithInline bitpos k v h shift node@(CompactNode bitmap keys vals chil
       existingKey = indexKey node bitpos
       (# existingVal #) = indexVal# node bitpos
    in if
-        | existingKey == k && False -> (# 0##, node #) -- TODO: ptr eq
+        | existingKey == k && v `ptrEq` existingVal -> (# 0##, node #)
         | existingKey == k -> (# 1##, CompactNode bitmap' keys (Contiguous.replaceAt vals idx v) children #)
         | otherwise ->
             let newIdx = childrenIndex node bitpos
@@ -338,7 +339,10 @@ lookup :: (MapRepr keys vals k v, Eq k, Hashable k) => k -> Map keys vals k v ->
 lookup !k m = case matchMap m of
   (# (# #) | | #) -> Nothing
   (# | (# k', v #) | #) -> if k == k' then Just v else Nothing
-  (# | | (# _size, node0 #) #) -> -- lookup' (hash k0) k0 0 node0
+  (# | | (# _size, node0 #) #) ->
+    -- NOTE: Manually inlining the first iteration of lookup'
+    -- (which will _never_ be in a collision node)
+    -- results in a noticeable speedup for maps that have at most 32 elements.
     let !h = hash k 
         !bitpos = maskToBitpos $ hashToMask 0 h
     in case bitposLocation node0 bitpos of
@@ -352,7 +356,7 @@ lookup !k m = case matchMap m of
                 {-# INLINEABLE lookup' #-}
                 lookup' !_s !(CollisionNode keys vals) =
                     keys
-                        & Contiguous.findIndex (\k' -> k' == k) -- TODO ptrEq optimization
+                        & Contiguous.findIndex (\k' -> k' == k)
                         & fmap (Contiguous.index vals)
                 lookup' !s !node@(CompactNode _bitmap _keys _vals _children) =
                     let !bitpos = maskToBitpos $ hashToMask s h
@@ -360,7 +364,6 @@ lookup !k m = case matchMap m of
                             Nowhere -> Nothing
                             Inline ->
                                 let k' = indexKey node bitpos
-                                    -- NOTE: We are careful to force the _access_ of the value but not the value itself
                                     (# v #) = indexVal# node bitpos
                                 in if k == k' then Just v else Nothing
                             InChild -> lookup' (nextShift s) (indexChild node bitpos)
@@ -370,19 +373,19 @@ mylookup = lookup
 
 {-# INLINE indexKey #-}
 indexKey :: MapRepr keys vals k v => MapNode keys vals k v -> Bitmap -> k
--- indexKey node@(CollisionNode keys _vals) ix = Contiguous.index keys ix
+indexKey (CollisionNode _keys _vals) _ = error "Should only be called on CompactNodes"
 indexKey node@(CompactNode _bitmap keys _vals _children) bitpos =
     Contiguous.index keys (dataIndex node bitpos)
 
 {-# INLINE indexVal# #-}
 indexVal# :: MapRepr keys vals k v => MapNode keys vals k v -> Bitmap -> (# v #)
---indexVal# node@(CollisionNode _keys vals) ix = Contiguous.index# vals ix
+indexVal# (CollisionNode _keys _vals) _ = error "Should only be called on CompactNodes"
 indexVal# node@(CompactNode _bitmap _keys vals _children) bitpos =
     Contiguous.index# vals (dataIndex node bitpos)
 
 {-# INLINE indexChild #-}
 indexChild :: MapRepr keys vals k v => MapNode keys vals k v -> Bitmap -> MapNode keys vals k v
-indexChild node@(CollisionNode _keys _vals) _ix = error "Should only be called on CompactNodes"
+indexChild (CollisionNode _keys _vals) _ = error "Should only be called on CompactNodes"
 indexChild node@(CompactNode _bitmap _keys _vals children) bitpos =
     Contiguous.index children (childrenIndex node bitpos)
 
@@ -394,13 +397,15 @@ instance (MapRepr keys vals k v, Eq v, Eq k) => Eq (Map keys vals k v) where
   {-# INLINEABLE (==) #-}
   EmptyMap == EmptyMap = True
   (SingletonMap k v) == (SingletonMap k' v') = (k == k') && (v == v')
-  (ManyMap size node) == (ManyMap size' node') = size == size' && node == node'
+  (ManyMap sz node) == (ManyMap sz' node') = sz == sz' && node == node'
   _ == _ = False
 
 instance (MapRepr keys vals k v, Eq v, Eq k) => Eq (MapNode keys vals k v) where
   {-# INLINEABLE (==) #-}
   n1 == n2 | n1 `ptrEq` n2 = True
-  (CollisionNode keys vals) == (CollisionNode keys' vals') = error "TODO: equality for collision nodes"
+  (CollisionNode keys vals) == (CollisionNode keys' vals') = 
+    Collision.isPermutationBy (==) (Contiguous.toList keys) (Contiguous.toList keys')
+    && Collision.isPermutationBy (==) (Contiguous.toList vals) (Contiguous.toList vals')
   (CompactNode b1 k1 v1 c1) == (CompactNode b2 k2 v2 c2) =
     b1 == b2
       && (k1 `Contiguous.same` k2 || k1 `Contiguous.equals` k2)
@@ -410,6 +415,9 @@ instance (MapRepr keys vals k v, Eq v, Eq k) => Eq (MapNode keys vals k v) where
 
 myeq :: MapUU Int Int -> MapUU Int Int -> Bool
 myeq a b = a == b
+
+
+
 
 instance (Hashable k, Eq k, MapRepr keys vals k v) => IsList (Map keys vals k v) where
   type Item (Map keys vals k v) = (k, v)
@@ -424,7 +432,6 @@ instance (NFData k, NFData v, MapRepr keys vals k v) => NFData (Map keys vals k 
   rnf (SingletonMap k v) = rnf k `seq` rnf v
   rnf (ManyMap _size node) = rnf node
 
--- TODO: Skip alltogether for MapNode Unboxed Unboxed
 instance {-# OVERLAPPABLE #-} (NFData k, NFData v, MapRepr keys vals k v) => NFData (MapNode keys vals k v) where
   {-# INLINE rnf #-}
   rnf (CollisionNode keys vals) = Contiguous.rnf keys `seq` Contiguous.rnf vals
@@ -435,49 +442,124 @@ instance {-# OVERLAPS #-} (NFData k, NFData v) => NFData (MapNode Unboxed (Stric
   {-# INLINE rnf #-}
   rnf !_ = ()
 
-------------------------------------------------------------------------
--- Pointer equality
+instance Functor (MapBL k) where
+  {-# INLINE fmap #-}
+  fmap = MyLib.map
 
--- | Check if two the two arguments are the same value.  N.B. This
--- function might give false negatives (due to GC moving objects, or things being unpacked/repacked.)
--- but never false positives
-ptrEq :: a -> a -> Bool
-ptrEq x y = Exts.isTrue# (Exts.reallyUnsafePtrEquality# x y Exts.==# 1#)
-{-# INLINE ptrEq #-}
+instance Functor (MapBB k) where
+  {-# INLINE fmap #-}
+  fmap = MyLib.map
+
+instance (Prim k) => Functor (MapUL k) where
+  {-# INLINE fmap #-}
+  fmap = MyLib.map
+
+instance (Prim k) => Functor (MapUB k) where
+  {-# INLINE fmap #-}
+  fmap = MyLib.map
+
+-- NOTE: Supporting Functor for MapXU is impossible
+-- without being very tricksy
+
+-- | Map a function over the values in a hashmap
+--
+-- O(n)
+map :: (MapRepr keys vals k a, MapRepr keys vals k b) => (a -> b) -> Map keys vals k a -> Map keys vals k b
+{-# INLINE map #-}
+map = map'
+
+-- | Map a function over the values in a hashmap,
+-- allowing to switch the value storage type.
+--
+-- that is: you can switch between MapBL <-> MapBB <-> MapBU,
+-- or switch between MapUL <-> MapUB <-> MapUU.
+--
+-- When using this function, you will need 
+-- to specify the type of the output map.
+--
+-- O(n)
+--
+-- Example:
+--
+-- >>> mymap = fromList [(1, 10), (2, 20)] :: MapUU Int Int
+-- >>> map' show mymap :: MapUB Int String 
+-- fromList [(1, "10"), (2, "20")]
+map' :: (MapRepr keys as k a, MapRepr keys bs k b) => (a -> b) -> Map keys as k a -> Map keys bs k b
+{-# INLINE map' #-}
+map' !_f EmptyMap = EmptyMap
+map' !f (SingletonMap k v) = SingletonMap k (f v)
+map' !f (ManyMap sz node) = ManyMap sz (mapNode node)
+  where
+    mapNode (CollisionNode keys vals) = (CollisionNode keys (Contiguous.map f vals))
+    mapNode (CompactNode bitmap keys vals children) =
+      let
+        vals' = Contiguous.map f vals
+        children' = Contiguous.map mapNode children
+      in
+        CompactNode bitmap keys vals' children'
 
 instance Foldable (MapBL k) where
+  {-# INLINE foldr #-}
   foldr = MyLib.foldr
+  {-# INLINE foldr' #-}
   foldr' = MyLib.foldr'
+  {-# INLINE foldl #-}
+  foldl = MyLib.foldl
+  {-# INLINE foldl' #-}
+  foldl' = MyLib.foldl'
 
 -- TODO: manual impls of the other funs
 -- as those are more efficient
 
 instance Foldable (MapBB k) where
+  {-# INLINE foldr #-}
   foldr = MyLib.foldr
+  {-# INLINE foldr' #-}
   foldr' = MyLib.foldr'
+  {-# INLINE foldl #-}
+  foldl = MyLib.foldl
+  {-# INLINE foldl' #-}
+  foldl' = MyLib.foldl'
 
 -- TODO: manual impls of the other funs
 -- as those are more efficient
+
+
+instance (Prim k) => Foldable (MapUL k) where
+  {-# INLINE foldr #-}
+  foldr = MyLib.foldr
+  {-# INLINE foldr' #-}
+  foldr' = MyLib.foldr'
+  {-# INLINE foldl #-}
+  foldl = MyLib.foldl
+  {-# INLINE foldl' #-}
+  foldl' = MyLib.foldl'
+
+-- TODO: manual impls of the other funs
+-- as those are more efficient
+
+instance (Prim k) => Foldable (MapUB k) where
+  {-# INLINE foldr #-}
+  foldr = MyLib.foldr
+  {-# INLINE foldr' #-}
+  foldr' = MyLib.foldr'
+  {-# INLINE foldl #-}
+  foldl = MyLib.foldl
+  {-# INLINE foldl' #-}
+  foldl' = MyLib.foldl'
+
+-- TODO: manual impls of the other funs
+-- as those are more efficient
+
+-- TODO: Would be nice to offer Foldable for
+-- maps with unboxed values,
+-- but without some tricksy workaround this is impossible.
 
 -- instance Foldable (MapBU k) where
 --   foldr = MyLib.foldr
 --   foldr' = MyLib.foldr'
 --   -- TODO: manual impls of the other funs
 --   -- as those are more efficient
-
-instance (Prim k) => Foldable (MapUL k) where
-  foldr = MyLib.foldr
-  foldr' = MyLib.foldr'
-
--- TODO: manual impls of the other funs
--- as those are more efficient
-
-instance (Prim k) => Foldable (MapUB k) where
-  foldr = MyLib.foldr
-  foldr' = MyLib.foldr'
-
--- TODO: manual impls of the other funs
--- as those are more efficient
 
 -- instance (Prim k) => Foldable (MapUU k) where
 --   foldr = MyLib.foldr
@@ -497,6 +579,19 @@ foldr f z0 m = case matchMap m of
         & flip (Contiguous.foldr f) vals
         & flip (Contiguous.foldr go) children
 
+{-# INLINE foldl #-}
+foldl :: (MapRepr keys vals k v) => (r -> v -> r) -> r -> Map keys vals k v -> r
+foldl f z0 m = case matchMap m of
+  (# (# #) | | #) -> z0
+  (# | (# _k, v #) | #) -> f z0 v
+  (# | | (# _size, node0 #) #) -> Exts.inline go z0 node0
+  where
+    go z (MapNode _bitmap _keys !vals !children) =
+      z
+        & flip (Contiguous.foldl go) children
+        & flip (Contiguous.foldl f) vals
+
+
 {-# INLINE foldr' #-}
 foldr' :: (MapRepr keys vals k v) => (v -> r -> r) -> r -> Map keys vals k v -> r
 foldr' f !z0 m = case matchMap m of
@@ -509,6 +604,18 @@ foldr' f !z0 m = case matchMap m of
         & flip (Contiguous.foldr' f) vals
         & flip (Contiguous.foldr' go) children
 
+{-# INLINE foldl' #-}
+foldl' :: (MapRepr keys vals k v) => (r -> v -> r) -> r -> Map keys vals k v -> r
+foldl' f !z0 m = case matchMap m of
+  (# (# #) | | #) -> z0
+  (# | (# _k, v #) | #) -> f z0 v
+  (# | | (# _size, node0 #) #) -> Exts.inline go z0 node0
+  where
+    go !z (MapNode _bitmap _keys !vals !children) =
+      z
+        & flip (Contiguous.foldl' go) children
+        & flip (Contiguous.foldl' f) vals
+
 {-# INLINE foldrWithKey #-}
 foldrWithKey :: (MapRepr keys vals k v) => (k -> v -> r -> r) -> r -> Map keys vals k v -> r
 foldrWithKey f z0 m = case matchMap m of
@@ -520,52 +627,33 @@ foldrWithKey f z0 m = case matchMap m of
       (Contiguous.foldrZipWith f) z keys vals
         & flip (Contiguous.foldr go) children
 
--- foldr' _f z EmptyMap = z
--- foldr' f !z (SingletonMap _k !v) = f v z
--- foldr' f z0 (ManyMap !node0) = go z0 node0 where
---     go z (MapNode _bitmap _keys vals children) =
---         z
---         & flip (Array.foldr' f) vals
---         & flip (Array.foldr' (flip go)) children
+{-# INLINE foldlWithKey' #-}
+foldlWithKey' :: (MapRepr keys vals k v) => (r -> k -> v -> r) -> r -> Map keys vals k v -> r
+foldlWithKey' f !z0 m = case matchMap m of
+  (# (# #) | | #) -> z0
+  (# | (# k, v #) | #) -> f z0 k v
+  (# | | (# _size, node0 #) #) -> Exts.inline go z0 node0
+  where
+    go !z (MapNode _bitmap keys !vals !children) =
+      (Contiguous.foldlZipWith' f) z keys vals
+        & flip (Contiguous.foldl' go) children
 
--- {-# INLINE foldr'2 #-}
--- foldr'2 :: (Element (ArrayOf (Strict keys)) k, Element (ArrayOf vals) v) => MapRepr keys vals k v => (v -> r -> r) -> r -> Map keys vals k v -> r
--- foldr'2 f z0 m = case matchMap m of
---   (# (##) | | #) -> z0
---   (# | (# _k, v #) | #) -> f v z0
---   (# | | node0 #) -> go node0 z0
---     where
---       go (MapNode _bitmap _keys !vals !children) z =
---         z
---         & flip (Contiguous.foldr' f) vals
---         & flip (Contiguous.foldr' go) children
 
--- {-# INLINE foldl'2 #-}
--- foldl'2 :: MapRepr keys vals k v => (r -> v -> r) -> r -> Map keys vals k v -> r
--- foldl'2 f z0 m = case matchMap m of
---   (# (##) | | #) -> z0
---   (# | (# _k, v #) | #) -> f z0 v
---   (# | | node0 #) -> go z0 node0
---     where
---       go z (MapNode _bitmap _keys vals children) =
---         z
---         & flip (Array.foldl' f) vals
---         & flip (Array.foldl' go) children
+instance (Show k, Show v, MapRepr keys vals k v) => Show (Map keys vals k v) where
+    show m = "fromList " <> show (MyLib.toList m)
 
--- instance (Show k, Show v, MapRepr keys vals k v) => Show (Map keys vals k v) where
---     show m = "fromList " <> show (toList m)
+-- Enable for debugging: 
+-- instance (Show (ArrayOf (Strict keys) k), Show (ArrayOf vals v), Show k, Show v, MapRepr keys vals k v) => Show (Map keys vals k v) where
+--   show EmptyMap = "EmptyMap"
+--   show (SingletonMap k v) = "(SingletonMap " <> show k <> " " <> show v <> ")"
+--   show (ManyMap _size node) = "(ManyMap " <> show node <> ")"
 
-instance (Show (ArrayOf (Strict keys) k), Show (ArrayOf vals v), Show k, Show v, MapRepr keys vals k v) => Show (Map keys vals k v) where
-  show EmptyMap = "EmptyMap"
-  show (SingletonMap k v) = "(SingletonMap " <> show k <> " " <> show v <> ")"
-  show (ManyMap _size node) = "(ManyMap " <> show node <> ")"
+-- instance (Show (ArrayOf (Strict keys) k), Show (ArrayOf vals v), Show k, Show v, MapRepr keys vals k v) => Show (MapNode keys vals k v) where
+--   show (CollisionNode keys vals) = "(CollisionNode " <> show keys <> " " <> show vals <> ")"
+--   show (CompactNode bitmap keys vals children) = "(CompactNode " <> show bitmap <> " " <> show keys <> " " <> show vals <> " " <> show children <> ")"
 
-instance (Show (ArrayOf (Strict keys) k), Show (ArrayOf vals v), Show k, Show v, MapRepr keys vals k v) => Show (MapNode keys vals k v) where
-  show (CollisionNode keys vals) = "(CollisionNode " <> show keys <> " " <> show vals <> ")"
-  show (CompactNode bitmap keys vals children) = "(CompactNode " <> show bitmap <> " " <> show keys <> " " <> show vals <> " " <> show children <> ")"
-
-mysumOne :: MapBL Int Int -> Int
-mysumOne = foldr' (+) 0
+-- mysumOne :: MapBL Int Int -> Int
+-- mysumOne = foldr' (+) 0
 
 -- mysumTwo :: MapBL Int Int -> Int
 -- mysumTwo = foldr'2 (+) 0
@@ -635,11 +723,21 @@ childrenIndex node bitpos =
 nextShift :: (Num a) => a -> a
 nextShift s = s + BIT_PARTITION_SIZE
 
-intsToList :: MapBL Int Int -> [(Int, Int)]
-intsToList = MyLib.toList
+-- intsToList :: MapBL Int Int -> [(Int, Int)]
+-- intsToList = MyLib.toList
 
-sumStrict :: MapBB Int Int -> Int
-sumStrict = foldr' (+) 0
+-- sumStrict :: MapBB Int Int -> Int
+-- sumStrict = foldr' (+) 0
 
-sumLazy :: MapBL Int Int -> Int
-sumLazy = foldr' (+) 0
+-- sumLazy :: MapBL Int Int -> Int
+-- sumLazy = foldr' (+) 0
+
+------------------------------------------------------------------------
+-- Pointer equality
+
+-- | Check if two the two arguments are the same value.  N.B. This
+-- function might give false negatives (due to GC moving objects, or things being unpacked/repacked.)
+-- but never false positives
+ptrEq :: a -> a -> Bool
+ptrEq x y = Exts.isTrue# (Exts.reallyUnsafePtrEquality# x y Exts.==# 1#)
+{-# INLINE ptrEq #-}
