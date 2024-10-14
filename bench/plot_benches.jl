@@ -1,3 +1,7 @@
+using Pkg
+Pkg.add("CSV")
+Pkg.add("DataFrames")
+Pkg.add("Plots")
 using CSV
 using DataFrames
 # using Statistics
@@ -10,7 +14,7 @@ function splitup(name)::Tuple{String,String,UInt}
 end
 
 benches = 
-  "benches.csv" |> CSV.File |> DataFrame |> frame -> select(frame,
+  "benches2.csv" |> CSV.File |> DataFrame |> frame -> select(frame,
               :Name => ByRow(splitup) => [:Benchmark, :DataStructure, :Size],
               :"Mean (ps)" => ByRow(x -> x / 10^3) => :Mean,
             )

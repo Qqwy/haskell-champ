@@ -359,352 +359,352 @@ All.insert (powers of two).MapBU.1024,222912,8736
 All.insert (powers of two).MapUL.1024,939397,46954
 All.insert (powers of two).MapUB.1024,234052,6476
 All.insert (powers of two).MapUU.1024,128435,10716
-All.Lookup (small).HashMap.Lazy.0,3724,238
-All.Lookup (small).HashMap.Strict.0,3717,240
+All.Lookup (small).HashMapLazy.0,3724,238
+All.Lookup (small).HashMapStrict.0,3717,240
 All.Lookup (small).MapBL.0,3456,262
 All.Lookup (small).MapBB.0,3483,182
 All.Lookup (small).MapBU.0,3449,236
 All.Lookup (small).MapUL.0,3621,290
 All.Lookup (small).MapUB.0,3444,252
 All.Lookup (small).MapUU.0,3464,186
-All.Lookup (small).HashMap.Lazy.1,3928,194
-All.Lookup (small).HashMap.Strict.1,3718,270
+All.Lookup (small).HashMapLazy.1,3928,194
+All.Lookup (small).HashMapStrict.1,3718,270
 All.Lookup (small).MapBL.1,3575,254
 All.Lookup (small).MapBB.1,3572,224
 All.Lookup (small).MapBU.1,3900,330
 All.Lookup (small).MapUL.1,3712,320
 All.Lookup (small).MapUB.1,3708,364
 All.Lookup (small).MapUU.1,3809,192
-All.Lookup (small).HashMap.Lazy.2,4153,358
-All.Lookup (small).HashMap.Strict.2,4078,162
+All.Lookup (small).HashMapLazy.2,4153,358
+All.Lookup (small).HashMapStrict.2,4078,162
 All.Lookup (small).MapBL.2,3997,320
 All.Lookup (small).MapBB.2,3934,164
 All.Lookup (small).MapBU.2,3801,150
 All.Lookup (small).MapUL.2,3837,370
 All.Lookup (small).MapUB.2,3843,366
 All.Lookup (small).MapUU.2,3732,230
-All.Lookup (small).HashMap.Lazy.3,4052,170
-All.Lookup (small).HashMap.Strict.3,4144,370
+All.Lookup (small).HashMapLazy.3,4052,170
+All.Lookup (small).HashMapStrict.3,4144,370
 All.Lookup (small).MapBL.3,3995,388
 All.Lookup (small).MapBB.3,3800,150
 All.Lookup (small).MapBU.3,3751,242
 All.Lookup (small).MapUL.3,3812,92
 All.Lookup (small).MapUB.3,3859,170
 All.Lookup (small).MapUU.3,3840,368
-All.Lookup (small).HashMap.Lazy.4,4053,276
-All.Lookup (small).HashMap.Strict.4,4040,224
+All.Lookup (small).HashMapLazy.4,4053,276
+All.Lookup (small).HashMapStrict.4,4040,224
 All.Lookup (small).MapBL.4,3995,384
 All.Lookup (small).MapBB.4,3997,204
 All.Lookup (small).MapBU.4,3741,266
 All.Lookup (small).MapUL.4,3740,210
 All.Lookup (small).MapUB.4,3742,244
 All.Lookup (small).MapUU.4,3734,234
-All.Lookup (small).HashMap.Lazy.5,4116,386
-All.Lookup (small).HashMap.Strict.5,4039,258
+All.Lookup (small).HashMapLazy.5,4116,386
+All.Lookup (small).HashMapStrict.5,4039,258
 All.Lookup (small).MapBL.5,3972,356
 All.Lookup (small).MapBB.5,3837,366
 All.Lookup (small).MapBU.5,3906,164
 All.Lookup (small).MapUL.5,3744,216
 All.Lookup (small).MapUB.5,3738,198
 All.Lookup (small).MapUU.5,3749,184
-All.Lookup (small).HashMap.Lazy.6,4173,272
-All.Lookup (small).HashMap.Strict.6,4127,322
+All.Lookup (small).HashMapLazy.6,4173,272
+All.Lookup (small).HashMapStrict.6,4127,322
 All.Lookup (small).MapBL.6,3989,392
 All.Lookup (small).MapBB.6,3957,392
 All.Lookup (small).MapBU.6,3738,228
 All.Lookup (small).MapUL.6,3727,234
 All.Lookup (small).MapUB.6,3747,202
 All.Lookup (small).MapUU.6,3730,228
-All.Lookup (small).HashMap.Lazy.7,4117,364
-All.Lookup (small).HashMap.Strict.7,4036,270
+All.Lookup (small).HashMapLazy.7,4117,364
+All.Lookup (small).HashMapStrict.7,4036,270
 All.Lookup (small).MapBL.7,3982,358
 All.Lookup (small).MapBB.7,3844,168
 All.Lookup (small).MapBU.7,3890,168
 All.Lookup (small).MapUL.7,3827,360
 All.Lookup (small).MapUB.7,3841,378
 All.Lookup (small).MapUU.7,3759,200
-All.Lookup (small).HashMap.Lazy.8,4112,350
-All.Lookup (small).HashMap.Strict.8,4126,340
+All.Lookup (small).HashMapLazy.8,4112,350
+All.Lookup (small).HashMapStrict.8,4126,340
 All.Lookup (small).MapBL.8,4012,322
 All.Lookup (small).MapBB.8,3753,194
 All.Lookup (small).MapBU.8,3740,218
 All.Lookup (small).MapUL.8,3739,202
 All.Lookup (small).MapUB.8,3731,258
 All.Lookup (small).MapUU.8,4086,380
-All.Lookup (small).HashMap.Lazy.9,4121,370
-All.Lookup (small).HashMap.Strict.9,4124,378
+All.Lookup (small).HashMapLazy.9,4121,370
+All.Lookup (small).HashMapStrict.9,4124,378
 All.Lookup (small).MapBL.9,4022,264
 All.Lookup (small).MapBB.9,3830,352
 All.Lookup (small).MapBU.9,3741,218
 All.Lookup (small).MapUL.9,3751,216
 All.Lookup (small).MapUB.9,3830,372
 All.Lookup (small).MapUU.9,3796,126
-All.Lookup (small).HashMap.Lazy.10,4131,408
-All.Lookup (small).HashMap.Strict.10,4164,290
+All.Lookup (small).HashMapLazy.10,4131,408
+All.Lookup (small).HashMapStrict.10,4164,290
 All.Lookup (small).MapBL.10,3921,236
 All.Lookup (small).MapBB.10,3746,296
 All.Lookup (small).MapBU.10,3800,278
 All.Lookup (small).MapUL.10,3766,328
 All.Lookup (small).MapUB.10,3786,252
 All.Lookup (small).MapUU.10,3705,178
-All.Lookup (small).HashMap.Lazy.11,4107,296
-All.Lookup (small).HashMap.Strict.11,4080,364
+All.Lookup (small).HashMapLazy.11,4107,296
+All.Lookup (small).HashMapStrict.11,4080,364
 All.Lookup (small).MapBL.11,4033,188
 All.Lookup (small).MapBB.11,3709,252
 All.Lookup (small).MapBU.11,3813,56
 All.Lookup (small).MapUL.11,3725,136
 All.Lookup (small).MapUB.11,3772,356
 All.Lookup (small).MapUU.11,3719,218
-All.Lookup (small).HashMap.Lazy.12,4077,348
-All.Lookup (small).HashMap.Strict.12,4123,284
+All.Lookup (small).HashMapLazy.12,4077,348
+All.Lookup (small).HashMapStrict.12,4123,284
 All.Lookup (small).MapBL.12,3942,268
 All.Lookup (small).MapBB.12,3816,288
 All.Lookup (small).MapBU.12,3975,386
 All.Lookup (small).MapUL.12,3737,144
 All.Lookup (small).MapUB.12,3789,350
 All.Lookup (small).MapUU.12,3722,144
-All.Lookup (small).HashMap.Lazy.13,4093,314
-All.Lookup (small).HashMap.Strict.13,4018,174
+All.Lookup (small).HashMapLazy.13,4093,314
+All.Lookup (small).HashMapStrict.13,4018,174
 All.Lookup (small).MapBL.13,3924,382
 All.Lookup (small).MapBB.13,3788,316
 All.Lookup (small).MapBU.13,3733,128
 All.Lookup (small).MapUL.13,3760,106
 All.Lookup (small).MapUB.13,3759,356
 All.Lookup (small).MapUU.13,3792,294
-All.Lookup (small).HashMap.Lazy.14,4028,126
-All.Lookup (small).HashMap.Strict.14,4061,366
+All.Lookup (small).HashMapLazy.14,4028,126
+All.Lookup (small).HashMapStrict.14,4061,366
 All.Lookup (small).MapBL.14,3985,378
 All.Lookup (small).MapBB.14,3754,234
 All.Lookup (small).MapBU.14,3789,90
 All.Lookup (small).MapUL.14,3723,214
 All.Lookup (small).MapUB.14,3736,254
 All.Lookup (small).MapUU.14,3753,168
-All.Lookup (small).HashMap.Lazy.15,4142,356
-All.Lookup (small).HashMap.Strict.15,4139,378
+All.Lookup (small).HashMapLazy.15,4142,356
+All.Lookup (small).HashMapStrict.15,4139,378
 All.Lookup (small).MapBL.15,3948,170
 All.Lookup (small).MapBB.15,3730,264
 All.Lookup (small).MapBU.15,3832,370
 All.Lookup (small).MapUL.15,3859,306
 All.Lookup (small).MapUB.15,3847,360
 All.Lookup (small).MapUU.15,3728,230
-All.Lookup (small).HashMap.Lazy.16,4114,408
-All.Lookup (small).HashMap.Strict.16,4116,362
+All.Lookup (small).HashMapLazy.16,4114,408
+All.Lookup (small).HashMapStrict.16,4116,362
 All.Lookup (small).MapBL.16,4146,286
 All.Lookup (small).MapBB.16,3721,208
 All.Lookup (small).MapBU.16,3820,352
 All.Lookup (small).MapUL.16,3945,164
 All.Lookup (small).MapUB.16,3810,100
 All.Lookup (small).MapUU.16,3833,220
-All.Lookup (small).HashMap.Lazy.17,4134,338
-All.Lookup (small).HashMap.Strict.17,3973,138
+All.Lookup (small).HashMapLazy.17,4134,338
+All.Lookup (small).HashMapStrict.17,3973,138
 All.Lookup (small).MapBL.17,3907,260
 All.Lookup (small).MapBB.17,3826,368
 All.Lookup (small).MapBU.17,3966,312
 All.Lookup (small).MapUL.17,3813,376
 All.Lookup (small).MapUB.17,3850,254
 All.Lookup (small).MapUU.17,3838,352
-All.Lookup (small).HashMap.Lazy.18,4104,400
-All.Lookup (small).HashMap.Strict.18,4128,412
+All.Lookup (small).HashMapLazy.18,4104,400
+All.Lookup (small).HashMapStrict.18,4128,412
 All.Lookup (small).MapBL.18,3985,318
 All.Lookup (small).MapBB.18,3721,244
 All.Lookup (small).MapBU.18,3754,218
 All.Lookup (small).MapUL.18,3760,212
 All.Lookup (small).MapUB.18,3746,200
 All.Lookup (small).MapUU.18,3838,328
-All.Lookup (small).HashMap.Lazy.19,4118,334
-All.Lookup (small).HashMap.Strict.19,4046,248
+All.Lookup (small).HashMapLazy.19,4118,334
+All.Lookup (small).HashMapStrict.19,4046,248
 All.Lookup (small).MapBL.19,3928,120
 All.Lookup (small).MapBB.19,3779,190
 All.Lookup (small).MapBU.19,3844,330
 All.Lookup (small).MapUL.19,3756,212
 All.Lookup (small).MapUB.19,3859,336
 All.Lookup (small).MapUU.19,3726,270
-All.Lookup (small).HashMap.Lazy.20,4046,206
-All.Lookup (small).HashMap.Strict.20,4096,118
+All.Lookup (small).HashMapLazy.20,4046,206
+All.Lookup (small).HashMapStrict.20,4096,118
 All.Lookup (small).MapBL.20,4033,330
 All.Lookup (small).MapBB.20,3748,226
 All.Lookup (small).MapBU.20,3834,372
 All.Lookup (small).MapUL.20,3748,330
 All.Lookup (small).MapUB.20,4316,368
 All.Lookup (small).MapUU.20,4040,332
-All.Lookup (small).HashMap.Lazy.21,4158,274
-All.Lookup (small).HashMap.Strict.21,4118,402
+All.Lookup (small).HashMapLazy.21,4158,274
+All.Lookup (small).HashMapStrict.21,4118,402
 All.Lookup (small).MapBL.21,3978,338
 All.Lookup (small).MapBB.21,3925,204
 All.Lookup (small).MapBU.21,4049,170
 All.Lookup (small).MapUL.21,3827,362
 All.Lookup (small).MapUB.21,3721,42
 All.Lookup (small).MapUU.21,3874,340
-All.Lookup (small).HashMap.Lazy.22,4163,382
-All.Lookup (small).HashMap.Strict.22,4228,184
+All.Lookup (small).HashMapLazy.22,4163,382
+All.Lookup (small).HashMapStrict.22,4228,184
 All.Lookup (small).MapBL.22,4077,268
 All.Lookup (small).MapBB.22,3856,346
 All.Lookup (small).MapBU.22,3883,284
 All.Lookup (small).MapUL.22,3757,240
 All.Lookup (small).MapUB.22,3885,322
 All.Lookup (small).MapUU.22,3776,236
-All.Lookup (small).HashMap.Lazy.23,4137,384
-All.Lookup (small).HashMap.Strict.23,4191,174
+All.Lookup (small).HashMapLazy.23,4137,384
+All.Lookup (small).HashMapStrict.23,4191,174
 All.Lookup (small).MapBL.23,4130,374
 All.Lookup (small).MapBB.23,3900,236
 All.Lookup (small).MapBU.23,3835,358
 All.Lookup (small).MapUL.23,3935,174
 All.Lookup (small).MapUB.23,4066,294
 All.Lookup (small).MapUU.23,3834,374
-All.Lookup (small).HashMap.Lazy.24,4150,310
-All.Lookup (small).HashMap.Strict.24,4175,246
+All.Lookup (small).HashMapLazy.24,4150,310
+All.Lookup (small).HashMapStrict.24,4175,246
 All.Lookup (small).MapBL.24,4026,286
 All.Lookup (small).MapBB.24,3842,320
 All.Lookup (small).MapBU.24,3866,326
 All.Lookup (small).MapUL.24,3850,308
 All.Lookup (small).MapUB.24,3782,188
 All.Lookup (small).MapUU.24,3726,100
-All.Lookup (small).HashMap.Lazy.25,4186,326
-All.Lookup (small).HashMap.Strict.25,4081,180
+All.Lookup (small).HashMapLazy.25,4186,326
+All.Lookup (small).HashMapStrict.25,4081,180
 All.Lookup (small).MapBL.25,3949,196
 All.Lookup (small).MapBB.25,3916,224
 All.Lookup (small).MapBU.25,3782,204
 All.Lookup (small).MapUL.25,3778,140
 All.Lookup (small).MapUB.25,3834,362
 All.Lookup (small).MapUU.25,3758,208
-All.Lookup (small).HashMap.Lazy.26,4095,218
-All.Lookup (small).HashMap.Strict.26,4159,324
+All.Lookup (small).HashMapLazy.26,4095,218
+All.Lookup (small).HashMapStrict.26,4159,324
 All.Lookup (small).MapBL.26,4042,352
 All.Lookup (small).MapBB.26,3848,370
 All.Lookup (small).MapBU.26,3892,300
 All.Lookup (small).MapUL.26,3844,376
 All.Lookup (small).MapUB.26,3816,370
 All.Lookup (small).MapUU.26,3823,330
-All.Lookup (small).HashMap.Lazy.27,4198,242
-All.Lookup (small).HashMap.Strict.27,4171,388
+All.Lookup (small).HashMapLazy.27,4198,242
+All.Lookup (small).HashMapStrict.27,4171,388
 All.Lookup (small).MapBL.27,4057,276
 All.Lookup (small).MapBB.27,3931,248
 All.Lookup (small).MapBU.27,3792,186
 All.Lookup (small).MapUL.27,3858,368
 All.Lookup (small).MapUB.27,3885,354
 All.Lookup (small).MapUU.27,3830,316
-All.Lookup (small).HashMap.Lazy.28,4158,342
-All.Lookup (small).HashMap.Strict.28,4169,296
+All.Lookup (small).HashMapLazy.28,4158,342
+All.Lookup (small).HashMapStrict.28,4169,296
 All.Lookup (small).MapBL.28,4042,312
 All.Lookup (small).MapBB.28,3879,332
 All.Lookup (small).MapBU.28,3813,156
 All.Lookup (small).MapUL.28,3871,368
 All.Lookup (small).MapUB.28,3878,332
 All.Lookup (small).MapUU.28,3773,162
-All.Lookup (small).HashMap.Lazy.29,4183,368
-All.Lookup (small).HashMap.Strict.29,4231,310
+All.Lookup (small).HashMapLazy.29,4183,368
+All.Lookup (small).HashMapStrict.29,4231,310
 All.Lookup (small).MapBL.29,4276,124
 All.Lookup (small).MapBB.29,4010,180
 All.Lookup (small).MapBU.29,3980,104
 All.Lookup (small).MapUL.29,3799,194
 All.Lookup (small).MapUB.29,3853,326
 All.Lookup (small).MapUU.29,3971,366
-All.Lookup (small).HashMap.Lazy.30,4258,358
-All.Lookup (small).HashMap.Strict.30,4487,292
+All.Lookup (small).HashMapLazy.30,4258,358
+All.Lookup (small).HashMapStrict.30,4487,292
 All.Lookup (small).MapBL.30,3989,176
 All.Lookup (small).MapBB.30,4204,400
 All.Lookup (small).MapBU.30,3876,110
 All.Lookup (small).MapUL.30,3919,328
 All.Lookup (small).MapUB.30,3973,294
 All.Lookup (small).MapUU.30,3969,248
-All.Lookup (small).HashMap.Lazy.31,4206,404
-All.Lookup (small).HashMap.Strict.31,4180,354
+All.Lookup (small).HashMapLazy.31,4206,404
+All.Lookup (small).HashMapStrict.31,4180,354
 All.Lookup (small).MapBL.31,4054,400
 All.Lookup (small).MapBB.31,3846,170
 All.Lookup (small).MapBU.31,4083,254
 All.Lookup (small).MapUL.31,3928,392
 All.Lookup (small).MapUB.31,3927,266
 All.Lookup (small).MapUU.31,3817,280
-All.Lookup (small).HashMap.Lazy.32,4633,442
-All.Lookup (small).HashMap.Strict.32,4429,356
+All.Lookup (small).HashMapLazy.32,4633,442
+All.Lookup (small).HashMapStrict.32,4429,356
 All.Lookup (small).MapBL.32,4077,336
 All.Lookup (small).MapBB.32,4003,160
 All.Lookup (small).MapBU.32,3928,118
 All.Lookup (small).MapUL.32,3872,270
 All.Lookup (small).MapUB.32,3840,152
 All.Lookup (small).MapUU.32,4024,206
-All.Lookup (powers of two).HashMap.Lazy.1,4332,222
-All.Lookup (powers of two).HashMap.Strict.1,5154,400
+All.Lookup (powers of two).HashMapLazy.1,4332,222
+All.Lookup (powers of two).HashMapStrict.1,5154,400
 All.Lookup (powers of two).MapBL.1,4433,326
 All.Lookup (powers of two).MapBB.1,6047,416
 All.Lookup (powers of two).MapBU.1,4753,366
 All.Lookup (powers of two).MapUL.1,4800,418
 All.Lookup (powers of two).MapUB.1,5100,400
 All.Lookup (powers of two).MapUU.1,3765,74
-All.Lookup (powers of two).HashMap.Lazy.2,4596,284
-All.Lookup (powers of two).HashMap.Strict.2,4686,208
+All.Lookup (powers of two).HashMapLazy.2,4596,284
+All.Lookup (powers of two).HashMapStrict.2,4686,208
 All.Lookup (powers of two).MapBL.2,4297,384
 All.Lookup (powers of two).MapBB.2,4450,246
 All.Lookup (powers of two).MapBU.2,4187,138
 All.Lookup (powers of two).MapUL.2,4138,410
 All.Lookup (powers of two).MapUB.2,4158,260
 All.Lookup (powers of two).MapUU.2,3991,152
-All.Lookup (powers of two).HashMap.Lazy.4,4517,220
-All.Lookup (powers of two).HashMap.Strict.4,4481,298
+All.Lookup (powers of two).HashMapLazy.4,4517,220
+All.Lookup (powers of two).HashMapStrict.4,4481,298
 All.Lookup (powers of two).MapBL.4,4285,254
 All.Lookup (powers of two).MapBB.4,4334,210
 All.Lookup (powers of two).MapBU.4,3956,272
 All.Lookup (powers of two).MapUL.4,3843,148
 All.Lookup (powers of two).MapUB.4,4186,230
 All.Lookup (powers of two).MapUU.4,4146,344
-All.Lookup (powers of two).HashMap.Lazy.8,4633,160
-All.Lookup (powers of two).HashMap.Strict.8,4561,418
+All.Lookup (powers of two).HashMapLazy.8,4633,160
+All.Lookup (powers of two).HashMapStrict.8,4561,418
 All.Lookup (powers of two).MapBL.8,4330,232
 All.Lookup (powers of two).MapBB.8,4472,112
 All.Lookup (powers of two).MapBU.8,4052,112
 All.Lookup (powers of two).MapUL.8,4519,394
 All.Lookup (powers of two).MapUB.8,4367,258
 All.Lookup (powers of two).MapUU.8,4828,470
-All.Lookup (powers of two).HashMap.Lazy.16,5113,362
-All.Lookup (powers of two).HashMap.Strict.16,4691,118
+All.Lookup (powers of two).HashMapLazy.16,5113,362
+All.Lookup (powers of two).HashMapStrict.16,4691,118
 All.Lookup (powers of two).MapBL.16,4504,364
 All.Lookup (powers of two).MapBB.16,4896,358
 All.Lookup (powers of two).MapBU.16,4324,310
 All.Lookup (powers of two).MapUL.16,4217,112
 All.Lookup (powers of two).MapUB.16,4285,418
 All.Lookup (powers of two).MapUU.16,4398,298
-All.Lookup (powers of two).HashMap.Lazy.32,5129,276
-All.Lookup (powers of two).HashMap.Strict.32,5363,348
+All.Lookup (powers of two).HashMapLazy.32,5129,276
+All.Lookup (powers of two).HashMapStrict.32,5363,348
 All.Lookup (powers of two).MapBL.32,4644,428
 All.Lookup (powers of two).MapBB.32,5325,242
 All.Lookup (powers of two).MapBU.32,4539,410
 All.Lookup (powers of two).MapUL.32,4861,366
 All.Lookup (powers of two).MapUB.32,4418,376
 All.Lookup (powers of two).MapUU.32,4440,396
-All.Lookup (powers of two).HashMap.Lazy.64,5669,484
-All.Lookup (powers of two).HashMap.Strict.64,5560,546
+All.Lookup (powers of two).HashMapLazy.64,5669,484
+All.Lookup (powers of two).HashMapStrict.64,5560,546
 All.Lookup (powers of two).MapBL.64,5181,414
 All.Lookup (powers of two).MapBB.64,5379,140
 All.Lookup (powers of two).MapBU.64,5307,368
 All.Lookup (powers of two).MapUL.64,5063,228
 All.Lookup (powers of two).MapUB.64,5202,318
 All.Lookup (powers of two).MapUU.64,5073,304
-All.Lookup (powers of two).HashMap.Lazy.128,5494,452
-All.Lookup (powers of two).HashMap.Strict.128,5875,556
+All.Lookup (powers of two).HashMapLazy.128,5494,452
+All.Lookup (powers of two).HashMapStrict.128,5875,556
 All.Lookup (powers of two).MapBL.128,5131,170
 All.Lookup (powers of two).MapBB.128,5578,548
 All.Lookup (powers of two).MapBU.128,5203,486
 All.Lookup (powers of two).MapUL.128,4864,306
 All.Lookup (powers of two).MapUB.128,4914,252
 All.Lookup (powers of two).MapUU.128,4965,436
-All.Lookup (powers of two).HashMap.Lazy.256,5293,314
-All.Lookup (powers of two).HashMap.Strict.256,5287,300
+All.Lookup (powers of two).HashMapLazy.256,5293,314
+All.Lookup (powers of two).HashMapStrict.256,5287,300
 All.Lookup (powers of two).MapBL.256,5104,158
 All.Lookup (powers of two).MapBB.256,5470,226
 All.Lookup (powers of two).MapBU.256,5153,232
 All.Lookup (powers of two).MapUL.256,4913,396
 All.Lookup (powers of two).MapUB.256,5133,360
 All.Lookup (powers of two).MapUU.256,5020,162
-All.Lookup (powers of two).HashMap.Lazy.512,5457,202
-All.Lookup (powers of two).HashMap.Strict.512,5596,322
+All.Lookup (powers of two).HashMapLazy.512,5457,202
+All.Lookup (powers of two).HashMapStrict.512,5596,322
 All.Lookup (powers of two).MapBL.512,5010,320
 All.Lookup (powers of two).MapBB.512,5920,434
 All.Lookup (powers of two).MapBU.512,5187,242
 All.Lookup (powers of two).MapUL.512,4994,114
 All.Lookup (powers of two).MapUB.512,5235,430
 All.Lookup (powers of two).MapUU.512,5239,378
-All.Lookup (powers of two).HashMap.Lazy.1024,7434,374
-All.Lookup (powers of two).HashMap.Strict.1024,7190,250
+All.Lookup (powers of two).HashMapLazy.1024,7434,374
+All.Lookup (powers of two).HashMapStrict.1024,7190,250
 All.Lookup (powers of two).MapBL.1024,5329,468
 All.Lookup (powers of two).MapBB.1024,6196,428
 All.Lookup (powers of two).MapBU.1024,5431,524
