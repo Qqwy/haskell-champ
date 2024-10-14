@@ -59,7 +59,7 @@ insertBench =
 
 lookupSmallBench :: Bench.Benchmark
 lookupSmallBench =
-  Bench.bgroup "Lookup (powers of two)" $
+  Bench.bgroup "Lookup (small)" $
     mconcat
       [ [ Bench.bench ("HashMap.Lazy." <> show n) $ Bench.nf (HashMap.Lazy.lookup (n)) (buildN n),
           Bench.bench ("HashMap.Strict." <> show n) $ Bench.nf (HashMap.Strict.lookup (n)) (buildN n),
