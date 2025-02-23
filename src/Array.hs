@@ -257,6 +257,7 @@ class IsUnit a where
   produceUnit :: a
 
 instance (a ~ ()) => IsUnit a where
+  {-# INLINE produceUnit #-}
   produceUnit = ()
 
 instance Contiguous.Contiguous ZeroCostFakeArray where

@@ -14,7 +14,7 @@
 {-# OPTIONS_GHC -ddump-simpl -dsuppress-all -ddump-stg-from-core -ddump-cmm -ddump-to-file #-}
 {-# OPTIONS_GHC -funbox-strict-fields #-}
 
-module MyLib where
+module Champ.Internal where
 
 import Array (StrictSmallArray, ZeroCostFakeArray, IsUnit)
 import Array qualified
@@ -41,25 +41,25 @@ import Collision qualified
 #define HASH_CODE_LENGTH (1 `unsafeShiftL` BIT_PARTITION_SIZE)
 #define BIT_PARTITION_MASK (HASH_CODE_LENGTH - 1)
 
-type MapBL = Map Boxed Lazy
+type HashMapBL = HashMap Boxed Lazy
 
-type MapBB = Map Boxed (Strict Boxed)
+type HashMapBB = HashMap Boxed (Strict Boxed)
 
-type MapBU = Map Boxed (Strict Unboxed)
+type HashMapBU = HashMap Boxed (Strict Unboxed)
 
-type MapUL = Map Unboxed Lazy
+type HashMapUL = HashMap Unboxed Lazy
 
-type MapUB = Map Unboxed (Strict Boxed)
+type HashMapUB = HashMap Unboxed (Strict Boxed)
 
-type MapUU = Map Unboxed (Strict Unboxed)
+type HashMapUU = HashMap Unboxed (Strict Unboxed)
 
-type SetB = Map Boxed Unexistent
-type SetU = Map Unboxed Unexistent
+type HashSetB = HashMap Boxed Unexistent
+type HashSetU = HashMap Unboxed Unexistent
 
 pattern EmptyMap ::
   forall (keyStorage :: StrictStorage) (valStorage :: Storage) k v.
   (MapRepr keyStorage valStorage k v) =>
-  Map keyStorage valStorage k v
+  HashMap keyStorage valStorage k v
 {-# INLINE EmptyMap #-}
 pattern EmptyMap <- (matchMap -> (# (# #) | | #))
   where
@@ -68,7 +68,7 @@ pattern EmptyMap <- (matchMap -> (# (# #) | | #))
 pattern SingletonMap ::
   forall (keyStorage :: StrictStorage) (valStorage :: Storage) k v.
   (MapRepr keyStorage valStorage k v) =>
-  k -> v -> Map keyStorage valStorage k v
+  k -> v -> HashMap keyStorage valStorage k v
 {-# INLINE SingletonMap #-}
 pattern SingletonMap k v <- (matchMap -> (# | (# k, v #) | #))
   where
@@ -77,7 +77,7 @@ pattern SingletonMap k v <- (matchMap -> (# | (# k, v #) | #))
 pattern ManyMap ::
   forall (keyStorage :: StrictStorage) (valStorage :: Storage) k v.
   (MapRepr keyStorage valStorage k v) =>
-  Word -> MapNode keyStorage valStorage k v -> Map keyStorage valStorage k v
+  Word -> MapNode keyStorage valStorage k v -> HashMap keyStorage valStorage k v
 {-# INLINE ManyMap #-}
 pattern ManyMap mapsize node <- (matchMap -> (# | | (# mapsize, node #) #))
   where
@@ -141,14 +141,14 @@ isNonZeroBitmap b = (# | b #)
 --  inside their array, as we're always strict in the tree-spine of the CHAMP map.
 --  This means GHC will skip any thunk-forcing code whenever reading/recursing
 class (ContiguousU (ArrayOf (Strict keyStorage)), ContiguousU (ArrayOf (valStorage)), Element (ArrayOf (Strict keyStorage)) k, Element (ArrayOf valStorage) v) => MapRepr (keyStorage :: StrictStorage) (valStorage :: Storage) k v where
-  data Map keyStorage valStorage k v
+  data HashMap keyStorage valStorage k v
   data MapNode keyStorage valStorage k v
   packNode :: (# Bitmap, ArrayOf (Strict keyStorage) k, (ArrayOf valStorage) v, StrictSmallArray (MapNode keyStorage valStorage k v) #) -> MapNode keyStorage valStorage k v
   unpackNode :: MapNode keyStorage valStorage k v -> (# Bitmap, ArrayOf (Strict keyStorage) k, (ArrayOf valStorage) v, StrictSmallArray (MapNode keyStorage valStorage k v) #)
-  manyMap :: Word -> MapNode keyStorage valStorage k v -> Map keyStorage valStorage k v
-  emptyMap :: Map keyStorage valStorage k v
-  singletonMap :: k -> v -> Map keyStorage valStorage k v
-  matchMap :: Map keyStorage valStorage k v -> (# (# #) | (# k, v #) | (# Word, MapNode keyStorage valStorage k v #) #)
+  manyMap :: Word -> MapNode keyStorage valStorage k v -> HashMap keyStorage valStorage k v
+  emptyMap :: HashMap keyStorage valStorage k v
+  singletonMap :: k -> v -> HashMap keyStorage valStorage k v
+  matchMap :: HashMap keyStorage valStorage k v -> (# (# #) | (# k, v #) | (# Word, MapNode keyStorage valStorage k v #) #)
 
 #define MAP_NODE_NAME(name) MapNode/**/_/**/name
 
@@ -176,7 +176,7 @@ instance constraints => MapRepr (keystorage) (valstorage) k v where             
 ; SingletonMap_/**/name k v -> (#  | (# k, v #) | #)                                                                     \
 ; ManyMap_/**/name mapsize b keys vals children -> (# | | (# mapsize, MAP_NODE_NAME(name) b keys vals children #) #) }   \
 ; data MapNode (keystorage) (valstorage) k v = MAP_NODE_NAME(name) MAP_NODE_FIELDS(keystorage, valstorage)               \
-; data Map (keystorage) (valstorage) k v                                                                                 \
+; data HashMap (keystorage) (valstorage) k v                                                                                 \
   = EmptyMap_/**/name                                                                                                    \
   | SingletonMap_/**/name !k v                                                                                           \
   | ManyMap_/**/name !Word MAP_NODE_FIELDS(keystorage, valstorage)                                                       \
@@ -196,22 +196,22 @@ map_repr_instance (Unboxed_Unexistent, Unboxed, Unexistent, (Prim k, IsUnit v))
 someFunc = undefined
 
 {-# INLINE null #-}
-null :: (MapRepr keys vals k v) => Map keys vals k v -> Bool
+null :: (MapRepr keys vals k v) => HashMap keys vals k v -> Bool
 null EmptyMap = True
 null _ = False
 
-size :: (MapRepr keys vals k v) => Map keys vals k v -> Int
+size :: (MapRepr keys vals k v) => HashMap keys vals k v -> Int
 {-# INLINE size #-}
 size EmptyMap = 0
 size (SingletonMap _k _v) = 1
 size (ManyMap s _) = fromIntegral s
 
 {-# INLINE empty #-}
-empty :: (MapRepr keys vals k v) => Map keys vals k v
+empty :: (MapRepr keys vals k v) => HashMap keys vals k v
 empty = EmptyMap
 
 {-# INLINE singleton #-}
-singleton :: (MapRepr keys vals k v) => k -> v -> Map keys vals k v
+singleton :: (MapRepr keys vals k v) => k -> v -> HashMap keys vals k v
 singleton !k v = SingletonMap k v
 
 data Location = Inline | InChild | Nowhere
@@ -228,7 +228,7 @@ bitposLocation node@(CompactNode bitmap _ _ _) bitpos
 --
 -- NOTE: Since there is no unsafeInsert yet,
 -- the current implementation is slower than necessary.
-fromList :: (Hashable k, MapRepr keys vals k v) => [(k, v)] -> Map keys vals k v
+fromList :: (Hashable k, MapRepr keys vals k v) => [(k, v)] -> HashMap keys vals k v
 {-# INLINE fromList #-}
 fromList = Foldable.foldl' (\m (k, v) -> insert k v m) empty
 
@@ -236,14 +236,14 @@ fromList = Foldable.foldl' (\m (k, v) -> insert k v m) empty
 --
 -- The resulting list is produced lazily and may participate in list fusion.
 -- The order of its elements is unspecified.
-toList :: (MapRepr keys vals k v) => Map keys vals k v -> [(k, v)]
+toList :: (MapRepr keys vals k v) => HashMap keys vals k v -> [(k, v)]
 {-# INLINE toList #-}
 toList hashmap = Exts.build (\fusedCons fusedNil -> foldrWithKey (\k v xs -> (k, v) `fusedCons` xs) fusedNil hashmap)
 
 -- | \(O(\log32 n)\) Associate the specified value with the specified
 -- key in this map.  If this map previously contained a mapping for
 -- the key, the old value is replaced.
-insert :: (Hashable k, MapRepr keys vals k v) => k -> v -> Map keys vals k v -> Map keys vals k v
+insert :: (Hashable k, MapRepr keys vals k v) => k -> v -> HashMap keys vals k v -> HashMap keys vals k v
 {-# INLINE insert #-}
 insert !k v !m = case matchMap m of
   (# (# #) | | #) -> singleton k v
@@ -276,13 +276,13 @@ insert' !h !k v !shift !node@(CompactNode !bitmap !keys !vals !children) =
           -- Doesn't exist yet, we can insert inline
           (# 1##, insertNewInline bitpos k v node #)
 
--- {-# SPECIALIZE insert :: Hashable k => k -> v -> MapBL k v -> MapBL k v #-}
--- {-# SPECIALIZE insert :: Hashable k => k -> v -> MapBB k v -> MapBB k v #-}
--- {-# SPECIALIZE insert :: (Hashable k, Prim v) => k -> v -> MapBU k v -> MapBU k v #-}
--- {-# SPECIALIZE insert :: (Hashable k, Prim k) => k -> v -> MapUL k v -> MapUL k v #-}
--- {-# SPECIALIZE insert :: (Hashable k, Prim k) => k -> v -> MapUB k v -> MapUB k v #-}
--- {-# SPECIALIZE insert :: (Hashable k, Prim k, Prim v) => k -> v -> MapUU k v -> MapUU k v #-}
--- {-# SPECIALIZE insert :: Int -> Int -> MapUU Int Int -> MapUU Int Int #-}
+-- {-# SPECIALIZE insert :: Hashable k => k -> v -> HashMapBL k v -> HashMapBL k v #-}
+-- {-# SPECIALIZE insert :: Hashable k => k -> v -> HashMapBB k v -> HashMapBB k v #-}
+-- {-# SPECIALIZE insert :: (Hashable k, Prim v) => k -> v -> HashMapBU k v -> HashMapBU k v #-}
+-- {-# SPECIALIZE insert :: (Hashable k, Prim k) => k -> v -> HashMapUL k v -> HashMapUL k v #-}
+-- {-# SPECIALIZE insert :: (Hashable k, Prim k) => k -> v -> HashMapUB k v -> HashMapUB k v #-}
+-- {-# SPECIALIZE insert :: (Hashable k, Prim k, Prim v) => k -> v -> HashMapUU k v -> HashMapUU k v #-}
+-- {-# SPECIALIZE insert :: Int -> Int -> HashMapUU Int Int -> HashMapUU Int Int #-}
 
 -- Collisions are appended at the end
 -- Note that we cannot insert them in sorted order
@@ -351,7 +351,7 @@ mergeCompactInline k1 v1 h1 k2 v2 h2 shift =
    in CompactNode bitmap keys vals Contiguous.empty
 
 {-# INLINE lookup #-}
-lookup :: (MapRepr keys vals k v, Eq k, Hashable k) => k -> Map keys vals k v -> Maybe v
+lookup :: (MapRepr keys vals k v, Eq k, Hashable k) => k -> HashMap keys vals k v -> Maybe v
 lookup !k m = case matchMap m of
   (# (# #) | | #) -> Nothing
   (# | (# k', v #) | #) -> if k == k' then Just v else Nothing
@@ -384,7 +384,7 @@ lookup !k m = case matchMap m of
                                 in if k == k' then Just v else Nothing
                             InChild -> lookup' (nextShift s) (indexChild node bitpos)
 
--- mylookup :: Int -> MapUU Int Int -> Maybe Int
+-- mylookup :: Int -> HashMapUU Int Int -> Maybe Int
 -- mylookup = lookup
 
 {-# INLINE indexKey #-}
@@ -405,11 +405,11 @@ indexChild (CollisionNode _keys _vals) _ = error "Should only be called on Compa
 indexChild node@(CompactNode _bitmap _keys _vals children) bitpos =
     Contiguous.index children (childrenIndex node bitpos)
 
-member :: (MapRepr keys vals k v, Eq k, Hashable k) => k -> Map keys vals k v -> Bool
+member :: (MapRepr keys vals k v, Eq k, Hashable k) => k -> HashMap keys vals k v -> Bool
 {-# INLINEABLE member #-}
 member k v = Maybe.isJust $ lookup k v
 
-instance (MapRepr keys vals k v, Eq v, Eq k) => Eq (Map keys vals k v) where
+instance (MapRepr keys vals k v, Eq v, Eq k) => Eq (HashMap keys vals k v) where
   {-# INLINEABLE (==) #-}
   EmptyMap == EmptyMap = True
   (SingletonMap k v) == (SingletonMap k' v') = (k == k') && (v == v')
@@ -429,20 +429,20 @@ instance (MapRepr keys vals k v, Eq v, Eq k) => Eq (MapNode keys vals k v) where
       && (c1 `Contiguous.same` c2 || c1 `Contiguous.equals` c2) -- Here we recurse
   _ == _ = False
 
-myeq :: MapUU Int Int -> MapUU Int Int -> Bool
+myeq :: HashMapUU Int Int -> HashMapUU Int Int -> Bool
 myeq a b = a == b
 
 
 
 
-instance (Hashable k, Eq k, MapRepr keys vals k v) => IsList (Map keys vals k v) where
-  type Item (Map keys vals k v) = (k, v)
+instance (Hashable k, Eq k, MapRepr keys vals k v) => IsList (HashMap keys vals k v) where
+  type Item (HashMap keys vals k v) = (k, v)
   {-# INLINE toList #-}
-  toList = MyLib.toList
+  toList = Champ.Internal.toList
   {-# INLINE fromList #-}
-  fromList = MyLib.fromList
+  fromList = Champ.Internal.fromList
 
-instance (NFData k, NFData v, MapRepr keys vals k v) => NFData (Map keys vals k v) where
+instance (NFData v, NFData k, (MapRepr keys vals k v), NFData (MapNode keys vals k v)) => NFData (HashMap keys vals k v) where
   {-# INLINE rnf #-}
   rnf EmptyMap = ()
   rnf (SingletonMap k v) = rnf k `seq` rnf v
@@ -458,21 +458,25 @@ instance {-# OVERLAPS #-} (NFData k, NFData v) => NFData (MapNode Unboxed (Stric
   {-# INLINE rnf #-}
   rnf !_ = ()
 
-instance Functor (MapBL k) where
-  {-# INLINE fmap #-}
-  fmap = MyLib.map
+instance {-# OVERLAPS #-} (NFData k, NFData v) => NFData (MapNode Unboxed Unexistent k v) where
+  {-# INLINE rnf #-}
+  rnf !_ = ()
 
-instance Functor (MapBB k) where
+instance Functor (HashMapBL k) where
   {-# INLINE fmap #-}
-  fmap = MyLib.map
+  fmap = Champ.Internal.map
 
-instance (Prim k) => Functor (MapUL k) where
+instance Functor (HashMapBB k) where
   {-# INLINE fmap #-}
-  fmap = MyLib.map
+  fmap = Champ.Internal.map
 
-instance (Prim k) => Functor (MapUB k) where
+instance (Prim k) => Functor (HashMapUL k) where
   {-# INLINE fmap #-}
-  fmap = MyLib.map
+  fmap = Champ.Internal.map
+
+instance (Prim k) => Functor (HashMapUB k) where
+  {-# INLINE fmap #-}
+  fmap = Champ.Internal.map
 
 -- NOTE: Supporting Functor for MapXU is impossible
 -- without being very tricksy
@@ -480,15 +484,15 @@ instance (Prim k) => Functor (MapUB k) where
 -- | Map a function over the values in a hashmap
 --
 -- O(n)
-map :: (MapRepr keys vals k a, MapRepr keys vals k b) => (a -> b) -> Map keys vals k a -> Map keys vals k b
+map :: (MapRepr keys vals k a, MapRepr keys vals k b) => (a -> b) -> HashMap keys vals k a -> HashMap keys vals k b
 {-# INLINE map #-}
 map = map'
 
 -- | Map a function over the values in a hashmap,
 -- allowing to switch the value storage type.
 --
--- that is: you can switch between MapBL <-> MapBB <-> MapBU,
--- or switch between MapUL <-> MapUB <-> MapUU.
+-- that is: you can switch between HashMapBL <-> HashMapBB <-> HashMapBU,
+-- or switch between HashMapUL <-> HashMapUB <-> HashMapUU.
 --
 -- When using this function, you will need 
 -- to specify the type of the output map.
@@ -497,10 +501,10 @@ map = map'
 --
 -- Example:
 --
--- >>> mymap = fromList [(1, 10), (2, 20)] :: MapUU Int Int
--- >>> map' show mymap :: MapUB Int String 
+-- >>> mymap = fromList [(1, 10), (2, 20)] :: HashMapUU Int Int
+-- >>> map' show mymap :: HashMapUB Int String 
 -- fromList [(1, "10"), (2, "20")]
-map' :: (MapRepr keys as k a, MapRepr keys bs k b) => (a -> b) -> Map keys as k a -> Map keys bs k b
+map' :: (MapRepr keys as k a, MapRepr keys bs k b) => (a -> b) -> HashMap keys as k a -> HashMap keys bs k b
 {-# INLINE map' #-}
 map' !_f EmptyMap = EmptyMap
 map' !f (SingletonMap k v) = SingletonMap k (f v)
@@ -514,71 +518,71 @@ map' !f (ManyMap sz node) = ManyMap sz (mapNode node)
       in
         CompactNode bitmap keys vals' children'
 
-instance Foldable (MapBL k) where
+instance Foldable (HashMapBL k) where
   {-# INLINE foldr #-}
-  foldr = MyLib.foldr
+  foldr = Champ.Internal.foldr
   {-# INLINE foldr' #-}
-  foldr' = MyLib.foldr'
+  foldr' = Champ.Internal.foldr'
   {-# INLINE foldl #-}
-  foldl = MyLib.foldl
+  foldl = Champ.Internal.foldl
   {-# INLINE foldl' #-}
-  foldl' = MyLib.foldl'
+  foldl' = Champ.Internal.foldl'
   {-# INLINE null #-}
-  null = MyLib.null
+  null = Champ.Internal.null
   {-# INLINE length #-}
-  length = MyLib.size
+  length = Champ.Internal.size
 
 -- TODO: manual impls of the other funs
 -- as those are more efficient
 
-instance Foldable (MapBB k) where
+instance Foldable (HashMapBB k) where
   {-# INLINE foldr #-}
-  foldr = MyLib.foldr
+  foldr = Champ.Internal.foldr
   {-# INLINE foldr' #-}
-  foldr' = MyLib.foldr'
+  foldr' = Champ.Internal.foldr'
   {-# INLINE foldl #-}
-  foldl = MyLib.foldl
+  foldl = Champ.Internal.foldl
   {-# INLINE foldl' #-}
-  foldl' = MyLib.foldl'
+  foldl' = Champ.Internal.foldl'
   {-# INLINE null #-}
-  null = MyLib.null
+  null = Champ.Internal.null
   {-# INLINE length #-}
-  length = MyLib.size
+  length = Champ.Internal.size
 
 -- TODO: manual impls of the other funs
 -- as those are more efficient
 
 
-instance (Prim k) => Foldable (MapUL k) where
+instance (Prim k) => Foldable (HashMapUL k) where
   {-# INLINE foldr #-}
-  foldr = MyLib.foldr
+  foldr = Champ.Internal.foldr
   {-# INLINE foldr' #-}
-  foldr' = MyLib.foldr'
+  foldr' = Champ.Internal.foldr'
   {-# INLINE foldl #-}
-  foldl = MyLib.foldl
+  foldl = Champ.Internal.foldl
   {-# INLINE foldl' #-}
-  foldl' = MyLib.foldl'
+  foldl' = Champ.Internal.foldl'
   {-# INLINE null #-}
-  null = MyLib.null
+  null = Champ.Internal.null
   {-# INLINE length #-}
-  length = MyLib.size
+  length = Champ.Internal.size
 
 -- TODO: manual impls of the other funs
 -- as those are more efficient
 
-instance (Prim k) => Foldable (MapUB k) where
+instance (Prim k) => Foldable (HashMapUB k) where
   {-# INLINE foldr #-}
-  foldr = MyLib.foldr
+  foldr = Champ.Internal.foldr
   {-# INLINE foldr' #-}
-  foldr' = MyLib.foldr'
+  foldr' = Champ.Internal.foldr'
   {-# INLINE foldl #-}
-  foldl = MyLib.foldl
+  foldl = Champ.Internal.foldl
   {-# INLINE foldl' #-}
-  foldl' = MyLib.foldl'
+  foldl' = Champ.Internal.foldl'
   {-# INLINE null #-}
-  null = MyLib.null
+  null = Champ.Internal.null
   {-# INLINE length #-}
-  length = MyLib.size
+  length = Champ.Internal.size
 
 -- TODO: manual impls of the other funs
 -- as those are more efficient
@@ -587,20 +591,20 @@ instance (Prim k) => Foldable (MapUB k) where
 -- maps with unboxed values,
 -- but without some tricksy workaround this is impossible.
 
--- instance Foldable (MapBU k) where
---   foldr = MyLib.foldr
---   foldr' = MyLib.foldr'
+-- instance Foldable (HashMapBU k) where
+--   foldr = Champ.Internal.foldr
+--   foldr' = Champ.Internal.foldr'
 --   -- TODO: manual impls of the other funs
 --   -- as those are more efficient
 
--- instance (Prim k) => Foldable (MapUU k) where
---   foldr = MyLib.foldr
---   foldr' = MyLib.foldr'
+-- instance (Prim k) => Foldable (HashMapUU k) where
+--   foldr = Champ.Internal.foldr
+--   foldr' = Champ.Internal.foldr'
 --   -- TODO: manual impls of the other funs
 --   -- as those are more efficient
 
 {-# INLINE foldr #-}
-foldr :: (MapRepr keys vals k v) => (v -> r -> r) -> r -> Map keys vals k v -> r
+foldr :: (MapRepr keys vals k v) => (v -> r -> r) -> r -> HashMap keys vals k v -> r
 foldr f z0 m = case matchMap m of
   (# (# #) | | #) -> z0
   (# | (# _k, v #) | #) -> f v z0
@@ -612,7 +616,7 @@ foldr f z0 m = case matchMap m of
         & flip (Contiguous.foldr go) children
 
 {-# INLINE foldl #-}
-foldl :: (MapRepr keys vals k v) => (r -> v -> r) -> r -> Map keys vals k v -> r
+foldl :: (MapRepr keys vals k v) => (r -> v -> r) -> r -> HashMap keys vals k v -> r
 foldl f z0 m = case matchMap m of
   (# (# #) | | #) -> z0
   (# | (# _k, v #) | #) -> f z0 v
@@ -625,7 +629,7 @@ foldl f z0 m = case matchMap m of
 
 
 {-# INLINE foldr' #-}
-foldr' :: (MapRepr keys vals k v) => (v -> r -> r) -> r -> Map keys vals k v -> r
+foldr' :: (MapRepr keys vals k v) => (v -> r -> r) -> r -> HashMap keys vals k v -> r
 foldr' f !z0 m = case matchMap m of
   (# (# #) | | #) -> z0
   (# | (# _k, v #) | #) -> f v z0
@@ -637,7 +641,7 @@ foldr' f !z0 m = case matchMap m of
         & flip (Contiguous.foldr' go) children
 
 {-# INLINE foldl' #-}
-foldl' :: (MapRepr keys vals k v) => (r -> v -> r) -> r -> Map keys vals k v -> r
+foldl' :: (MapRepr keys vals k v) => (r -> v -> r) -> r -> HashMap keys vals k v -> r
 foldl' f !z0 m = case matchMap m of
   (# (# #) | | #) -> z0
   (# | (# _k, v #) | #) -> f z0 v
@@ -649,7 +653,7 @@ foldl' f !z0 m = case matchMap m of
         & flip (Contiguous.foldl' f) vals
 
 {-# INLINE foldrWithKey #-}
-foldrWithKey :: (MapRepr keys vals k v) => (k -> v -> r -> r) -> r -> Map keys vals k v -> r
+foldrWithKey :: (MapRepr keys vals k v) => (k -> v -> r -> r) -> r -> HashMap keys vals k v -> r
 foldrWithKey f z0 m = case matchMap m of
   (# (# #) | | #) -> z0
   (# | (# k, v #) | #) -> f k v z0
@@ -660,7 +664,7 @@ foldrWithKey f z0 m = case matchMap m of
         & flip (Contiguous.foldr go) children
 
 {-# INLINE foldlWithKey' #-}
-foldlWithKey' :: (MapRepr keys vals k v) => (r -> k -> v -> r) -> r -> Map keys vals k v -> r
+foldlWithKey' :: (MapRepr keys vals k v) => (r -> k -> v -> r) -> r -> HashMap keys vals k v -> r
 foldlWithKey' f !z0 m = case matchMap m of
   (# (# #) | | #) -> z0
   (# | (# k, v #) | #) -> f z0 k v
@@ -674,20 +678,20 @@ foldlWithKey' f !z0 m = case matchMap m of
 --
 -- The resulting list is produced lazily and participates in list fusion.
 -- The order of keys is unspecified.
-keys :: MapRepr keys vals k v => Map keys vals k v -> [k]
+keys :: MapRepr keys vals k v => HashMap keys vals k v -> [k]
 {-# INLINE keys #-}
-keys = Prelude.map fst . MyLib.toList
+keys = Prelude.map fst . Champ.Internal.toList
 
 -- | \(O(n)\) Returns a list of the map's elements (or values).
 --
 -- The resulting list is produced lazily and participates in list fusion.
 -- The order of elements is unspecified.
-elems :: MapRepr keys vals k v => Map keys vals k v -> [v]
+elems :: MapRepr keys vals k v => HashMap keys vals k v -> [v]
 {-# INLINE elems #-}
-elems = Prelude.map snd . MyLib.toList
+elems = Prelude.map snd . Champ.Internal.toList
 
-instance (Show k, Show v, MapRepr keys vals k v) => Show (Map keys vals k v) where
-    show m = "fromList " <> show (MyLib.toList m)
+instance (Show k, Show v, MapRepr keys vals k v) => Show (HashMap keys vals k v) where
+    show m = "fromList " <> show (Champ.Internal.toList m)
 
 -- Enable for debugging: 
 -- instance (Show (ArrayOf (Strict keys) k), Show (ArrayOf vals v), Show k, Show v, MapRepr keys vals k v) => Show (Map keys vals k v) where
@@ -699,10 +703,10 @@ instance (Show k, Show v, MapRepr keys vals k v) => Show (Map keys vals k v) whe
 --   show (CollisionNode keys vals) = "(CollisionNode " <> show keys <> " " <> show vals <> ")"
 --   show (CompactNode bitmap keys vals children) = "(CompactNode " <> show bitmap <> " " <> show keys <> " " <> show vals <> " " <> show children <> ")"
 
--- mysumOne :: MapBL Int Int -> Int
+-- mysumOne :: HashMapBL Int Int -> Int
 -- mysumOne = foldr' (+) 0
 
--- mysumTwo :: MapBL Int Int -> Int
+-- mysumTwo :: HashMapBL Int Int -> Int
 -- mysumTwo = foldr'2 (+) 0
 
 -- Helper functions & types:
@@ -770,13 +774,13 @@ childrenIndex node bitpos =
 nextShift :: (Num a) => a -> a
 nextShift s = s + BIT_PARTITION_SIZE
 
--- intsToList :: MapBL Int Int -> [(Int, Int)]
--- intsToList = MyLib.toList
+-- intsToList :: HashMapBL Int Int -> [(Int, Int)]
+-- intsToList = Champ.Internal.toList
 
--- sumStrict :: MapBB Int Int -> Int
+-- sumStrict :: HashMapBB Int Int -> Int
 -- sumStrict = foldr' (+) 0
 
--- sumLazy :: MapBL Int Int -> Int
+-- sumLazy :: HashMapBL Int Int -> Int
 -- sumLazy = foldr' (+) 0
 
 ------------------------------------------------------------------------

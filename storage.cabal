@@ -59,7 +59,13 @@ library
     import:           warnings
 
     -- Modules exported by the library.
-    exposed-modules:  Storage, MyLib, Array, Collision
+    exposed-modules:  
+      Champ.HashMap,
+      Champ.HashSet,
+      Champ.Internal,
+      Array, 
+      Collision,
+      Storage, 
 
     -- Modules included in this library but not exported.
     -- other-modules:
