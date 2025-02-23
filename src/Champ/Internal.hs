@@ -5,6 +5,7 @@
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE MultiWayIf #-}
 {-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE RoleAnnotations #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeFamilyDependencies #-}
 {-# LANGUAGE UnboxedTuples #-}
@@ -35,6 +36,10 @@ import GHC.IsList (IsList (..))
 import Numeric (showBin)
 import Storage (ArrayOf, Storage (..), StrictStorage (..))
 import Prelude hiding (lookup)
+import Data.Coerce (Coercible, coerce)
+import Unsafe.Coerce (unsafeCoerce)
+import Data.Type.Coercion (Coercion(Coercion))
+
 import Collision qualified
 
 #define BIT_PARTITION_SIZE 5
@@ -142,7 +147,9 @@ isNonZeroBitmap b = (# | b #)
 --  This means GHC will skip any thunk-forcing code whenever reading/recursing
 class (ContiguousU (ArrayOf (Strict keyStorage)), ContiguousU (ArrayOf (valStorage)), Element (ArrayOf (Strict keyStorage)) k, Element (ArrayOf valStorage) v) => MapRepr (keyStorage :: StrictStorage) (valStorage :: Storage) k v where
   data HashMap keyStorage valStorage k v
+
   data MapNode keyStorage valStorage k v
+
   packNode :: (# Bitmap, ArrayOf (Strict keyStorage) k, (ArrayOf valStorage) v, StrictSmallArray (MapNode keyStorage valStorage k v) #) -> MapNode keyStorage valStorage k v
   unpackNode :: MapNode keyStorage valStorage k v -> (# Bitmap, ArrayOf (Strict keyStorage) k, (ArrayOf valStorage) v, StrictSmallArray (MapNode keyStorage valStorage k v) #)
   manyMap :: Word -> MapNode keyStorage valStorage k v -> HashMap keyStorage valStorage k v
@@ -792,3 +799,19 @@ nextShift s = s + BIT_PARTITION_SIZE
 ptrEq :: a -> a -> Bool
 ptrEq x y = Exts.isTrue# (Exts.reallyUnsafePtrEquality# x y Exts.==# 1#)
 {-# INLINE ptrEq #-}
+
+-- | Simplified usage of `withCoercible` for the common case where you want to directly coerce the hashmap itself.
+coerceHashMap :: forall v v' keys vals k. (Coercible v v', MapRepr keys vals k v, MapRepr keys vals k v') => HashMap keys vals k v -> HashMap keys vals k v'
+coerceHashMap x = withCoercible @(HashMap keys vals k v) @(HashMap keys vals k v') (coerce x)
+
+-- | Because of the way Champ.HashMap is currently implemented (using associated data families),
+-- the role annotation of the value type inside Champ.HashMap is `nominal` rather than `representational`.
+--
+-- This is a problem when you want to use `Data.Coerce.coerce`.
+-- This function allows an escape hatch to do so anyway.
+--
+-- You will need to specify the precise desired types `h1` and `h2`,
+-- otherwise GHC will complain that the types might not match in representation.
+withCoercible :: forall h1 h2 {keys} {vals} {k} {v} {v'} r. (Coercible v v', h1 ~ HashMap keys vals k v, h2 ~ HashMap keys vals k v', MapRepr keys vals k v, MapRepr keys vals k v') => (Coercible h1 h2 => r) -> r
+withCoercible val = case (unsafeCoerce (Coercion @v @v') :: Coercion h1 h2) of
+  Coercion -> val

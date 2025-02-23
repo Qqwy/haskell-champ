@@ -1,6 +1,7 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE RoleAnnotations #-}
 module Champ.HashSet (
-    HashSet,
+    HashSet(..),
     HashSetB,
     HashSetU,
     empty,
@@ -13,7 +14,8 @@ module Champ.HashSet (
     map,
     map',
     foldr,
-    foldl'
+    foldl',
+    toMap,
 ) where
 
 import Prelude hiding (map, foldr)
@@ -23,7 +25,9 @@ import Data.Hashable (Hashable)
 import Data.List qualified
 import Data.Coerce (coerce)
 
-newtype HashSet elems e = HashSet (Champ.Internal.HashMap elems Unexistent e ())
+newtype HashSet elems e = HashSet { toMap :: Champ.Internal.HashMap elems Unexistent e () }
+type role HashSet nominal nominal
+
 type SetRepr elems e = Champ.Internal.MapRepr elems Unexistent e ()
 type HashSetB e = HashSet Boxed e
 type HashSetU e = HashSet Unboxed e
@@ -38,7 +42,7 @@ fromList = coerce Champ.Internal.fromList . fmap (\x -> (x, ()))
 
 toList :: (SetRepr elems e) => HashSet elems e -> [e]
 {-# INLINE toList #-}
-toList = fmap fst . Champ.Internal.toList . coerce
+toList = Champ.Internal.keys . coerce
 
 empty :: (SetRepr elems e) => HashSet elems e
 {-# INLINE empty #-}
