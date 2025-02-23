@@ -812,6 +812,19 @@ difference a b = foldlWithKey' go empty a
                  Nothing -> unsafeInsert k v m
                  _       -> m
 
+-- | \(O(n \log m)\) Difference with a combining function. When two equal keys are
+-- encountered, the combining function is applied to the values of these keys.
+-- If it returns 'Nothing', the element is discarded (proper set difference). If
+-- it returns (@'Just' y@), the element is updated with a new value @y@.
+differenceWith :: (Hashable k, MapRepr keys vals k v, MapRepr keys vals' k w) => (v -> w -> Maybe v) -> HashMap keys vals k v -> HashMap keys vals' k w -> HashMap keys vals k v
+differenceWith f a b = foldlWithKey' go empty a
+  where
+    go m k v = case lookup k b of
+                 Nothing -> unsafeInsert k v m
+                 Just w  -> maybe m (\y -> unsafeInsert k y m) (f v w)
+{-# INLINABLE differenceWith #-}
+
+
 -- mysumOne :: HashMapBL Int Int -> Int
 -- mysumOne = foldr' (+) 0
 
