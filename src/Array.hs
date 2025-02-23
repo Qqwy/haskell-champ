@@ -27,6 +27,11 @@ module Array (
   -- * Arrays to store zero-size values
   UnitArray,
   IsUnit,
+  -- * Conditionally safe interface
+  Safety(..),
+  Array.insertAt,
+  Array.replaceAt,
+  Array.deleteAt
 ) where
 
 import Control.DeepSeq (NFData)
@@ -38,7 +43,7 @@ import Data.Foldable qualified as Foldable
 import Data.Hashable (Hashable)
 import Data.Kind (Type)
 import Data.Primitive (Prim, PrimArray, SmallArray)
-import Data.Primitive.Contiguous
+import Data.Primitive.Contiguous (SmallUnliftedArray, Always)
 import Data.Primitive.Contiguous qualified as Contiguous
 import Data.Primitive.Contiguous.Class (Contiguous (..), ContiguousU (..), MutableSlice (..), Slice (..))
 import Data.Primitive.PrimArray qualified as PrimArray
@@ -191,44 +196,6 @@ instance Contiguous.ContiguousU StrictSmallArray where
 instance (Eq a) => Eq (StrictSmallArray a) where
   (StrictSmallArray l) == (StrictSmallArray r) = l == r
 
-sumStrictArray :: StrictSmallArray Int -> Int
-sumStrictArray = foldr' (+) 0
-
-sumLazyArray :: SmallArray Int -> Int
-sumLazyArray = foldr' (+) 0
-
--- | Branchless pair-array creation:
--- If the int is '1', creates the array [a, b]
--- If the int is '0', creates the array [b, a]
---
--- Trick copied from Data.Hashmap
-doubletonBranchless :: (Contiguous arr, Element arr a) => Int -> a -> a -> arr a
-{-# INLINE doubletonBranchless #-}
-doubletonBranchless idx0Or1 a b = run $ do
-  arr <- new 2
-  write arr (1 - idx0Or1) a
-  write arr idx0Or1 b
-  unsafeFreeze arr
-
--- modifyAtIfChanged :: (Contiguous arr, Element arr a) => (a -> a) -> arr a -> Int -> arr a
--- modifyAtIfChanged f arr idx =
---   let
---     !elem = Contiguous.index arr idx
---     !elem' = f elem
---   in if elem' `ptrEq` elem
---      then arr
---      else Contiguous.replaceAt arr idx elem'
-
-------------------------------------------------------------------------
--- Pointer equality
-
--- | Check if two the two arguments are the same value.  N.B. This
--- function might give false negatives (due to GC moving objects, or things being unpacked/repacked.)
--- but never false positives
-ptrEq :: a -> a -> Bool
-ptrEq x y = Exts.isTrue# (Exts.reallyUnsafePtrEquality# x y Exts.==# 1#)
-{-# INLINE ptrEq #-}
-
 
 -- Array containing any number of `()`'s.
 --
@@ -351,3 +318,62 @@ instance Contiguous.ContiguousU UnitArray where
   {-# INLINE liftMut #-}
   liftMut (MutableUnitArray# l) = MutableUnitArray l
 
+sumStrictArray :: StrictSmallArray Int -> Int
+sumStrictArray = Foldable.foldr' (+) 0
+
+sumLazyArray :: SmallArray Int -> Int
+sumLazyArray = Foldable.foldr' (+) 0
+
+-- | Branchless pair-array creation:
+-- If the int is '1', creates the array [a, b]
+-- If the int is '0', creates the array [b, a]
+--
+-- Trick copied from Data.Hashmap
+doubletonBranchless :: (Contiguous arr, Element arr a) => Int -> a -> a -> arr a
+{-# INLINE doubletonBranchless #-}
+doubletonBranchless idx0Or1 a b = run $ do
+  arr <- new 2
+  write arr (1 - idx0Or1) a
+  write arr idx0Or1 b
+  unsafeFreeze arr
+
+-- modifyAtIfChanged :: (Contiguous arr, Element arr a) => (a -> a) -> arr a -> Int -> arr a
+-- modifyAtIfChanged f arr idx =
+--   let
+--     !elem = Contiguous.index arr idx
+--     !elem' = f elem
+--   in if elem' `ptrEq` elem
+--      then arr
+--      else Contiguous.replaceAt arr idx elem'
+
+------------------------------------------------------------------------
+-- Pointer equality
+
+-- | Check if two the two arguments are the same value.  N.B. This
+-- function might give false negatives (due to GC moving objects, or things being unpacked/repacked.)
+-- but never false positives
+ptrEq :: a -> a -> Bool
+{-# INLINE ptrEq #-}
+ptrEq x y = Exts.isTrue# (Exts.reallyUnsafePtrEquality# x y Exts.==# 1#)
+
+-- TODO
+insertAtUnsafe :: (Contiguous arr, Element arr a) => arr a -> Int -> a -> arr a
+insertAtUnsafe = Contiguous.insertAt
+
+
+data Safety = Safe | Unsafe
+
+insertAt :: (Contiguous arr, Element arr a) => Safety -> arr a -> Int -> a -> arr a
+{-# INLINE insertAt #-}
+insertAt Safe = Contiguous.insertAt
+insertAt Unsafe = Contiguous.insertAt -- TODO
+
+replaceAt :: (Contiguous arr, Element arr a) => Safety -> arr a -> Int -> a -> arr a
+{-# INLINE replaceAt #-}
+replaceAt Safe = Contiguous.replaceAt
+replaceAt Unsafe = Contiguous.replaceAt -- TODO
+
+deleteAt :: (Contiguous arr, Element arr a) => Safety -> arr a -> Int -> arr a 
+{-# INLINE deleteAt #-}
+deleteAt Safe = Contiguous.deleteAt
+deleteAt Unsafe = Contiguous.deleteAt -- TODO

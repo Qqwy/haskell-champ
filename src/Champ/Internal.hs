@@ -17,7 +17,7 @@
 
 module Champ.Internal where
 
-import Array (StrictSmallArray, UnitArray, IsUnit)
+import Array (StrictSmallArray, UnitArray, IsUnit, Safety(..))
 import Array qualified
 import Control.DeepSeq (NFData (..))
 import Data.Bits hiding (shift)
@@ -59,9 +59,6 @@ type HashMapUL = HashMap Unboxed Lazy
 type HashMapUB = HashMap Unboxed (Strict Boxed)
 
 type HashMapUU = HashMap Unboxed (Strict Unboxed)
-
-type HashSetB = HashMap Boxed Unexistent
-type HashSetU = HashMap Unboxed Unexistent
 
 pattern EmptyMap ::
   forall (keyStorage :: StrictStorage) (valStorage :: Storage) k v.
@@ -254,7 +251,15 @@ toList hashmap = Exts.build (\fusedCons fusedNil -> foldrWithKey (\k v xs -> (k,
 -- the key, the old value is replaced.
 insert :: (Hashable k, MapRepr keys vals k v) => k -> v -> HashMap keys vals k v -> HashMap keys vals k v
 {-# INLINE insert #-}
-insert !k v !m = case matchMap m of
+insert = insert' Safe
+
+insertUnsafe :: (Hashable k, MapRepr keys vals k v) => k -> v -> HashMap keys vals k v -> HashMap keys vals k v
+{-# INLINE insertUnsafe #-}
+insertUnsafe = insert' Unsafe
+
+insert' :: (Hashable k, MapRepr keys vals k v) => Safety -> k -> v -> HashMap keys vals k v -> HashMap keys vals k v
+{-# INLINE insert' #-}
+insert' safety !k v !m = case matchMap m of
   (# (# #) | | #) -> singleton k v
   (# | (# k', v' #) | #) ->
     if k == k'
@@ -263,30 +268,30 @@ insert !k v !m = case matchMap m of
         let !(# size, node #) =
               Contiguous.empty
                 & MapNode (maskToBitpos (hashToMask 0 (hash k))) (Contiguous.singleton k) (Contiguous.singleton v)
-                & insert' (hash k') k' v' 0
+                & insertInNode safety (hash k') k' v' 0
          in ManyMap (1 + Exts.W# size) node
   (# | | (# size, node0 #) #) ->
-    let (# didIGrow, node' #) = insert' (hash k) k v 0 node0
+    let (# didIGrow, node' #) = insertInNode safety (hash k) k v 0 node0
      in ManyMap (size + Exts.W# didIGrow) node'
 
-{-# INLINEABLE insert' #-}
-insert' !h !k v !shift !node@(CollisionNode _ _) = (# 1##, insertCollision k v node #)
-insert' !h !k v !shift !node@(CompactNode !bitmap !keys !vals !children) =
+{-# INLINEABLE insertInNode #-}
+insertInNode safety !h !k v !shift !node@(CollisionNode _ _) = (# 1##, insertCollision safety k v node #)
+insertInNode safety !h !k v !shift !node@(CompactNode !bitmap !keys !vals !children) =
   let !bitpos = maskToBitpos $ hashToMask shift h
    in case bitposLocation node bitpos of
         Inline ->
           -- exists inline; potentially turn inline to subnode with two keys
-          insertMergeWithInline bitpos k v h shift node
+          insertMergeWithInline safety bitpos k v h shift node
         InChild ->
           -- Exists in child, insert in there and make sure this node contains the updated child
           let child = indexChild node bitpos
-              (# didIGrow, child' #) = insert' h k v (nextShift shift) child
+              (# didIGrow, child' #) = insertInNode safety h k v (nextShift shift) child
            in if child' `ptrEq` child
                 then (# 0##, node #)
-                else (# didIGrow, CompactNode bitmap keys vals (Contiguous.replaceAt children (childrenIndex node bitpos) child') #)
+                else (# didIGrow, CompactNode bitmap keys vals (Array.replaceAt safety children (childrenIndex node bitpos) child') #)
         Nowhere ->
           -- Doesn't exist yet, we can insert inline
-          (# 1##, insertNewInline bitpos k v node #)
+          (# 1##, insertNewInline safety bitpos k v node #)
 
 -- {-# SPECIALIZE insert :: Hashable k => k -> v -> HashMapBL k v -> HashMapBL k v #-}
 -- {-# SPECIALIZE insert :: Hashable k => k -> v -> HashMapBB k v -> HashMapBB k v #-}
@@ -301,38 +306,38 @@ insert' !h !k v !shift !node@(CompactNode !bitmap !keys !vals !children) =
 -- (which would theoretically allow a binary search on lookup)
 -- because we don't have an `Ord` instance.
 {-# INLINE insertCollision #-}
-insertCollision :: (MapRepr keys vals k v) => k -> v -> MapNode keys vals k v -> MapNode keys vals k v
-insertCollision k v (CollisionNode keys vals) =
+insertCollision :: (MapRepr keys vals k v) => Safety -> k -> v -> MapNode keys vals k v -> MapNode keys vals k v
+insertCollision safety k v (CollisionNode keys vals) =
   let idx = Contiguous.size keys
-      keys' = Contiguous.insertAt keys idx k
-      vals' = Contiguous.insertAt vals idx v
+      keys' = Array.insertAt safety keys idx k
+      vals' = Array.insertAt safety vals idx v
    in CollisionNode keys' vals'
 
 {-# INLINE insertNewInline #-}
-insertNewInline :: (MapRepr keys vals k v) => Bitmap -> k -> v -> MapNode keys vals k v -> MapNode keys vals k v
-insertNewInline bitpos k v node@(MapNode bitmap keys vals children) =
+insertNewInline :: (MapRepr keys vals k v) => Safety -> Bitmap -> k -> v -> MapNode keys vals k v -> MapNode keys vals k v
+insertNewInline safety bitpos k v node@(MapNode bitmap keys vals children) =
   let bitmap' = bitmap .|. bitpos
       idx = dataIndex node bitpos
-      keys' = Contiguous.insertAt keys idx k
-      vals' = Contiguous.insertAt vals idx v
+      keys' = Array.insertAt safety keys idx k
+      vals' = Array.insertAt safety vals idx v
    in MapNode bitmap' keys' vals' children
 
 {-# INLINE insertMergeWithInline #-}
-insertMergeWithInline :: (Hashable k, MapRepr keys vals k v) => Bitmap -> k -> v -> Hash -> Word -> MapNode keys vals k v -> (# Exts.Word#, MapNode keys vals k v #)
-insertMergeWithInline bitpos k v h shift node@(CompactNode bitmap keys vals children) =
+insertMergeWithInline :: (Hashable k, MapRepr keys vals k v) => Safety -> Bitmap -> k -> v -> Hash -> Word -> MapNode keys vals k v -> (# Exts.Word#, MapNode keys vals k v #)
+insertMergeWithInline safety bitpos k v h shift node@(CompactNode bitmap keys vals children) =
   let bitmap' = bitmap .^. bitpos .|. (bitpos `unsafeShiftL` HASH_CODE_LENGTH)
       idx = dataIndex node bitpos
       existingKey = indexKey node bitpos
       (# existingVal #) = indexVal# node bitpos
    in if
         | existingKey == k && v `ptrEq` existingVal -> (# 0##, node #)
-        | existingKey == k -> (# 1##, CompactNode bitmap' keys (Contiguous.replaceAt vals idx v) children #)
+        | existingKey == k -> (# 1##, CompactNode bitmap' keys (Array.replaceAt safety vals idx v) children #)
         | otherwise ->
             let newIdx = childrenIndex node bitpos
-                keys' = Contiguous.deleteAt keys idx
-                vals' = Contiguous.deleteAt vals idx
+                keys' = Array.deleteAt safety keys idx
+                vals' = Array.deleteAt safety vals idx
                 child = pairNode existingKey existingVal (hash existingKey) k v h (nextShift shift)
-                children' = Contiguous.insertAt children newIdx child
+                children' = Array.insertAt safety children newIdx child
              in (# 1##, CompactNode bitmap' keys' vals' children' #)
 
 {-# INLINE pairNode #-}
@@ -362,11 +367,21 @@ mergeCompactInline k1 v1 h1 k2 v2 h2 shift =
       vals = Array.doubletonBranchless c v1 v2
    in CompactNode bitmap keys vals Contiguous.empty
 
-{-# INLINE lookup #-}
 lookup :: (MapRepr keys vals k v, Eq k, Hashable k) => k -> HashMap keys vals k v -> Maybe v
-lookup !k m = case matchMap m of
+{-# INLINE lookup #-}
+lookup k m = snd <$> lookupKV k m
+
+-- | Version of lookup that also returns the found key.
+--
+-- This is only useful if the 'memory identity' of the key is important.
+-- It usually isn't, but sometimes it is: For example, some equality checks can short-cirquit using pointer-equality
+-- and by fetching a key that is known to be the same pointer, you can speed up equality checks in the future,
+-- as well as deduplicate the memory you're holding onto.
+lookupKV :: (MapRepr keys vals k v, Eq k, Hashable k) => k -> HashMap keys vals k v -> Maybe (k, v)
+{-# INLINE lookupKV #-}
+lookupKV !k m = case matchMap m of
   (# (# #) | | #) -> Nothing
-  (# | (# k', v #) | #) -> if k == k' then Just v else Nothing
+  (# | (# k', v #) | #) -> if k == k' then Just (k', v) else Nothing
   (# | | (# _size, node0 #) #) ->
     -- NOTE: Manually inlining the first iteration of lookup'
     -- (which will _never_ be in a collision node)
@@ -378,14 +393,14 @@ lookup !k m = case matchMap m of
         Inline ->
             let k' = indexKey node0 bitpos
                 (# v #) = indexVal# node0 bitpos
-            in if k == k' then Just v else Nothing
+            in if k == k' then Just (k', v) else Nothing
         InChild -> lookup' (nextShift 0) (indexChild node0 bitpos)
             where
                 {-# INLINEABLE lookup' #-}
                 lookup' !_s !(CollisionNode keys vals) =
                     keys
                         & Contiguous.findIndex (\k' -> k' == k)
-                        & fmap (Contiguous.index vals)
+                        & fmap (\idx -> (Contiguous.index keys idx, Contiguous.index vals idx))
                 lookup' !s !node@(CompactNode _bitmap _keys _vals _children) =
                     let !bitpos = maskToBitpos $ hashToMask s h
                     in case bitposLocation node bitpos of
@@ -393,36 +408,39 @@ lookup !k m = case matchMap m of
                             Inline ->
                                 let k' = indexKey node bitpos
                                     (# v #) = indexVal# node bitpos
-                                in if k == k' then Just v else Nothing
+                                in if k == k' then Just (k', v) else Nothing
                             InChild -> lookup' (nextShift s) (indexChild node bitpos)
 
 -- mylookup :: Int -> HashMapUU Int Int -> Maybe Int
 -- mylookup = lookup
 
-{-# INLINE indexKey #-}
 indexKey :: MapRepr keys vals k v => MapNode keys vals k v -> Bitmap -> k
+{-# INLINE indexKey #-}
 indexKey (CollisionNode _keys _vals) _ = error "Should only be called on CompactNodes"
 indexKey node@(CompactNode _bitmap keys _vals _children) bitpos =
     Contiguous.index keys (dataIndex node bitpos)
 
-{-# INLINE indexVal# #-}
 indexVal# :: MapRepr keys vals k v => MapNode keys vals k v -> Bitmap -> (# v #)
+{-# INLINE indexVal# #-}
 indexVal# (CollisionNode _keys _vals) _ = error "Should only be called on CompactNodes"
 indexVal# node@(CompactNode _bitmap _keys vals _children) bitpos =
     Contiguous.index# vals (dataIndex node bitpos)
 
-{-# INLINE indexChild #-}
 indexChild :: MapRepr keys vals k v => MapNode keys vals k v -> Bitmap -> MapNode keys vals k v
+{-# INLINE indexChild #-}
 indexChild (CollisionNode _keys _vals) _ = error "Should only be called on CompactNodes"
 indexChild node@(CompactNode _bitmap _keys _vals children) bitpos =
     Contiguous.index children (childrenIndex node bitpos)
 
 member :: (MapRepr keys vals k v, Eq k, Hashable k) => k -> HashMap keys vals k v -> Bool
-{-# INLINEABLE member #-}
-member k v = Maybe.isJust $ lookup k v
+{-# INLINE member #-}
+member k m = 
+  m
+  & lookupKV k
+  & Maybe.isJust
 
 instance (MapRepr keys vals k v, Eq v, Eq k) => Eq (HashMap keys vals k v) where
-  {-# INLINEABLE (==) #-}
+  {-# INLINE (==) #-}
   EmptyMap == EmptyMap = True
   (SingletonMap k v) == (SingletonMap k' v') = (k == k') && (v == v')
   (ManyMap sz node) == (ManyMap sz' node') = sz == sz' && node == node'
@@ -443,9 +461,6 @@ instance (MapRepr keys vals k v, Eq v, Eq k) => Eq (MapNode keys vals k v) where
 
 myeq :: HashMapUU Int Int -> HashMapUU Int Int -> Bool
 myeq a b = a == b
-
-
-
 
 instance (Hashable k, Eq k, MapRepr keys vals k v) => IsList (HashMap keys vals k v) where
   type Item (HashMap keys vals k v) = (k, v)

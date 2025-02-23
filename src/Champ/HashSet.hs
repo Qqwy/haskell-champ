@@ -1,4 +1,5 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE RoleAnnotations #-}
 {-# LANGUAGE UndecidableInstances #-}
 module Champ.HashSet (
@@ -9,9 +10,10 @@ module Champ.HashSet (
     singleton,
     size,
     insert,
-    fromList,
-    toList,
+    Champ.HashSet.fromList,
+    Champ.HashSet.toList,
     member,
+    lookup,
     map,
     map',
     foldr,
@@ -19,19 +21,27 @@ module Champ.HashSet (
     convert,
 ) where
 
-import Prelude hiding (map, foldr)
+import Prelude hiding (map, foldr, lookup)
 import Champ.Internal qualified
 import Storage (Storage(Unexistent), StrictStorage(..))
 import Data.Hashable (Hashable)
 import Data.List qualified
 import Data.Coerce (coerce)
+import GHC.IsList (IsList (..))
 
 newtype HashSet elems e = HashSet { toMap :: Champ.Internal.HashMap elems Unexistent e () }
 type role HashSet nominal nominal
 
-
 instance (Show e, SetRepr elems e) => Show (HashSet elems e) where
-    show set = "Champ.HashSet.fromList " <> show (toList set)
+    show set = "Champ.HashSet.fromList " <> show (Champ.HashSet.toList set)
+
+instance (Hashable e, Eq e, SetRepr elems e) => IsList (HashSet elems e) where
+  type Item (HashSet elems e) = e
+  {-# INLINE toList #-}
+  toList = Champ.HashSet.toList
+  {-# INLINE fromList #-}
+  fromList = Champ.HashSet.fromList
+
 
 type SetRepr elems e = Champ.Internal.MapRepr elems Unexistent e ()
 type HashSetB e = HashSet Boxed e
@@ -65,13 +75,17 @@ member :: (SetRepr elems e, Hashable e) => e -> HashSet elems e -> Bool
 {-# INLINE member #-}
 member = coerce Champ.Internal.member
 
+lookup :: (SetRepr elems e, Hashable e) => e -> HashSet elems e -> Maybe e
+{-# INLINE lookup #-}
+lookup e set = fst <$> Champ.Internal.lookupKV e (coerce set)
+
 map :: (Hashable b, SetRepr elems a, SetRepr elems b) => (a -> b) -> HashSet elems a -> HashSet elems b
 {-# INLINE map #-}
 map = map'
 
 map' :: (Hashable b, SetRepr as a, SetRepr bs b) => (a -> b) -> HashSet as a -> HashSet bs b
 {-# INLINE map' #-}
-map' fun = fromList . Data.List.map fun . toList
+map' fun = Champ.HashSet.fromList . Data.List.map fun . Champ.HashSet.toList
 
 foldr :: (SetRepr elems e) => (e -> r -> r) -> r -> HashSet elems e -> r
 {-# INLINE foldr #-}
