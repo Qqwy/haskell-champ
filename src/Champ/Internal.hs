@@ -26,6 +26,7 @@ import Data.Function ((&))
 import Data.Hashable (Hashable)
 import Data.Hashable qualified as Hashable
 import Data.Maybe qualified as Maybe
+import Data.List qualified as List
 import Data.Primitive
 import Data.Primitive.Contiguous (Contiguous, ContiguousU, Element)
 import Data.Primitive.Contiguous qualified as Contiguous
@@ -751,15 +752,20 @@ convert m = case matchMap m of
 "Champ.HashMap.convert to the identical type" forall (h :: HashMap ks vs k v). convert @(HashMap ks vs) @(HashMap ks vs) h = h
 #-}
 
--- Enable for debugging: 
--- instance (Show (ArrayOf (Strict keys) k), Show (ArrayOf vals v), Show k, Show v, MapRepr keys vals k v) => Show (Map keys vals k v) where
---   show EmptyMap = "EmptyMap"
---   show (SingletonMap k v) = "(SingletonMap " <> show k <> " " <> show v <> ")"
---   show (ManyMap _size node) = "(ManyMap " <> show node <> ")"
+debugShow :: (Show (ArrayOf (Strict keys) k), Show (ArrayOf vals v), Show k, Show v, MapRepr keys vals k v) => HashMap keys vals k v -> String
+debugShow EmptyMap = "EmptyMap"
+debugShow (SingletonMap k v) = "(SingletonMap " <> show k <> " " <> show v <> ")"
+debugShow (ManyMap _size node) = "(ManyMap " <> debugShowNode node <> ")"
 
--- instance (Show (ArrayOf (Strict keys) k), Show (ArrayOf vals v), Show k, Show v, MapRepr keys vals k v) => Show (MapNode keys vals k v) where
---   show (CollisionNode keys vals) = "(CollisionNode " <> show keys <> " " <> show vals <> ")"
---   show (CompactNode bitmap keys vals children) = "(CompactNode " <> show bitmap <> " " <> show keys <> " " <> show vals <> " " <> show children <> ")"
+debugShowNode :: (Show (ArrayOf (Strict keys) k), Show (ArrayOf vals v), Show k, Show v, MapRepr keys vals k v) => MapNode keys vals k v -> String
+debugShowNode (CollisionNode keys vals) = "(CollisionNode " <> show keys <> " " <> show vals <> ")"
+debugShowNode (CompactNode bitmap keys vals children) = "(CompactNode " <> show bitmap <> " " <> show keys <> " " <> show vals <> " [" <> showChildren children <> "])"
+  where
+    showChildren xs = 
+      xs
+      & Foldable.toList
+      & fmap debugShowNode
+      & List.intercalate ","
 
 -- mysumOne :: HashMapBL Int Int -> Int
 -- mysumOne = foldr' (+) 0
