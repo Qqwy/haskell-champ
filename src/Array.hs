@@ -12,6 +12,8 @@
 {-# OPTIONS_GHC -ddump-simpl -ddump-cmm -ddump-stg-tags -ddump-stg-final -ddump-asm -ddump-to-file #-}
 
 module Array (
+  -- * Array class
+  Array,
   -- * Simple arrays:
   SmallArray, 
   SmallUnliftedArray, 
@@ -49,7 +51,7 @@ import Data.Primitive.Contiguous.Class (Contiguous (..), ContiguousU (..), Mutab
 import Data.Primitive.PrimArray qualified as PrimArray
 import Data.Primitive.SmallArray qualified as SmallArray
 import Data.Primitive.Unlifted.Class (PrimUnlifted (..))
-import Data.Primitive.Unlifted.SmallArray (SmallMutableUnliftedArray_ (..), SmallUnliftedArray_ (..), mapSmallUnliftedArray)
+import Data.Primitive.Unlifted.SmallArray (SmallMutableUnliftedArray_ (..), SmallUnliftedArray_ (..), mapSmallUnliftedArray, unsafeThawSmallUnliftedArray)
 import Data.Primitive.Unlifted.SmallArray.Primops (SmallMutableUnliftedArray# (SmallMutableUnliftedArray#), SmallUnliftedArray# (SmallUnliftedArray#))
 import GHC.Exts (Levity (..), RuntimeRep (BoxedRep), SmallArray#, SmallMutableArray#, TYPE)
 import GHC.Exts qualified as Exts
@@ -318,6 +320,30 @@ instance Contiguous.ContiguousU UnitArray where
   {-# INLINE liftMut #-}
   liftMut (MutableUnitArray# l) = MutableUnitArray l
 
+class Contiguous.ContiguousU arr => Array arr where
+  unsafeThaw :: PrimMonad m => arr a -> m (Mutable arr (PrimState m) a)
+  -- unsafeResizeMut :: PrimMonad m => (Mutable arr (PrimState m) a) -> Int -> a -> m (Mutable arr (PrimState m) a)
+
+instance Array SmallArray where
+  unsafeThaw = SmallArray.unsafeThawSmallArray
+  -- unsafeResizeMut = SmallArray.resizeSmallMutableArray
+
+instance Array PrimArray where
+  unsafeThaw = PrimArray.unsafeThawPrimArray
+  -- unsafeResizeMut = PrimArray.resizeMutablePrimArray
+
+instance Array StrictSmallArray where
+  unsafeThaw (StrictSmallArray sa) = StrictSmallMutableArray <$> unsafeThawSmallUnliftedArray sa
+  -- unsafeResizeMut (StrictSmallMutableArray sa) = StrictSmallMutableArray <$>
+  --   primitive
+  --     (\s0 -> case GHC.Exts.resizeSmallMutableArray# arr n x s0 of
+  --       (# s1, arr' #) -> (# s1, SmallMutableUnliftedArray_ arr' #)
+  --     )
+
+
+instance Array UnitArray where
+  unsafeThaw (UnitArray l) = pure $ MutableUnitArray l
+
 sumStrictArray :: StrictSmallArray Int -> Int
 sumStrictArray = Foldable.foldr' (+) 0
 
@@ -356,24 +382,25 @@ ptrEq :: a -> a -> Bool
 {-# INLINE ptrEq #-}
 ptrEq x y = Exts.isTrue# (Exts.reallyUnsafePtrEquality# x y Exts.==# 1#)
 
--- TODO
-insertAtUnsafe :: (Contiguous arr, Element arr a) => arr a -> Int -> a -> arr a
-insertAtUnsafe = Contiguous.insertAt
-
-
+-- | Allow running certain operations
+-- in either a 'Safe' (copy-on-write)
+-- and 'Unsafe' (mutate in place)
+-- mode
 data Safety = Safe | Unsafe
 
-insertAt :: (Contiguous arr, Element arr a) => Safety -> arr a -> Int -> a -> arr a
+insertAt :: (Array arr, Element arr a) => Safety -> arr a -> Int -> a -> arr a
 {-# INLINE insertAt #-}
-insertAt Safe = Contiguous.insertAt
-insertAt Unsafe = Contiguous.insertAt -- TODO
+insertAt _ src i x = Contiguous.insertAt src i x
 
-replaceAt :: (Contiguous arr, Element arr a) => Safety -> arr a -> Int -> a -> arr a
+replaceAt :: (Array arr, Element arr a) => Safety -> arr a -> Int -> a -> arr a
 {-# INLINE replaceAt #-}
-replaceAt Safe = Contiguous.replaceAt
-replaceAt Unsafe = Contiguous.replaceAt -- TODO
+replaceAt Safe src i x = Contiguous.replaceAt src i x
+replaceAt Unsafe src i x = Contiguous.create $ do
+  dst <- unsafeThaw src
+  Contiguous.write dst i x
+  pure dst
 
-deleteAt :: (Contiguous arr, Element arr a) => Safety -> arr a -> Int -> arr a 
+deleteAt :: (Array arr, Element arr a) => Safety -> arr a -> Int -> arr a 
 {-# INLINE deleteAt #-}
 deleteAt Safe = Contiguous.deleteAt
 deleteAt Unsafe = Contiguous.deleteAt -- TODO

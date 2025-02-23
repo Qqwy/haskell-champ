@@ -17,7 +17,7 @@
 
 module Champ.Internal where
 
-import Array (StrictSmallArray, UnitArray, IsUnit, Safety(..))
+import Array (Array, StrictSmallArray, UnitArray, IsUnit, Safety(..))
 import Array qualified
 import Control.DeepSeq (NFData (..))
 import Data.Bits hiding (shift)
@@ -27,8 +27,8 @@ import Data.Hashable (Hashable)
 import Data.Hashable qualified as Hashable
 import Data.Maybe qualified as Maybe
 import Data.List qualified as List
-import Data.Primitive
-import Data.Primitive.Contiguous (Contiguous, ContiguousU, Element)
+import Data.Primitive (Prim)
+import Data.Primitive.Contiguous (Contiguous, Element)
 import Data.Primitive.Contiguous qualified as Contiguous
 import Data.Primitive.SmallArray qualified as SmallArray
 import Data.Word (Word64)
@@ -144,7 +144,7 @@ isNonZeroBitmap b = (# | b #)
 -- - Finally, we make sure that internal map nodes are stored as `UnliftedType` (AKA `TYPE 'BoxedRep 'Unlifted`)
 --  inside their array, as we're always strict in the tree-spine of the CHAMP map.
 --  This means GHC will skip any thunk-forcing code whenever reading/recursing
-class (ContiguousU (ArrayOf (Strict keyStorage)), ContiguousU (ArrayOf (valStorage)), Element (ArrayOf (Strict keyStorage)) k, Element (ArrayOf valStorage) v) => MapRepr (keyStorage :: StrictStorage) (valStorage :: Storage) k v where
+class (Array (ArrayOf (Strict keyStorage)), Array (ArrayOf (valStorage)), Element (ArrayOf (Strict keyStorage)) k, Element (ArrayOf valStorage) v) => MapRepr (keyStorage :: StrictStorage) (valStorage :: Storage) k v where
   data HashMap keyStorage valStorage k v
 
   data MapNode keyStorage valStorage k v
@@ -236,7 +236,7 @@ bitposLocation node@(CompactNode bitmap _ _ _) bitpos
 -- the current implementation is slower than necessary.
 fromList :: (Hashable k, MapRepr keys vals k v) => [(k, v)] -> HashMap keys vals k v
 {-# INLINE fromList #-}
-fromList = Foldable.foldl' (\m (k, v) -> insert k v m) empty
+fromList = Foldable.foldl' (\m (k, v) -> unsafeInsert k v m) empty
 
 -- | \(O(n)\) Return a list of this map's elements (key-value pairs).
 --
@@ -253,9 +253,9 @@ insert :: (Hashable k, MapRepr keys vals k v) => k -> v -> HashMap keys vals k v
 {-# INLINE insert #-}
 insert = insert' Safe
 
-insertUnsafe :: (Hashable k, MapRepr keys vals k v) => k -> v -> HashMap keys vals k v -> HashMap keys vals k v
-{-# INLINE insertUnsafe #-}
-insertUnsafe = insert' Unsafe
+unsafeInsert :: (Hashable k, MapRepr keys vals k v) => k -> v -> HashMap keys vals k v -> HashMap keys vals k v
+{-# INLINE unsafeInsert #-}
+unsafeInsert = insert' Unsafe
 
 insert' :: (Hashable k, MapRepr keys vals k v) => Safety -> k -> v -> HashMap keys vals k v -> HashMap keys vals k v
 {-# INLINE insert' #-}
