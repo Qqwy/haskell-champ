@@ -20,6 +20,7 @@ module Champ.Internal where
 import Array (Array, StrictSmallArray, UnitArray, IsUnit, Safety(..))
 import Array qualified
 import Control.DeepSeq (NFData (..))
+import Control.Monad qualified
 import Data.Bits hiding (shift)
 import Data.Foldable qualified as Foldable
 import Data.Function ((&))
@@ -781,6 +782,23 @@ debugShowNode (CompactNode bitmap keys vals children) = "(CompactNode " <> show 
       & Foldable.toList
       & fmap debugShowNode
       & List.intercalate ","
+
+-- | The union of two maps. If a key occurs in both maps, the
+-- mapping from the first will be the mapping in the result.
+--
+-- \(O(n + m)\)
+-- The current implementation is simple but not fast;
+-- performing repeated insertion
+union :: (Hashable k, MapRepr keys vals k v) => HashMap keys vals k v -> HashMap keys vals k v -> HashMap keys vals k v
+{-# INLINE union #-}
+union l r = Champ.Internal.fromList (Champ.Internal.toList r <> Champ.Internal.toList l) 
+
+unions :: (Hashable k, MapRepr keys vals k v) => [HashMap keys vals k v] -> HashMap keys vals k v
+unions maps = 
+  maps
+  & fmap Champ.Internal.toList
+  & Control.Monad.join
+  & Champ.Internal.fromList
 
 -- mysumOne :: HashMapBL Int Int -> Int
 -- mysumOne = foldr' (+) 0
