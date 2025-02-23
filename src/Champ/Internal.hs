@@ -267,7 +267,7 @@ insert' safety !k v !m = case matchMap m of
       else
         let !(# size, node #) =
               Contiguous.empty
-                & MapNode (maskToBitpos (hashToMask 0 (hash k))) (Contiguous.singleton k) (Contiguous.singleton v)
+                & MapNode (maskToBitpos (hashToMask 0 (hash k))) (Array.singleton safety k) (Array.singleton safety v)
                 & insertInNode safety (hash k') k' v' 0
          in ManyMap (1 + Exts.W# size) node
   (# | | (# size, node0 #) #) ->
@@ -336,13 +336,13 @@ insertMergeWithInline safety bitpos k v h shift node@(CompactNode bitmap keys va
             let newIdx = childrenIndex node bitpos
                 keys' = Array.deleteAt safety keys idx
                 vals' = Array.deleteAt safety vals idx
-                child = pairNode existingKey existingVal (hash existingKey) k v h (nextShift shift)
+                child = pairNode safety existingKey existingVal (hash existingKey) k v h (nextShift shift)
                 children' = Array.insertAt safety children newIdx child
              in (# 1##, CompactNode bitmap' keys' vals' children' #)
 
 {-# INLINE pairNode #-}
-pairNode :: (MapRepr keys vals k v) => k -> v -> Hash -> k -> v -> Hash -> Word -> MapNode keys vals k v
-pairNode k1 v1 h1 k2 v2 h2 shift
+pairNode :: (MapRepr keys vals k v) => Safety -> k -> v -> Hash -> k -> v -> Hash -> Word -> MapNode keys vals k v
+pairNode safety k1 v1 h1 k2 v2 h2 shift
   | shift >= HASH_CODE_LENGTH = CollisionNode (Contiguous.doubleton k1 k2) (Contiguous.doubleton v1 v2)
   | otherwise =
       let mask1 = hashToMask shift h1
@@ -350,21 +350,21 @@ pairNode k1 v1 h1 k2 v2 h2 shift
        in if mask1 /= mask2
             then
               -- Both fit on this level
-              mergeCompactInline k1 v1 h1 k2 v2 h2 shift
+              mergeCompactInline safety k1 v1 h1 k2 v2 h2 shift
             else
               -- Both fit on the _next_ level
-              let child = mergeCompactInline k1 v1 h1 k2 v2 h2 (nextShift shift)
+              let child = mergeCompactInline safety k1 v1 h1 k2 v2 h2 (nextShift shift)
                   bitmap = maskToBitpos mask1 `unsafeShiftL` HASH_CODE_LENGTH
-               in CompactNode bitmap Contiguous.empty Contiguous.empty (Contiguous.singleton child)
+               in CompactNode bitmap Contiguous.empty Contiguous.empty (Array.singleton safety child)
 
 {-# INLINE mergeCompactInline #-}
-mergeCompactInline k1 v1 h1 k2 v2 h2 shift =
+mergeCompactInline safety k1 v1 h1 k2 v2 h2 shift =
   let !mask0@(Mask (Exts.W# i1)) = hashToMask shift h1
       !mask1@(Mask (Exts.W# i2)) = hashToMask shift h2
       !bitmap = maskToBitpos mask0 .|. maskToBitpos mask1
       !c = Exts.I# (i1 `Exts.ltWord#` i2)
-      keys = Array.doubletonBranchless c k1 k2
-      vals = Array.doubletonBranchless c v1 v2
+      keys = Array.doubletonBranchless safety c k1 k2
+      vals = Array.doubletonBranchless safety c v1 v2
    in CompactNode bitmap keys vals Contiguous.empty
 
 lookup :: (MapRepr keys vals k v, Eq k, Hashable k) => k -> HashMap keys vals k v -> Maybe v

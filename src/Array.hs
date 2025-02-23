@@ -33,7 +33,8 @@ module Array (
   Safety(..),
   Array.insertAt,
   Array.replaceAt,
-  Array.deleteAt
+  Array.deleteAt,
+  Array.singleton
 ) where
 
 import Control.DeepSeq (NFData)
@@ -56,6 +57,8 @@ import Data.Primitive.Unlifted.SmallArray.Primops (SmallMutableUnliftedArray# (S
 import GHC.Exts (Levity (..), RuntimeRep (BoxedRep), SmallArray#, SmallMutableArray#, TYPE)
 import GHC.Exts qualified as Exts
 import Prelude hiding (foldl, foldl', foldr, foldr', length, null, read)
+import Debug.Trace qualified
+import System.IO.Unsafe
 
 -- | Helper newtype to implement `PrimUnlifted` for any datatype
 -- to turn it into a `Data.Elevator.Strict`
@@ -120,7 +123,7 @@ instance Contiguous.Contiguous StrictSmallArray where
   {-# INLINE empty #-}
   empty = StrictSmallArray empty
   {-# INLINE singleton #-}
-  singleton = StrictSmallArray . singleton . Strictly
+  singleton = StrictSmallArray . Contiguous.singleton . Strictly
   {-# INLINE doubleton #-}
   doubleton a b = StrictSmallArray $ doubleton (Strictly a) (Strictly b)
   {-# INLINE tripleton #-}
@@ -322,19 +325,19 @@ instance Contiguous.ContiguousU UnitArray where
 
 class Contiguous.ContiguousU arr => Array arr where
   unsafeThaw :: PrimMonad m => arr a -> m (Mutable arr (PrimState m) a)
-  unsafeResizeMut :: (PrimMonad m, Element arr a) => (Mutable arr (PrimState m) a) -> Int -> a -> m (Mutable arr (PrimState m) a)
+  -- unsafeResizeMut :: (PrimMonad m, Element arr a) => (Mutable arr (PrimState m) a) -> Int -> a -> m (Mutable arr (PrimState m) a)
   unsafeShrinkMut :: (PrimMonad m, Element arr a) => (Mutable arr (PrimState m) a) -> Int -> m (Mutable arr (PrimState m) a)
 
 instance Array SmallArray where
   unsafeThaw = SmallArray.unsafeThawSmallArray
-  unsafeResizeMut = SmallArray.resizeSmallMutableArray
+  -- unsafeResizeMut = SmallArray.resizeSmallMutableArray
   unsafeShrinkMut a s = do 
     SmallArray.shrinkSmallMutableArray a s
     pure a
 
 instance Array PrimArray where
   unsafeThaw = PrimArray.unsafeThawPrimArray
-  unsafeResizeMut a s _ = PrimArray.resizeMutablePrimArray a s
+  -- unsafeResizeMut a s _ = PrimArray.resizeMutablePrimArray a s
   unsafeShrinkMut a s = do 
     PrimArray.shrinkMutablePrimArray a s
     pure a
@@ -346,41 +349,41 @@ instance Array StrictSmallArray where
     pure (StrictSmallMutableArray sa)
   -- Missing in upstream library, c.f. 
   -- https://github.com/haskell-primitive/primitive-unlifted/issues/46
-  unsafeResizeMut :: PrimMonad m => (StrictSmallMutableArray (PrimState m) a) -> Int -> a -> m (StrictSmallMutableArray (PrimState m) a)
-  unsafeResizeMut (StrictSmallMutableArray (SmallMutableUnliftedArray arr)) (Exts.I# n) x =
-    primitive
-      (\s0 -> case resizeSmallMutableUnliftedArray# (arrToInner arr) n (toUnlifted# (Strictly x)) s0 of
-        (# s1, arr' #) -> (# s1, StrictSmallMutableArray (SmallMutableUnliftedArray (innerToArr arr')) #)
-      )
-      where 
-        arrToInner :: SmallMutableUnliftedArray# s (Strict a) -> SmallMutableArray# s (Strict a)
-        arrToInner = Exts.unsafeCoerce#
-        innerToArr :: SmallMutableArray# s (Strict a) -> SmallMutableUnliftedArray# s (Strict a)
-        innerToArr = Exts.unsafeCoerce#
+  -- unsafeResizeMut :: PrimMonad m => (StrictSmallMutableArray (PrimState m) a) -> Int -> a -> m (StrictSmallMutableArray (PrimState m) a)
+  -- unsafeResizeMut (StrictSmallMutableArray (SmallMutableUnliftedArray arr)) (Exts.I# n) x =
+  --   primitive
+  --     (\s0 -> case resizeSmallMutableUnliftedArray# (arrToInner arr) n (toUnlifted# (Strictly x)) s0 of
+  --       (# s1, arr' #) -> (# s1, StrictSmallMutableArray (SmallMutableUnliftedArray (innerToArr arr')) #)
+  --     )
+  --     where 
+  --       arrToInner :: SmallMutableUnliftedArray# s (Strict a) -> SmallMutableArray# s (Strict a)
+  --       arrToInner = Exts.unsafeCoerce#
+  --       innerToArr :: SmallMutableArray# s (Strict a) -> SmallMutableUnliftedArray# s (Strict a)
+  --       innerToArr = Exts.unsafeCoerce#
 
-        resizeSmallMutableUnliftedArray#
-          :: forall (a :: UnliftedType) s.
-          Exts.SmallMutableArray# s a -- ^ Array to resize
-          -> Exts.Int# -- ^ New size of array
-          -> a
-            -- ^ Newly created slots initialized to this element.
-            -- Only used when array is grown.
-          -> Exts.State# s
-          -> (# Exts.State# s, Exts.SmallMutableArray# s a #)
-        resizeSmallMutableUnliftedArray# arr0 szNew a s0 =
-          case Exts.getSizeofSmallMutableArray# arr0 s0 of
-            (# s1, szOld #) -> if Exts.isTrue# (szNew Exts.<# szOld)
-              then case Exts.shrinkSmallMutableArray# arr0 szNew s1 of
-                s2 -> (# s2, arr0 #)
-              else if Exts.isTrue# (szNew Exts.># szOld)
-                then case Exts.newSmallArray# szNew a s1 of
-                  (# s2, arr1 #) -> case Exts.copySmallMutableArray# arr0 0# arr1 0# szOld s2 of
-                    s3 -> (# s3, arr1 #)
-                else (# s1, arr0 #)
+  --       resizeSmallMutableUnliftedArray#
+  --         :: forall (a :: UnliftedType) s.
+  --         Exts.SmallMutableArray# s a -- ^ Array to resize
+  --         -> Exts.Int# -- ^ New size of array
+  --         -> a
+  --           -- ^ Newly created slots initialized to this element.
+  --           -- Only used when array is grown.
+  --         -> Exts.State# s
+  --         -> (# Exts.State# s, Exts.SmallMutableArray# s a #)
+  --       resizeSmallMutableUnliftedArray# arr0 szNew a s0 =
+  --         case Exts.getSizeofSmallMutableArray# arr0 s0 of
+  --           (# s1, szOld #) -> if Exts.isTrue# (szNew Exts.<# szOld)
+  --             then case Exts.shrinkSmallMutableArray# arr0 szNew s1 of
+  --               s2 -> (# s2, arr0 #)
+  --             else if Exts.isTrue# (szNew Exts.># szOld)
+  --               then case Exts.newSmallArray# szNew a s1 of
+  --                 (# s2, arr1 #) -> case Exts.copySmallMutableArray# arr0 0# arr1 0# szOld s2 of
+  --                   s3 -> (# s3, arr1 #)
+  --               else (# s1, arr0 #)
 
 instance Array UnitArray where
   unsafeThaw (UnitArray l) = pure $ MutableUnitArray l
-  unsafeResizeMut MutableUnitArray{} l _ = pure $ MutableUnitArray l
+  -- unsafeResizeMut MutableUnitArray{} l _ = pure $ MutableUnitArray l
   unsafeShrinkMut MutableUnitArray{} l  = pure $ MutableUnitArray l
 
 sumStrictArray :: StrictSmallArray Int -> Int
@@ -394,13 +397,19 @@ sumLazyArray = Foldable.foldr' (+) 0
 -- If the int is '0', creates the array [b, a]
 --
 -- Trick copied from Data.Hashmap
-doubletonBranchless :: (Contiguous arr, Element arr a) => Int -> a -> a -> arr a
+doubletonBranchless :: (Contiguous arr, Element arr a) => Safety -> Int -> a -> a -> arr a
 {-# INLINE doubletonBranchless #-}
-doubletonBranchless idx0Or1 a b = run $ do
+doubletonBranchless Safe idx0Or1 a b = run $ do
   arr <- new 2
   write arr (1 - idx0Or1) a
   write arr idx0Or1 b
   unsafeFreeze arr
+
+doubletonBranchless Unsafe idx0Or1 a b = run $ do
+  arr <- new 32
+  write arr (1 - idx0Or1) a
+  write arr idx0Or1 b
+  unsafeShrinkAndFreeze arr 2
 
 -- modifyAtIfChanged :: (Contiguous arr, Element arr a) => (a -> a) -> arr a -> Int -> arr a
 -- modifyAtIfChanged f arr idx =
@@ -430,12 +439,20 @@ data Safety = Safe | Unsafe
 insertAt :: (Array arr, Element arr a) => Safety -> arr a -> Int -> a -> arr a
 {-# INLINE insertAt #-}
 insertAt Safe src i x = Contiguous.insertAt src i x
-insertAt Unsafe src i x = Contiguous.create $ do
-  dst <- (\arr -> unsafeResizeMut arr (Contiguous.size src + 1) x) =<< unsafeThaw src
-  newSize <- Contiguous.sizeMut dst
-  copyMut dst (i + 1) (sliceMut dst i (newSize - i))
-  Contiguous.write dst i x
-  pure dst
+insertAt Unsafe src i x = 
+  -- The following is probably faster for PrimArray
+  -- but is not (yet) for SmallArray
+  -- i.e. it won't currently re-use space in an earlier shrunk SmallArray
+  -- c.f. https://gitlab.haskell.org/ghc/ghc/-/issues/21266
+  Contiguous.create $ do
+  -- Debug.Trace.traceM $ "Using unsafe insertAt for " <> show (addrOf src)
+  -- dst <- (\arr -> unsafeResizeMut arr (Contiguous.size src + 1) x) =<< unsafeThaw src
+  dst <- unsafeThaw src
+  dst' <- Contiguous.resize dst (Contiguous.size src + 1)
+  newSize <- Contiguous.sizeMut dst'
+  copyMut dst' (i + 1) (sliceMut dst' i (newSize - i))
+  Contiguous.write dst' i x
+  pure dst'
 
 replaceAt :: (Array arr, Element arr a) => Safety -> arr a -> Int -> a -> arr a
 {-# INLINE replaceAt #-}
@@ -454,4 +471,12 @@ deleteAt Unsafe src i= Contiguous.create $ do
   size <- Contiguous.sizeMut dst
   copyMut dst i (sliceMut dst i' (size - i'))
   unsafeShrinkMut dst (size - 1)
-  pure dst
+
+singleton :: (Array arr, Element arr a) => Safety -> a -> arr a
+singleton Safe a = Contiguous.singleton a
+singleton Unsafe a = Contiguous.create $ do
+  dst <- Contiguous.replicateMut 32 a
+  unsafeShrinkMut dst 1
+
+addrOf :: a -> Exts.Ptr ()
+addrOf a = unsafePerformIO $ primitive (\s0 -> case Exts.anyToAddr# a s0 of (# s1, addr #) -> (# s1, Exts.Ptr addr #))
