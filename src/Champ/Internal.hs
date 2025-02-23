@@ -259,6 +259,27 @@ adjust f k m = case lookupKV k m of
     let v' = f v 
     in insert k' v' m 
 
+-- | \(O(\log n)\)  The expression @('alter' f k map)@ alters the value @x@ at @k@, or
+-- absence thereof.
+--
+-- 'alter' can be used to insert, delete, or update a value in a map.
+--
+-- If the function returns Nothing, the key is removed from the map.
+-- If the function returns Just v', the key is inserted or replaced with the new value.
+--
+-- The current implementation is very simple,
+-- but is not super performant.
+alter :: (Hashable k, MapRepr keys vals k v) => (Maybe v -> Maybe v) -> k -> HashMap keys vals k v -> HashMap keys vals k v
+alter f k m = case lookupKV k m of
+  Nothing -> 
+    case f Nothing of
+      Nothing -> m
+      Just v -> insert k v m
+  Just (k', v) -> 
+    case f (Just v) of
+      Nothing -> error "TODO: Implement delete"
+      Just v' -> if ptrEq v v' then m else insert k v' m
+
 -- | \(O(\log32 n)\) Associate the specified value with the specified
 -- key in this map.  If this map previously contained a mapping for
 -- the key, the old value is replaced.
