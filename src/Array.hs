@@ -8,9 +8,26 @@
 {-# LANGUAGE UnboxedTuples #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE UnliftedNewtypes #-}
+{-# LANGUAGE UnliftedDatatypes #-}
 {-# OPTIONS_GHC -ddump-simpl -ddump-cmm -ddump-stg-tags -ddump-stg-final -ddump-asm -ddump-to-file #-}
 
-module Array (SmallArray, SmallUnliftedArray, SmallUnliftedArray_, StrictSmallArray, PrimArray, Strictly (..), doubletonBranchless, sumStrictArray, sumLazyArray) where
+module Array (
+  -- * Simple arrays:
+  SmallArray, 
+  SmallUnliftedArray, 
+  SmallUnliftedArray_, 
+  StrictSmallArray, 
+  PrimArray, 
+  -- * Dealing with strict values:
+  Strictly (..), 
+  -- * Array helper functions:
+  doubletonBranchless, 
+  sumStrictArray, 
+  sumLazyArray,
+  -- * Arrays to store zero-size values
+  ZeroCostFakeArray,
+  IsUnit,
+) where
 
 import Control.DeepSeq (NFData)
 import Control.Monad.Primitive
@@ -211,3 +228,116 @@ doubletonBranchless idx0Or1 a b = run $ do
 ptrEq :: a -> a -> Bool
 ptrEq x y = Exts.isTrue# (Exts.reallyUnsafePtrEquality# x y Exts.==# 1#)
 {-# INLINE ptrEq #-}
+
+
+-- Array containing any number of `()`'s.
+-- 
+-- The trick is that we only need to keep track of such an array's length,
+-- since we can produce as many `()`'s a we like from thin air.
+--
+-- This could be generalized to store any singleton type instances (c.f. `singletons`' SingI class),
+-- but we don't need that generality here.
+data ZeroCostFakeArray (a :: Type) = ZeroCostFakeArray {-# UNPACK #-} !Int
+data MutableZeroCostFakeArray s (a :: Type) = MutableZeroCostFakeArray {-# UNPACK #-} !Int
+
+data ZeroCostFakeArray# (a :: Type) :: UnliftedType where 
+  ZeroCostFakeArray# :: {-# UNPACK #-} !Int -> ZeroCostFakeArray# a
+
+data MutableZeroCostFakeArray# s (a :: Type) :: UnliftedType where
+  MutableZeroCostFakeArray# :: {-# UNPACK #-} !Int -> MutableZeroCostFakeArray# s a
+
+class IsUnit a where
+  produceUnit :: a
+
+instance (a ~ ()) => IsUnit a where
+  produceUnit = ()
+
+instance Contiguous.Contiguous ZeroCostFakeArray where
+  type Mutable ZeroCostFakeArray = MutableZeroCostFakeArray
+  type Element ZeroCostFakeArray = IsUnit
+  type Sliced ZeroCostFakeArray = Slice ZeroCostFakeArray
+  type MutableSliced ZeroCostFakeArray = MutableSlice ZeroCostFakeArray
+  {-# INLINE new #-}
+  new n = pure $ MutableZeroCostFakeArray n
+  {-# INLINE replicateMut #-}
+  replicateMut n _ = pure $ MutableZeroCostFakeArray n
+  {-# INLINE shrink #-}
+  shrink _ n = pure $ MutableZeroCostFakeArray n
+  {-# INLINE empty #-}
+  empty = ZeroCostFakeArray 0
+  {-# INLINE singleton #-}
+  singleton _ = ZeroCostFakeArray 1
+  {-# INLINE doubleton #-}
+  doubleton _ _ = ZeroCostFakeArray 2
+  {-# INLINE tripleton #-}
+  tripleton _ _ _ = ZeroCostFakeArray 3
+  {-# INLINE quadrupleton #-}
+  quadrupleton _ _ _ _ = ZeroCostFakeArray 4
+  {-# INLINE quintupleton #-}
+  quintupleton _ _ _ _ _ = ZeroCostFakeArray 5
+  {-# INLINE sextupleton #-}
+  sextupleton _ _ _ _ _ _ = ZeroCostFakeArray 5
+  {-# INLINE index #-}
+  index _ _ = produceUnit
+  {-# INLINE index# #-}
+  index# _ _ = (# produceUnit #)
+  {-# INLINE indexM #-}
+  indexM _ _ = pure produceUnit
+  {-# INLINE size #-}
+  size (ZeroCostFakeArray n) = n
+  {-# INLINE sizeMut #-}
+  sizeMut (MutableZeroCostFakeArray n) = pure n
+  {-# INLINE equals #-}
+  equals (ZeroCostFakeArray n) (ZeroCostFakeArray m) = n == m
+  {-# INLINE equalsMut #-}
+  equalsMut (MutableZeroCostFakeArray n) (MutableZeroCostFakeArray m) = n == m
+  {-# INLINE rnf #-}
+  rnf !(ZeroCostFakeArray _) = ()
+  {-# INLINE null #-}
+  null (ZeroCostFakeArray n) = n == 0
+  {-# INLINE read #-}
+  read (MutableZeroCostFakeArray _) _ = pure produceUnit
+  {-# INLINE write #-}
+  write (MutableZeroCostFakeArray _) _ _ = pure ()
+  {-# INLINE slice #-}
+  slice base offset length = Slice {offset, length, base = unlift base}
+  {-# INLINE sliceMut #-}
+  sliceMut baseMut offsetMut lengthMut = MutableSlice {offsetMut, lengthMut, baseMut = unliftMut baseMut}
+  {-# INLINE toSlice #-}
+  toSlice base = Slice {offset = 0, length = size base, base = unlift base}
+  {-# INLINE toSliceMut #-}
+  toSliceMut baseMut = do
+    lengthMut <- sizeMut baseMut
+    pure MutableSlice {offsetMut = 0, lengthMut, baseMut = unliftMut baseMut}
+  {-# INLINE clone_ #-}
+  clone_ (ZeroCostFakeArray _) offset length = ZeroCostFakeArray $ length
+  {-# INLINE cloneMut_ #-}
+  cloneMut_ (MutableZeroCostFakeArray _) offset length = pure $ MutableZeroCostFakeArray length
+  {-# INLINE copy_ #-}
+  copy_ _ _ _ _ _ = pure ()
+  {-# INLINE copyMut_ #-}
+  copyMut_ _ _ _ _ _ = pure ()
+  {-# INLINE freeze_ #-}
+  freeze_ (MutableZeroCostFakeArray _) _ length = pure $ ZeroCostFakeArray length
+  {-# INLINE unsafeFreeze #-}
+  unsafeFreeze (MutableZeroCostFakeArray l) = pure $ ZeroCostFakeArray l
+  {-# INLINE unsafeShrinkAndFreeze #-}
+  unsafeShrinkAndFreeze (MutableZeroCostFakeArray _) length = pure $ ZeroCostFakeArray length
+  {-# INLINE thaw_ #-}
+  thaw_ (ZeroCostFakeArray _) _ length = pure $ MutableZeroCostFakeArray length
+  run = runST -- NOTE: not relying on a manually-written run-st here as modern GHCs inline runST properly.
+
+instance Contiguous.ContiguousU ZeroCostFakeArray where
+  type Unlifted ZeroCostFakeArray = ZeroCostFakeArray#
+  type UnliftedMut ZeroCostFakeArray = MutableZeroCostFakeArray#
+  {-# INLINE resize #-}
+  resize (MutableZeroCostFakeArray _) length = pure $ MutableZeroCostFakeArray length
+  {-# INLINE unlift #-}
+  unlift (ZeroCostFakeArray l) = ZeroCostFakeArray# l
+  {-# INLINE unliftMut #-}
+  unliftMut (MutableZeroCostFakeArray l) = MutableZeroCostFakeArray# l
+  {-# INLINE lift #-}
+  lift (ZeroCostFakeArray# l) = ZeroCostFakeArray l
+  {-# INLINE liftMut #-}
+  liftMut (MutableZeroCostFakeArray# l) = MutableZeroCostFakeArray l
+

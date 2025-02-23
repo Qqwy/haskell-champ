@@ -16,7 +16,7 @@
 
 module MyLib where
 
-import Array (StrictSmallArray)
+import Array (StrictSmallArray, ZeroCostFakeArray, IsUnit)
 import Array qualified
 import Control.DeepSeq (NFData (..))
 import Data.Bits hiding (shift)
@@ -52,6 +52,9 @@ type MapUL = Map Unboxed Lazy
 type MapUB = Map Unboxed (Strict Boxed)
 
 type MapUU = Map Unboxed (Strict Unboxed)
+
+type SetB = Map Boxed Unexistent
+type SetU = Map Unboxed Unexistent
 
 pattern EmptyMap ::
   forall (keyStorage :: StrictStorage) (valStorage :: Storage) k v.
@@ -186,6 +189,9 @@ map_repr_instance (Boxed_Unboxed, Boxed, Strict Unboxed, (Prim v))
 map_repr_instance (Unboxed_Lazy, Unboxed, Lazy, (Prim k))
 map_repr_instance (Unboxed_Boxed, Unboxed, Strict Boxed, (Prim k))
 map_repr_instance (Unboxed_Unboxed, Unboxed, Strict Unboxed, (Prim k, Prim v))
+
+map_repr_instance (Boxed_Unexistent, Boxed, Unexistent, (IsUnit v))
+map_repr_instance (Unboxed_Unexistent, Unboxed, Unexistent, (Prim k, IsUnit v))
 
 someFunc = undefined
 
