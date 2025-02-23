@@ -44,4 +44,4 @@ type family ArrayOf (s :: Storage) = (r :: Type -> Type) | r -> s where
   ArrayOf Lazy = Array.SmallArray
   ArrayOf (Strict Boxed) = Array.StrictSmallArray
   ArrayOf (Strict Unboxed) = Array.PrimArray
-  ArrayOf Unexistent = Array.ZeroCostFakeArray
+  ArrayOf Unexistent = Array.UnitArray

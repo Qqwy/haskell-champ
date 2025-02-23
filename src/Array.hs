@@ -25,7 +25,7 @@ module Array (
   sumStrictArray, 
   sumLazyArray,
   -- * Arrays to store zero-size values
-  ZeroCostFakeArray,
+  UnitArray,
   IsUnit,
 ) where
 
@@ -234,24 +234,26 @@ ptrEq x y = Exts.isTrue# (Exts.reallyUnsafePtrEquality# x y Exts.==# 1#)
 --
 -- The trick is tha we can forget and later produce as many `()`'s as we like from thin air.
 -- 
--- If we wanted to have this be a _proper_ instance of `Contiguous`/`ContiguousU`,
--- we would (only) keep track of the length.
---
--- However, since we use this for the special case of a HashSet built on maps,
--- where we know from its invariants that the length of the keys-array
--- and the length of the values-array is always the same,
--- we can get away with not even storing the length.
+-- These only keep track of their length (as unboxed Int).
 --
 -- This could be generalized to store any singleton type instances (c.f. `singletons`' SingI class),
 -- but we don't need that generality here.
-data ZeroCostFakeArray (a :: Type) = ZeroCostFakeArray
-data MutableZeroCostFakeArray s (a :: Type) = MutableZeroCostFakeArray
+--
+-- It may be possible to get rid of even this length field
+-- if we are very careful with how we use them as backing store of the hashmap
+-- since we already know how long the keys array is.
+-- However, that would require re-implementing many higher-level functions such as `insertAt`, `deleteAt` and `convert`,
+-- which was not worth it to do yet. (PRs accepted!)
+data UnitArray (a :: Type) where 
+  UnitArray :: {-# UNPACK #-} !Int -> UnitArray a
+data MutableUnitArray s (a :: Type) where 
+  MutableUnitArray :: {-# UNPACK #-} !Int -> MutableUnitArray s a
 
-data ZeroCostFakeArray# (a :: Type) :: UnliftedType where 
-  ZeroCostFakeArray# :: ZeroCostFakeArray# a
+data UnitArray# (a :: Type) :: UnliftedType where 
+  UnitArray# :: {-# UNPACK #-} !Int -> UnitArray# a
 
-data MutableZeroCostFakeArray# s (a :: Type) :: UnliftedType where
-  MutableZeroCostFakeArray# :: MutableZeroCostFakeArray# s a
+data MutableUnitArray# s (a :: Type) :: UnliftedType where
+  MutableUnitArray# :: {-# UNPACK #-} !Int -> MutableUnitArray# s a
 
 class IsUnit a where
   produceUnit :: a
@@ -260,31 +262,31 @@ instance (a ~ ()) => IsUnit a where
   {-# INLINE produceUnit #-}
   produceUnit = ()
 
-instance Contiguous.Contiguous ZeroCostFakeArray where
-  type Mutable ZeroCostFakeArray = MutableZeroCostFakeArray
-  type Element ZeroCostFakeArray = IsUnit
-  type Sliced ZeroCostFakeArray = Slice ZeroCostFakeArray
-  type MutableSliced ZeroCostFakeArray = MutableSlice ZeroCostFakeArray
+instance Contiguous.Contiguous UnitArray where
+  type Mutable UnitArray = MutableUnitArray
+  type Element UnitArray = IsUnit
+  type Sliced UnitArray = Slice UnitArray
+  type MutableSliced UnitArray = MutableSlice UnitArray
   {-# INLINE new #-}
-  new _ = pure $ MutableZeroCostFakeArray
+  new l = pure $ MutableUnitArray l
   {-# INLINE replicateMut #-}
-  replicateMut _ _ = pure $ MutableZeroCostFakeArray
+  replicateMut l _ = pure $ MutableUnitArray l
   {-# INLINE shrink #-}
-  shrink _ _ = pure $ MutableZeroCostFakeArray
+  shrink _ l = pure $ MutableUnitArray l
   {-# INLINE empty #-}
-  empty = ZeroCostFakeArray
+  empty = UnitArray 0
   {-# INLINE singleton #-}
-  singleton _ = ZeroCostFakeArray
+  singleton _ = UnitArray 1
   {-# INLINE doubleton #-}
-  doubleton _ _ = ZeroCostFakeArray
+  doubleton _ _ = UnitArray 2
   {-# INLINE tripleton #-}
-  tripleton _ _ _ = ZeroCostFakeArray
+  tripleton _ _ _ = UnitArray 3
   {-# INLINE quadrupleton #-}
-  quadrupleton _ _ _ _ = ZeroCostFakeArray
+  quadrupleton _ _ _ _ = UnitArray 4
   {-# INLINE quintupleton #-}
-  quintupleton _ _ _ _ _ = ZeroCostFakeArray
+  quintupleton _ _ _ _ _ = UnitArray 5
   {-# INLINE sextupleton #-}
-  sextupleton _ _ _ _ _ _ = ZeroCostFakeArray
+  sextupleton _ _ _ _ _ _ = UnitArray 6
   {-# INLINE index #-}
   index _ _ = produceUnit
   {-# INLINE index# #-}
@@ -292,21 +294,21 @@ instance Contiguous.Contiguous ZeroCostFakeArray where
   {-# INLINE indexM #-}
   indexM _ _ = pure produceUnit
   {-# INLINE size #-}
-  size ZeroCostFakeArray = error "We intentionally do not track the size of ZeroCostFakeArray;`size` should never be called on it."
+  size (UnitArray l) = l
   {-# INLINE sizeMut #-}
-  sizeMut MutableZeroCostFakeArray = pure (error "We intentionally do not track the size of ZeroCostFakeArray;`size` should never be called on it.")
+  sizeMut (MutableUnitArray l) = pure l
   {-# INLINE equals #-}
-  equals ZeroCostFakeArray ZeroCostFakeArray = True
+  equals (UnitArray l) (UnitArray m) = l == m
   {-# INLINE equalsMut #-}
-  equalsMut MutableZeroCostFakeArray MutableZeroCostFakeArray = True
+  equalsMut (MutableUnitArray l) (MutableUnitArray m) = l == m
   {-# INLINE rnf #-}
-  rnf !ZeroCostFakeArray{} = ()
+  rnf !UnitArray{} = ()
   {-# INLINE null #-}
-  null ZeroCostFakeArray = error "We intentionally do not track the size of ZeroCostFakeArray;"
+  null (UnitArray l) = l == 0
   {-# INLINE read #-}
-  read MutableZeroCostFakeArray _ = pure produceUnit
+  read MutableUnitArray{} _ = pure produceUnit
   {-# INLINE write #-}
-  write MutableZeroCostFakeArray _ _ = pure ()
+  write MutableUnitArray{} _ _ = pure ()
   {-# INLINE slice #-}
   slice base offset length = Slice {offset, length, base = unlift base}
   {-# INLINE sliceMut #-}
@@ -318,34 +320,34 @@ instance Contiguous.Contiguous ZeroCostFakeArray where
     lengthMut <- sizeMut baseMut
     pure MutableSlice {offsetMut = 0, lengthMut, baseMut = unliftMut baseMut}
   {-# INLINE clone_ #-}
-  clone_ ZeroCostFakeArray _ _ = ZeroCostFakeArray
+  clone_ UnitArray{} _ l = UnitArray l
   {-# INLINE cloneMut_ #-}
-  cloneMut_ MutableZeroCostFakeArray _ _ = pure $ MutableZeroCostFakeArray
+  cloneMut_ MutableUnitArray{} _ l = pure $ MutableUnitArray l
   {-# INLINE copy_ #-}
   copy_ _ _ _ _ _ = pure ()
   {-# INLINE copyMut_ #-}
   copyMut_ _ _ _ _ _ = pure ()
   {-# INLINE freeze_ #-}
-  freeze_ MutableZeroCostFakeArray _ _ = pure $ ZeroCostFakeArray
+  freeze_ (MutableUnitArray l) _ _ = pure $ UnitArray l
   {-# INLINE unsafeFreeze #-}
-  unsafeFreeze MutableZeroCostFakeArray = pure $ ZeroCostFakeArray
+  unsafeFreeze (MutableUnitArray l) = pure $ UnitArray l
   {-# INLINE unsafeShrinkAndFreeze #-}
-  unsafeShrinkAndFreeze MutableZeroCostFakeArray _ = pure $ ZeroCostFakeArray
+  unsafeShrinkAndFreeze MutableUnitArray{} l = pure $ UnitArray l
   {-# INLINE thaw_ #-}
-  thaw_ ZeroCostFakeArray _ _ = pure $ MutableZeroCostFakeArray
+  thaw_ UnitArray{} _ l = pure $ MutableUnitArray l
   run = runST -- NOTE: not relying on a manually-written run-st here as modern GHCs inline runST properly.
 
-instance Contiguous.ContiguousU ZeroCostFakeArray where
-  type Unlifted ZeroCostFakeArray = ZeroCostFakeArray#
-  type UnliftedMut ZeroCostFakeArray = MutableZeroCostFakeArray#
+instance Contiguous.ContiguousU UnitArray where
+  type Unlifted UnitArray = UnitArray#
+  type UnliftedMut UnitArray = MutableUnitArray#
   {-# INLINE resize #-}
-  resize MutableZeroCostFakeArray _ = pure $ MutableZeroCostFakeArray
+  resize MutableUnitArray{} l = pure $ MutableUnitArray l
   {-# INLINE unlift #-}
-  unlift ZeroCostFakeArray = ZeroCostFakeArray#
+  unlift (UnitArray l) = UnitArray# l
   {-# INLINE unliftMut #-}
-  unliftMut MutableZeroCostFakeArray = MutableZeroCostFakeArray#
+  unliftMut (MutableUnitArray l) = MutableUnitArray# l
   {-# INLINE lift #-}
-  lift ZeroCostFakeArray# = ZeroCostFakeArray
+  lift (UnitArray# l) = UnitArray l
   {-# INLINE liftMut #-}
-  liftMut MutableZeroCostFakeArray# = MutableZeroCostFakeArray
+  liftMut (MutableUnitArray# l) = MutableUnitArray l
 

@@ -1,5 +1,6 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE RoleAnnotations #-}
+{-# LANGUAGE UndecidableInstances #-}
 module Champ.HashSet (
     HashSet(..),
     HashSetB,
@@ -15,7 +16,7 @@ module Champ.HashSet (
     map',
     foldr,
     foldl',
-    toMap,
+    convert,
 ) where
 
 import Prelude hiding (map, foldr)
@@ -27,6 +28,10 @@ import Data.Coerce (coerce)
 
 newtype HashSet elems e = HashSet { toMap :: Champ.Internal.HashMap elems Unexistent e () }
 type role HashSet nominal nominal
+
+
+instance (Show e, SetRepr elems e) => Show (HashSet elems e) where
+    show set = "Champ.HashSet.fromList " <> show (toList set)
 
 type SetRepr elems e = Champ.Internal.MapRepr elems Unexistent e ()
 type HashSetB e = HashSet Boxed e
@@ -86,3 +91,6 @@ instance Foldable (HashSet Boxed) where
     foldl' = Champ.HashSet.foldl'
     {-# INLINE length #-}
     length = Champ.HashSet.size
+
+convert :: forall s1 s2 {es} {es'} {e}. (s1 ~ HashSet es, s2 ~ HashSet es', SetRepr es e, SetRepr es' e) => HashSet es e -> HashSet es' e
+convert = coerce Champ.Internal.convert

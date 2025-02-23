@@ -17,7 +17,7 @@
 
 module Champ.Internal where
 
-import Array (StrictSmallArray, ZeroCostFakeArray, IsUnit)
+import Array (StrictSmallArray, UnitArray, IsUnit)
 import Array qualified
 import Control.DeepSeq (NFData (..))
 import Data.Bits hiding (shift)
@@ -259,7 +259,10 @@ insert !k v !m = case matchMap m of
     if k == k'
       then singleton k' v'
       else
-        let !(# size, node #) = insert' (hash k) k v 0 $ (MapNode (maskToBitpos (hashToMask 0 (hash k'))) (Contiguous.singleton k) (Contiguous.singleton v) Contiguous.empty)
+        let !(# size, node #) =
+              Contiguous.empty
+                & MapNode (maskToBitpos (hashToMask 0 (hash k))) (Contiguous.singleton k) (Contiguous.singleton v)
+                & insert' (hash k') k' v' 0
          in ManyMap (1 + Exts.W# size) node
   (# | | (# size, node0 #) #) ->
     let (# didIGrow, node' #) = insert' (hash k) k v 0 node0
@@ -725,7 +728,7 @@ elems :: MapRepr keys vals k v => HashMap keys vals k v -> [v]
 elems = Prelude.map snd . Champ.Internal.toList
 
 instance (Show k, Show v, MapRepr keys vals k v) => Show (HashMap keys vals k v) where
-    show m = "fromList " <> show (Champ.Internal.toList m)
+    show m = "Champ.HashMap.fromList " <> show (Champ.Internal.toList m)
 
 -- | Turn a HashMap into a HashMap with the same structure but another storage mechanism.
 --
