@@ -11,10 +11,12 @@ module Champ.HashSet (
     toList,
     member,
     map,
-    map'
+    map',
+    foldr,
+    foldl'
 ) where
 
-import Prelude hiding (map)
+import Prelude hiding (map, foldr)
 import Champ.Internal qualified
 import Storage (Storage(Unexistent), StrictStorage(..))
 import Data.Hashable (Hashable)

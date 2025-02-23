@@ -1,1 +1,27 @@
-module Champ.HashMap where
+module Champ.HashMap (
+    Champ.Internal.HashMap,
+    Champ.Internal.HashMapBL,
+    Champ.Internal.HashMapBB,
+    Champ.Internal.HashMapBU,
+    Champ.Internal.HashMapUL,
+    Champ.Internal.HashMapUB,
+    Champ.Internal.HashMapUU,
+    Champ.Internal.empty,
+    Champ.Internal.singleton,
+    Champ.Internal.null,
+    Champ.Internal.size,
+    Champ.Internal.insert,
+    Champ.Internal.fromList,
+    Champ.Internal.toList,
+    Champ.Internal.lookup,
+    Champ.Internal.member,
+    Champ.Internal.map,
+    Champ.Internal.map',
+    Champ.Internal.foldr,
+    Champ.Internal.foldl,
+    Champ.Internal.foldl',
+    Champ.Internal.foldrWithKey,
+    Champ.Internal.foldlWithKey',
+) where
+
+import Champ.Internal qualified
