@@ -742,6 +742,23 @@ foldrWithKey f z0 m = case matchMap m of
         & (\acc -> (Contiguous.foldrZipWith f) acc keys vals)
         & flip (Contiguous.foldr go) children
 
+
+-- | \(O(n)\) Reduce the map by applying a function to each element
+-- and combining the results with a monoid operation.
+--
+-- Iteration order is unspecified
+foldMapWithKey :: (MapRepr keys vals k v, Monoid m) => (k -> v -> m) -> HashMap keys vals k v -> m
+foldMapWithKey f m = case matchMap m of
+  (# (# #) | | #) -> mempty
+  (# | (# k, v #) | #) -> f k v
+  (# | | (# _size, node0 #) #) -> Exts.inline go node0
+  where
+    go (MapNode _bitmap keys vals !children) = 
+      (Contiguous.foldrZipWith (\k v acc' -> acc' <> (f k v) )) mempty keys vals
+      <> Contiguous.foldMap go children
+{-# INLINE foldMapWithKey #-}
+
+
 -- {-# INLINE foldrWithKey' #-}
 -- foldrWithKey' :: (MapRepr keys vals k v) => (k -> v -> r -> r) -> r -> HashMap keys vals k v -> r
 -- foldrWithKey' f !z0 m = case matchMap m of
