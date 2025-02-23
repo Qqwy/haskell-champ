@@ -280,6 +280,23 @@ alter f k m = case lookupKV k m of
       Nothing -> error "TODO: Implement delete"
       Just v' -> if ptrEq v v' then m else insert k v' m
 
+-- | \(O(n)\).
+-- @'mapKeys' f s@ is the map obtained by applying @f@ to each key of @s@.
+--
+-- The size of the result may be smaller if @f@ maps two or more distinct
+-- keys to the same new key. In this case there is no guarantee which of the
+-- associated values is chosen for the conflicting key.
+--
+-- >>> mapKeys (+ 1) (fromList [(5,"a"), (3,"b")])
+-- fromList [(4,"b"),(6,"a")]
+-- >>> mapKeys (\ _ -> 1) (fromList [(1,"b"), (2,"a"), (3,"d"), (4,"c")])
+-- fromList [(1,"c")]
+-- >>> mapKeys (\ _ -> 3) (fromList [(1,"b"), (2,"a"), (3,"d"), (4,"c")])
+-- fromList [(3,"c")]
+mapKeys :: (Eq k2, Hashable k2, MapRepr keys vals k1 v, MapRepr keys2 vals k2 v) => (k1 -> k2) -> HashMap keys vals k1 v -> HashMap keys2 vals k2 v
+{-# INLINE mapKeys #-}
+mapKeys f = Champ.Internal.fromList . Champ.Internal.foldrWithKey (\k x xs -> (f k, x) : xs) []
+
 -- | \(O(\log32 n)\) Associate the specified value with the specified
 -- key in this map.  If this map previously contained a mapping for
 -- the key, the old value is replaced.
