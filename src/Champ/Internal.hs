@@ -794,11 +794,23 @@ union :: (Hashable k, MapRepr keys vals k v) => HashMap keys vals k v -> HashMap
 union l r = Champ.Internal.fromList (Champ.Internal.toList r <> Champ.Internal.toList l) 
 
 unions :: (Hashable k, MapRepr keys vals k v) => [HashMap keys vals k v] -> HashMap keys vals k v
+{-# INLINE unions #-}
 unions maps = 
   maps
   & fmap Champ.Internal.toList
   & Control.Monad.join
   & Champ.Internal.fromList
+
+
+-- | \(O(n \log m)\) Difference of two maps. Return elements of the first map
+-- not existing in the second.
+difference :: (Hashable k, MapRepr keys vals k v, MapRepr keys vals' k w) => HashMap keys vals k v -> HashMap keys vals' k w -> HashMap keys vals k v
+{-# INLINE difference #-}
+difference a b = foldlWithKey' go empty a
+  where
+    go m k v = case lookup k b of
+                 Nothing -> unsafeInsert k v m
+                 _       -> m
 
 -- mysumOne :: HashMapBL Int Int -> Int
 -- mysumOne = foldr' (+) 0
