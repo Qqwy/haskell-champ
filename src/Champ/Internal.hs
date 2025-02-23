@@ -36,7 +36,8 @@ import GHC.IsList (IsList (..))
 import Numeric (showBin)
 import Storage (ArrayOf, Storage (..), StrictStorage (..))
 import Prelude hiding (lookup)
-import Data.Coerce (Coercible, coerce)
+import Data.Coerce (Coercible)
+import Data.Coerce qualified
 import Unsafe.Coerce (unsafeCoerce)
 import Data.Type.Coercion (Coercion(Coercion))
 
@@ -667,8 +668,33 @@ foldrWithKey f z0 m = case matchMap m of
   (# | | (# _size, node0 #) #) -> Exts.inline go node0 z0
   where
     go (MapNode _bitmap keys !vals !children) z =
-      (Contiguous.foldrZipWith f) z keys vals
+      z
+        & (\acc -> (Contiguous.foldrZipWith f) acc keys vals)
         & flip (Contiguous.foldr go) children
+
+-- {-# INLINE foldrWithKey' #-}
+-- foldrWithKey' :: (MapRepr keys vals k v) => (k -> v -> r -> r) -> r -> HashMap keys vals k v -> r
+-- foldrWithKey' f !z0 m = case matchMap m of
+--   (# (# #) | | #) -> z0
+--   (# | (# k, v #) | #) -> f k v z0
+--   (# | | (# _size, node0 #) #) -> Exts.inline go node0 z0
+--   where
+--     go (MapNode _bitmap !keys !vals !children) !z =
+--       z
+--         & (\acc -> (Contiguous.foldrZipWith' f) acc keys vals)
+--         & flip (Contiguous.foldr' go) children
+
+-- {-# INLINE foldlWithKey #-}
+-- foldlWithKey :: (MapRepr keys vals k v) => (r -> k -> v -> r) -> r -> HashMap keys vals k v -> r
+-- foldlWithKey f z0 m = case matchMap m of
+--   (# (# #) | | #) -> z0
+--   (# | (# k, v #) | #) -> f z0 k v
+--   (# | | (# _size, node0 #) #) -> Exts.inline go z0 node0
+--   where
+--     go !z (MapNode _bitmap keys !vals !children) =
+--       z
+--         & flip (Contiguous.foldl go) children
+--         & (\acc -> (Contiguous.foldlZipWith f) acc keys vals)
 
 {-# INLINE foldlWithKey' #-}
 foldlWithKey' :: (MapRepr keys vals k v) => (r -> k -> v -> r) -> r -> HashMap keys vals k v -> r
@@ -678,8 +704,9 @@ foldlWithKey' f !z0 m = case matchMap m of
   (# | | (# _size, node0 #) #) -> Exts.inline go z0 node0
   where
     go !z (MapNode _bitmap keys !vals !children) =
-      (Contiguous.foldlZipWith' f) z keys vals
+      z
         & flip (Contiguous.foldl' go) children
+        & (\acc -> (Contiguous.foldlZipWith' f) acc keys vals)
 
 -- | \(O(n)\) Returns a list of the map's keys.
 --
@@ -699,6 +726,27 @@ elems = Prelude.map snd . Champ.Internal.toList
 
 instance (Show k, Show v, MapRepr keys vals k v) => Show (HashMap keys vals k v) where
     show m = "fromList " <> show (Champ.Internal.toList m)
+
+-- | Turn a HashMap into a HashMap with the same structure but another storage mechanism.
+--
+-- For example, turn a `HashMapBL` into a `HashMapBB` to force all laziness in all its values.
+-- Or turn a `HashMapBB` into a `HashMapUU` to unbox all keys and values.
+--
+-- O(n), walks over the complete original hashmap and constructs a deep copy of all of its parts,
+-- with the new storage mechanism.
+convert :: forall h1 h2 {ks} {ks'} {vs} {vs'} {k} {v}. (h1 ~ HashMap ks vs, h2 ~ HashMap ks' vs', MapRepr ks vs k v, MapRepr ks' vs' k v) => HashMap ks vs k v -> HashMap ks' vs' k v
+{-# INLINE [2] convert #-}
+convert m = case matchMap m of
+  (# (# #) | | #) -> EmptyMap
+  (# | (# k, v #) | #) -> SingletonMap k v
+  (# | | (# size, node #) #) -> ManyMap size (convert' node)
+  where
+    convert' :: MapNode ks vs k v -> MapNode ks' vs' k v
+    convert' (MapNode bitmap keys vals children) = (MapNode bitmap (Contiguous.convert keys) (Contiguous.convert vals) (Contiguous.map convert' children))
+
+{-# RULES 
+"Champ.HashMap.convert to the identical type" forall (h :: HashMap ks vs k v). convert @(HashMap ks vs) @(HashMap ks vs) h = h
+#-}
 
 -- Enable for debugging: 
 -- instance (Show (ArrayOf (Strict keys) k), Show (ArrayOf vals v), Show k, Show v, MapRepr keys vals k v) => Show (Map keys vals k v) where
@@ -801,10 +849,15 @@ ptrEq x y = Exts.isTrue# (Exts.reallyUnsafePtrEquality# x y Exts.==# 1#)
 {-# INLINE ptrEq #-}
 
 -- | Simplified usage of `withCoercible` for the common case where you want to directly coerce the hashmap itself.
-coerceHashMap :: forall v v' keys vals k. (Coercible v v', MapRepr keys vals k v, MapRepr keys vals k v') => HashMap keys vals k v -> HashMap keys vals k v'
-coerceHashMap x = withCoercible @(HashMap keys vals k v) @(HashMap keys vals k v') (coerce x)
+--
+-- `Data.Coerce.coerce` but specialized to `Champ.HashMap`.
+-- See `withCoercible` for more information.
+coerce :: forall v v' keys vals k. (Coercible v v', MapRepr keys vals k v, MapRepr keys vals k v') => HashMap keys vals k v -> HashMap keys vals k v'
+coerce x = withCoercible @(HashMap keys vals k v) @(HashMap keys vals k v') (Data.Coerce.coerce x)
 
--- | Because of the way Champ.HashMap is currently implemented (using associated data families),
+-- | Brings a `Coercible` instance in scope to coerce between two `Champ.HashMap`s
+-- 
+-- Because of the way Champ.HashMap is currently implemented (using associated data families),
 -- the role annotation of the value type inside Champ.HashMap is `nominal` rather than `representational`.
 --
 -- This is a problem when you want to use `Data.Coerce.coerce`.
