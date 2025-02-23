@@ -247,6 +247,18 @@ toList :: (MapRepr keys vals k v) => HashMap keys vals k v -> [(k, v)]
 {-# INLINE toList #-}
 toList hashmap = Exts.build (\fusedCons fusedNil -> foldrWithKey (\k v xs -> (k, v) `fusedCons` xs) fusedNil hashmap)
 
+-- | \(O(\log n)\) Adjust the value tied to a given key in this map only
+-- if it is present. Otherwise, leave the map alone.
+--
+-- The current implementation is very simple
+-- but is not super performant as it will traverse the map twice.
+adjust :: (Hashable k, MapRepr keys vals k v) => (v -> v) -> k -> HashMap keys vals k v -> HashMap keys vals k v
+adjust f k m = case lookupKV k m of
+  Nothing -> m
+  Just (k', v) -> 
+    let v' = f v 
+    in insert k' v' m 
+
 -- | \(O(\log32 n)\) Associate the specified value with the specified
 -- key in this map.  If this map previously contained a mapping for
 -- the key, the old value is replaced.
@@ -264,7 +276,7 @@ insert' safety !k v !m = case matchMap m of
   (# (# #) | | #) -> singleton k v
   (# | (# k', v' #) | #) ->
     if k == k'
-      then singleton k' v'
+      then singleton k' v
       else
         let !(# size, node #) =
               Contiguous.empty
