@@ -457,7 +457,7 @@ ifoldrZipWith' ::
   arr1 a ->
   arr2 b ->
   c
-ifoldrZipWith' f !z arr1 arr2 = go sz z
+ifoldrZipWith' f !z arr1 arr2 = go (sz - 1) z
   where
   !sz = min (Contiguous.size arr1) (Contiguous.size arr2)
   go !ix !acc =

@@ -33,9 +33,9 @@ module Champ.HashSet (
     -- TODO intersection
 
     -- * Folds
-    foldr,
-    foldl',
-    foldr',
+    Champ.HashSet.foldr,
+    Champ.HashSet.foldl',
+    Champ.HashSet.foldr',
     -- TODO foldl
     Champ.HashSet.foldMap,
 
@@ -52,6 +52,7 @@ module Champ.HashSet (
 ) where
 
 import Prelude hiding (map, foldr, lookup)
+import Data.Foldable
 import Champ.Internal qualified
 import Champ.Internal.Storage (Storage(Unexistent), StrictStorage(..))
 import Data.Hashable (Hashable)
@@ -163,6 +164,8 @@ difference = coerce Champ.Internal.difference
 instance Foldable (HashSet Boxed) where
     {-# INLINE foldr #-}
     foldr = Champ.HashSet.foldr
+    {-# INLINE foldr' #-}
+    foldr' = Champ.HashSet.foldr'
     {-# INLINE foldl' #-}
     foldl' = Champ.HashSet.foldl'
     {-# INLINE foldMap #-}
