@@ -35,6 +35,8 @@ module Champ.HashSet (
     -- * Folds
     foldr,
     foldl',
+    foldr',
+    -- TODO foldl
     Champ.HashSet.foldMap,
 
     -- * Conversions
@@ -131,6 +133,10 @@ foldr :: (SetRepr elems e) => (e -> r -> r) -> r -> HashSet elems e -> r
 {-# INLINE foldr #-}
 foldr fun acc set = Champ.Internal.foldrWithKey (\e () r -> fun e r) acc (coerce set)
 
+foldr' :: (SetRepr elems e) => (e -> r -> r) -> r -> HashSet elems e -> r
+{-# INLINE foldr' #-}
+foldr' fun acc set = Champ.Internal.foldrWithKey' (\e () r -> fun e r) acc (coerce set)
+
 foldl' :: (SetRepr elems e) => (r -> e -> r) -> r -> HashSet elems e -> r
 {-# INLINE foldl' #-}
 foldl' fun acc set = Champ.Internal.foldlWithKey' (\r e () -> fun r e) acc (coerce set)
@@ -186,7 +192,7 @@ fromMap = HashSet
 -- >>> HashSet.keysSet (HashMap.fromList [(1, "a"), (2, "b")]
 -- Champ.HashSet.fromList [1,2]
 keysSet :: (Champ.Internal.MapRepr keys vals k v, SetRepr keys k) => Champ.Internal.HashMap keys vals k v -> HashSet keys k
-keysSet = coerce $ Champ.Internal.map' (const ())
+keysSet = coerce . Champ.Internal.map' (const ())
 
 -- -- | Like `keysSet` but allows switching the storage mechanism of the keys (that become the set's elements).
 -- TODO requires mapWithKey'

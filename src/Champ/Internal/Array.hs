@@ -25,8 +25,9 @@ module Champ.Internal.Array (
   Strictly (..), 
   -- * Array helper functions:
   doubletonBranchless, 
-  sumStrictArray, 
-  sumLazyArray,
+  -- sumStrictArray, 
+  -- sumLazyArray,
+  foldrZipWith',
   -- * Arrays to store zero-size values
   UnitArray,
   IsUnit,
@@ -354,11 +355,11 @@ instance Array UnitArray where
   unsafeThaw (UnitArray l) = pure $ MutableUnitArray l
   unsafeShrinkMut MutableUnitArray{} l  = pure $ MutableUnitArray l
 
-sumStrictArray :: StrictSmallArray Int -> Int
-sumStrictArray = Foldable.foldr' (+) 0
+-- sumStrictArray :: StrictSmallArray Int -> Int
+-- sumStrictArray = Foldable.foldr' (+) 0
 
-sumLazyArray :: SmallArray Int -> Int
-sumLazyArray = Foldable.foldr' (+) 0
+-- sumLazyArray :: SmallArray Int -> Int
+-- sumLazyArray = Foldable.foldr' (+) 0
 
 -- | Branchless pair-array creation:
 -- If the int is '1', creates the array [a, b]
@@ -430,6 +431,50 @@ singleton Safe a = Contiguous.singleton a
 singleton Unsafe a = Contiguous.create $ do
   dst <- Contiguous.replicateMut 32 a
   unsafeShrinkMut dst 1
+
+foldrZipWith' ::
+  ( Contiguous arr1
+  , Contiguous arr2
+  , Element arr1 a
+  , Element arr2 b
+  ) =>
+  (a -> b -> c -> c) ->
+  c ->
+  arr1 a ->
+  arr2 b ->
+  c
+{-# INLINE foldrZipWith' #-}
+foldrZipWith' f = ifoldrZipWith' (\_ x y c -> f x y c)
+
+ifoldrZipWith' ::
+  ( Contiguous arr1
+  , Contiguous arr2
+  , Element arr1 a
+  , Element arr2 b
+  ) =>
+  (Int -> a -> b -> c -> c) ->
+  c ->
+  arr1 a ->
+  arr2 b ->
+  c
+ifoldrZipWith' f !z arr1 arr2 = go sz z
+  where
+  !sz = min (Contiguous.size arr1) (Contiguous.size arr2)
+  go !ix !acc =
+    if ix > -1
+      then case Contiguous.index# arr1 ix of
+        (# x #) -> case Contiguous.index# arr2 ix of
+          (# y #) -> go (ix - 1) (f ix x y acc)
+      else acc
+{-# INLINE ifoldrZipWith' #-}
+
+
+
+
+
+
+
+
 
 addrOf :: a -> Exts.Ptr ()
 addrOf a = unsafePerformIO $ primitive (\s0 -> case Exts.anyToAddr# a s0 of (# s1, addr #) -> (# s1, Exts.Ptr addr #))
