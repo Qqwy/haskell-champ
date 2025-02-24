@@ -405,11 +405,15 @@ insertAt Unsafe src i x =
 
 replaceAt :: (Array arr, Element arr a) => Safety -> arr a -> Int -> a -> arr a
 {-# INLINE replaceAt #-}
-replaceAt Safe src i x = Contiguous.replaceAt src i x
-replaceAt Unsafe src i x = Contiguous.create $ do
-  dst <- unsafeThaw src
-  Contiguous.write dst i x
-  pure dst
+replaceAt safety src i x = 
+  let (# oldX #) = (Contiguous.index# src i)
+  in if x `ptrEq` oldX then src
+  else case safety of
+    Safe -> Contiguous.replaceAt src i x
+    Unsafe -> Contiguous.create $ do
+      dst <- unsafeThaw src
+      Contiguous.write dst i x
+      pure dst
 
 deleteAt :: (Array arr, Element arr a) => Safety -> arr a -> Int -> arr a 
 {-# INLINE deleteAt #-}

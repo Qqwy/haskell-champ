@@ -340,9 +340,7 @@ insertInNode safety !h !k v !shift = \case
           -- Exists in child, insert in there and make sure this node contains the updated child
           let child = indexChild node bitpos
               (# didIGrow, child' #) = insertInNode safety h k v (nextShift shift) child
-           in if child' `ptrEq` child
-                then (# 0##, node #)
-                else (# didIGrow, CompactNode bitmap keys vals (Array.replaceAt safety children (childrenIndex node bitpos) child') #)
+           in (# didIGrow, CompactNode bitmap keys vals (Array.replaceAt safety children (childrenIndex node bitpos) child') #)
         Nowhere ->
           -- Doesn't exist yet, we can insert inline
           (# 1##, insertNewInline safety bitpos k v node #)
@@ -382,21 +380,19 @@ insertMergeWithInline safety bitpos k v h shift node@(CompactNode bitmap keys va
   let idx = dataIndex node bitpos
       existingKey = indexKey node bitpos
       (# existingVal #) = indexVal# node bitpos
-   in if
-        | existingKey == k && v `ptrEq` existingVal -> (# 0##, node #)
-        | existingKey == k -> (# 1##, CompactNode bitmap keys (Array.replaceAt safety vals idx v) children #)
-        | otherwise ->
-            let newIdx = childrenIndex node bitpos
-                -- SAFETY: The forcing of `child`/`pairNode` here is extremely important
-                -- if we're in `Unsafe` mode about to delete `existingVal` from the values array;
-                -- then when we are too lazy in the _fetching_ of `existingVal`,
-                -- we'd fetch off-by-one!
-                !child = pairNode safety existingKey existingVal (hash existingKey) k v h (nextShift shift)
-                keys' = Array.deleteAt safety keys idx
-                vals' = Array.deleteAt safety vals idx
-                !children' = Array.insertAt safety children newIdx child
-                bitmap' = bitmap .^. bitpos .|. (bitpos `unsafeShiftL` HASH_CODE_LENGTH)
-             in (# 1##, CompactNode bitmap' keys' vals' children' #)
+   in if existingKey == k then (# 1##, CompactNode bitmap keys (Array.replaceAt safety vals idx v) children #)
+      else
+          let newIdx = childrenIndex node bitpos
+              -- SAFETY: The forcing of `child`/`pairNode` here is extremely important
+              -- if we're in `Unsafe` mode about to delete `existingVal` from the values array;
+              -- then when we are too lazy in the _fetching_ of `existingVal`,
+              -- we'd fetch off-by-one!
+              !child = pairNode safety existingKey existingVal (hash existingKey) k v h (nextShift shift)
+              keys' = Array.deleteAt safety keys idx
+              vals' = Array.deleteAt safety vals idx
+              !children' = Array.insertAt safety children newIdx child
+              bitmap' = bitmap .^. bitpos .|. (bitpos `unsafeShiftL` HASH_CODE_LENGTH)
+            in (# 1##, CompactNode bitmap' keys' vals' children' #)
 
 {-# INLINE pairNode #-}
 pairNode :: (MapRepr keys vals k v) => Safety -> k -> v -> Hash -> k -> v -> Hash -> Word -> MapNode keys vals k v
@@ -514,13 +510,9 @@ deleteFromNode safety !h !k !shift = \case
               & CompactNode bitmap' keys vals 
               & insertNewInline safety bitpos k' v'
               & (\node' -> (# | (# 1##, node' #) #) )
-            (# | (# 0##, child #) #) -> 
-              -- Child unchanged, short circuit
-              (# | (# 0##, node #) #)
-            (# | (# 1##, child' #) #) ->
-              -- TODO update bitmap
+            (# | (# didIGrow, child' #) #) ->
               let node' = CompactNode bitmap' keys vals (Array.replaceAt safety children childIndex child')
-              in (# | (# 1##, node' #) #)
+              in (# | (# didIGrow, node' #) #)
 
 
 
