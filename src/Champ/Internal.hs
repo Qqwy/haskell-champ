@@ -297,75 +297,6 @@ mapKeys :: (Eq k2, Hashable k2, MapRepr keys vals k1 v, MapRepr keys2 vals k2 v)
 {-# INLINE mapKeys #-}
 mapKeys f = Champ.Internal.fromList . Champ.Internal.foldrWithKey (\k x xs -> (f k, x) : xs) []
 
-delete :: (Hashable k, MapRepr keys vals k v) => k -> HashMap keys vals k v -> HashMap keys vals k v
-delete = delete' Safe
-
-delete' :: (Hashable k, MapRepr keys vals k v) => Safety -> k -> HashMap keys vals k v -> HashMap keys vals k v
-delete' safety !k !m = case matchMap m of
-  (# (# #) | | #) -> EmptyMap
-  (# | (# k', v #) | #) 
-    | k == k' -> EmptyMap
-    | otherwise -> SingletonMap k' v
-  (# | | (# size, node0 #) #) ->
-    case deleteFromNode safety (hash k) k 0 node0 of
-      (# (# k', v #) | #) -> SingletonMap k' v
-      (# | (# didIShrink, node #) #) -> ManyMap (size - Exts.W# didIShrink) node
-
-deleteFromNode safety !h !k !shift = \case
-  node@CollisionNode{} -> error "TODO"
-  node@(CompactNode !bitmap !keys !vals !children) ->
-    let !bitpos = maskToBitpos (hashToMask shift h)
-    in case bitposLocation node bitpos of
-      Nowhere ->
-        -- Nothing to delete, return self
-        (# | (# 0##, node #) #)
-      Inline ->
-        -- Delete locally
-        let existingKey = indexKey node bitpos
-        in if 
-             | existingKey /= k -> 
-              -- Deleting something with the same hash
-              -- but actually a different key; nothing to do
-              (# |  (# 0## , node #) #)
-             | existingKey == k && (Contiguous.size keys == 2) ->
-              -- Collapse this array of two elements into a singleton node;
-              -- and bubble it up to be merged inline one layer up
-              case (dataIndex node bitpos) of
-                0 ->
-                  let (# existingVal #) = Contiguous.index# vals 1
-                      existingKey = Contiguous.index keys 1
-                  in (# (# existingKey, existingVal #) | #)
-                1 ->
-                  let (# existingVal #) = Contiguous.index# vals 0
-                      existingKey = Contiguous.index keys 0
-                  in (# (# existingKey, existingVal #) | #)
-             | otherwise ->
-              let idx = dataIndex node bitpos
-                  keys' = Array.deleteAt safety keys idx
-                  vals' = Array.deleteAt safety vals idx
-                  bitmap' = bitmap .^. bitpos
-              in
-                (# | (# 1##, CompactNode bitmap' keys' vals' children #) #)
-      InChild ->
-        -- Recurse
-        let child = indexChild node bitpos
-            childIndex = childrenIndex node bitpos
-            bitmap' = bitmap .^. (bitpos `unsafeShiftL` HASH_CODE_LENGTH)
-        in
-          case deleteFromNode safety h k (nextShift shift) child of
-            (# (# k', v' #) | #) ->
-              -- Child became too small, replace with inline
-              (Array.deleteAt safety children childIndex)
-              & CompactNode bitmap' keys vals 
-              & insertNewInline safety bitpos k' v'
-              & (\node' -> (# | (# 1##, node' #) #) )
-            (# | (# 0##, child #) #) -> 
-              -- Child unchanged, short circuit
-              (# | (# 0##, node #) #)
-            (# | (# 1##, child' #) #) ->
-              -- TODO update bitmap
-              let node' = CompactNode bitmap' keys vals (Array.replaceAt safety children childIndex child')
-              in (# | (# 1##, node' #) #)
 
 -- | \(O(\log32 n)\) Associate the specified value with the specified
 -- key in this map.  If this map previously contained a mapping for
@@ -492,6 +423,105 @@ mergeCompactInline safety k1 v1 h1 k2 v2 h2 shift =
       keys = Array.doubletonBranchless safety c k1 k2
       vals = Array.doubletonBranchless safety c v1 v2
    in CompactNode bitmap keys vals Contiguous.empty
+
+
+delete :: (Hashable k, MapRepr keys vals k v) => k -> HashMap keys vals k v -> HashMap keys vals k v
+{-# INLINE delete #-}
+delete = delete' Safe
+
+unsafeDelete :: (Hashable k, MapRepr keys vals k v) => k -> HashMap keys vals k v -> HashMap keys vals k v
+{-# INLINE unsafeDelete #-}
+unsafeDelete = delete' Safe
+
+delete' :: (Hashable k, MapRepr keys vals k v) => Safety -> k -> HashMap keys vals k v -> HashMap keys vals k v
+{-# INLINE delete' #-}
+delete' safety !k !m = case matchMap m of
+  (# (# #) | | #) -> EmptyMap
+  (# | (# k', v #) | #) 
+    | k == k' -> EmptyMap
+    | otherwise -> SingletonMap k' v
+  (# | | (# size, node0 #) #) ->
+    case deleteFromNode safety (hash k) k 0 node0 of
+      (# (# k', v #) | #) -> SingletonMap k' v
+      (# | (# didIShrink, node #) #) -> ManyMap (size - Exts.W# didIShrink) node
+
+deleteFromNode safety !h !k !shift = \case
+  node@(CollisionNode keys vals) -> case Contiguous.findIndex (\existingKey -> existingKey == k) keys of
+    Nothing -> 
+      (# | (# 0##, node #) #)
+    Just idx | Contiguous.size keys == 2 ->
+      case idx of
+        0 ->
+          let (# existingVal #) = Contiguous.index# vals 1
+              existingKey = Contiguous.index keys 1
+          in (# (# existingKey, existingVal #) | #)
+        1 ->
+          let (# existingVal #) = Contiguous.index# vals 0
+              existingKey = Contiguous.index keys 0
+          in (# (# existingKey, existingVal #) | #)
+        _ -> error "Unreachable"
+    Just idx ->
+      let keys' = Array.deleteAt safety keys idx
+          vals' = Array.deleteAt safety vals idx
+          node' = CollisionNode keys' vals'
+      in
+        (# | (# 1##, node' #) #)
+  node@(CompactNode !bitmap !keys !vals !children) ->
+    let !bitpos = maskToBitpos (hashToMask shift h)
+    in case bitposLocation node bitpos of
+      Nowhere ->
+        -- Nothing to delete, return self
+        (# | (# 0##, node #) #)
+      Inline ->
+        -- Delete locally
+        let existingKey = indexKey node bitpos
+        in if 
+             | existingKey /= k -> 
+              -- Deleting something with the same hash
+              -- but actually a different key; nothing to do
+              (# |  (# 0## , node #) #)
+             | existingKey == k && (Contiguous.size keys == 2) ->
+              -- Collapse this array of two elements into a singleton node;
+              -- and bubble it up to be merged inline one layer up
+              case (dataIndex node bitpos) of
+                0 ->
+                  let (# existingVal #) = Contiguous.index# vals 1
+                      existingKey = Contiguous.index keys 1
+                  in (# (# existingKey, existingVal #) | #)
+                1 ->
+                  let (# existingVal #) = Contiguous.index# vals 0
+                      existingKey = Contiguous.index keys 0
+                  in (# (# existingKey, existingVal #) | #)
+                _ -> error "Unreachable"
+             | otherwise ->
+              let idx = dataIndex node bitpos
+                  keys' = Array.deleteAt safety keys idx
+                  vals' = Array.deleteAt safety vals idx
+                  bitmap' = bitmap .^. bitpos
+              in
+                (# | (# 1##, CompactNode bitmap' keys' vals' children #) #)
+      InChild ->
+        -- Recurse
+        let child = indexChild node bitpos
+            childIndex = childrenIndex node bitpos
+            bitmap' = bitmap .^. (bitpos `unsafeShiftL` HASH_CODE_LENGTH)
+        in
+          case deleteFromNode safety h k (nextShift shift) child of
+            (# (# k', v' #) | #) ->
+              -- Child became too small, replace with inline
+              (Array.deleteAt safety children childIndex)
+              & CompactNode bitmap' keys vals 
+              & insertNewInline safety bitpos k' v'
+              & (\node' -> (# | (# 1##, node' #) #) )
+            (# | (# 0##, child #) #) -> 
+              -- Child unchanged, short circuit
+              (# | (# 0##, node #) #)
+            (# | (# 1##, child' #) #) ->
+              -- TODO update bitmap
+              let node' = CompactNode bitmap' keys vals (Array.replaceAt safety children childIndex child')
+              in (# | (# 1##, node' #) #)
+
+
 
 lookup :: (MapRepr keys vals k v, Eq k, Hashable k) => k -> HashMap keys vals k v -> Maybe v
 {-# INLINE lookup #-}
