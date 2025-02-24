@@ -14,10 +14,15 @@
 {-# LANGUAGE ViewPatterns #-}
 {-# OPTIONS_GHC -ddump-simpl -dsuppress-all -ddump-stg-from-core -ddump-cmm -ddump-to-file #-}
 {-# OPTIONS_GHC -funbox-strict-fields #-}
+{-# OPTIONS_GHC -funbox-strict-fields #-}
+
+-- We'd really like to use the names 'keys', 'elems', 'vals'
+-- for a bunch of different things.
+{-# OPTIONS_GHC -Wno-name-shadowing #-}
 
 module Champ.Internal where
 
-import Champ.Internal.Array (Array, StrictSmallArray, UnitArray, IsUnit, Safety(..))
+import Champ.Internal.Array (Array, StrictSmallArray, IsUnit, Safety(..))
 import Champ.Internal.Array qualified as Array
 import Champ.Internal.Collision qualified as Collision
 import Champ.Internal.Storage (ArrayOf, Storage (..), StrictStorage (..))
@@ -32,9 +37,8 @@ import Data.Hashable qualified as Hashable
 import Data.Maybe qualified as Maybe
 import Data.List qualified as List
 import Data.Primitive (Prim)
-import Data.Primitive.Contiguous (Contiguous, Element)
+import Data.Primitive.Contiguous (Element)
 import Data.Primitive.Contiguous qualified as Contiguous
-import Data.Primitive.SmallArray qualified as SmallArray
 import Data.Word (Word64)
 import GHC.Exts qualified as Exts
 import GHC.IsList (IsList (..))
@@ -201,8 +205,6 @@ map_repr_instance (Unboxed_Unboxed, Unboxed, Strict Unboxed, (Prim k, Prim v))
 map_repr_instance (Boxed_Unexistent, Boxed, Unexistent, (IsUnit v))
 map_repr_instance (Unboxed_Unexistent, Unboxed, Unexistent, (Prim k, IsUnit v))
 
-someFunc = undefined
-
 {-# INLINE null #-}
 null :: (MapRepr keys vals k v) => HashMap keys vals k v -> Bool
 null EmptyMap = True
@@ -224,8 +226,9 @@ singleton !k v = SingletonMap k v
 
 data Location = Inline | InChild | Nowhere
 
+bitposLocation :: MapRepr keys vals k v => MapNode keys vals k v -> Bitmap -> Location
 {-# INLINE bitposLocation #-}
-bitposLocation node@(CompactNode bitmap _ _ _) bitpos
+bitposLocation node@(MapNode bitmap _ _ _) bitpos
   | bitmap .&. bitpos /= 0 = Inline
   | (childrenBitmap node) .&. bitpos /= 0 = InChild
   | otherwise = Nowhere
@@ -278,8 +281,8 @@ alter f k m = case lookupKV k m of
       Just v -> insert k v m
   Just (k', v) -> 
     case f (Just v) of
-      Nothing -> error "TODO: Implement delete"
-      Just v' -> if ptrEq v v' then m else insert k v' m
+      Nothing -> delete k' m
+      Just v' -> if ptrEq v v' then m else insert k' v' m
 
 -- | \(O(n)\).
 -- @'mapKeys' f s@ is the map obtained by applying @f@ to each key of @s@.
@@ -324,9 +327,17 @@ insert' safety !k v !m = case matchMap m of
                 & insertInNode safety (hash k) k v 0
          in ManyMap (1 + Exts.W# size) node
   (# | | (# size, node0 #) #) ->
-    let (# didIGrow, node' #) = insertInNode safety (hash k) k v 0 node0
+    let !(# didIGrow, node' #) = insertInNode safety (hash k) k v 0 node0
      in ManyMap (size + Exts.W# didIGrow) node'
 
+insertInNode :: (MapRepr keys vals k v, Hashable k) =>
+                Safety
+                -> Hash
+                -> k
+                -> v
+                -> Word
+                -> MapNode keys vals k v
+                -> (# Exts.Word#, MapNode keys vals k v #)
 {-# INLINEABLE insertInNode #-}
 insertInNode safety !h !k v !shift = \case
   !node@(CollisionNode _ _) -> (# 1##, insertCollision safety k v node #)
@@ -339,7 +350,7 @@ insertInNode safety !h !k v !shift = \case
         InChild ->
           -- Exists in child, insert in there and make sure this node contains the updated child
           let child = indexChild node bitpos
-              (# didIGrow, child' #) = insertInNode safety h k v (nextShift shift) child
+              !(# didIGrow, child' #) = insertInNode safety h k v (nextShift shift) child
            in (# didIGrow, CompactNode bitmap keys vals (Array.replaceAt safety children (childrenIndex node bitpos) child') #)
         Nowhere ->
           -- Doesn't exist yet, we can insert inline
@@ -359,7 +370,7 @@ insertInNode safety !h !k v !shift = \case
 -- because we don't have an `Ord` instance.
 {-# INLINE insertCollision #-}
 insertCollision :: (MapRepr keys vals k v) => Safety -> k -> v -> MapNode keys vals k v -> MapNode keys vals k v
-insertCollision safety k v (CollisionNode keys vals) =
+insertCollision safety k v (MapNode _ keys vals _) =
   let idx = Contiguous.size keys
       keys' = Array.insertAt safety keys idx k
       vals' = Array.insertAt safety vals idx v
@@ -376,7 +387,7 @@ insertNewInline safety bitpos k v node@(MapNode bitmap keys vals children) =
 
 {-# INLINE insertMergeWithInline #-}
 insertMergeWithInline :: (Hashable k, MapRepr keys vals k v) => Safety -> Bitmap -> k -> v -> Hash -> Word -> MapNode keys vals k v -> (# Exts.Word#, MapNode keys vals k v #)
-insertMergeWithInline safety bitpos k v h shift node@(CompactNode bitmap keys vals children) =
+insertMergeWithInline safety bitpos k v h shift node@(MapNode bitmap keys vals children) =
   let idx = dataIndex node bitpos
       existingKey = indexKey node bitpos
       (# existingVal #) = indexVal# node bitpos
@@ -411,6 +422,16 @@ pairNode safety k1 v1 h1 k2 v2 h2 shift
                   bitmap = maskToBitpos mask1 `unsafeShiftL` HASH_CODE_LENGTH
                in CompactNode bitmap Contiguous.empty Contiguous.empty (Array.singleton safety child)
 
+mergeCompactInline :: MapRepr keyStorage valStorage k v =>
+                            Safety
+                            -> k
+                            -> v
+                            -> Hash
+                            -> k
+                            -> v
+                            -> Hash
+                            -> Word
+                            -> MapNode keyStorage valStorage k v
 {-# INLINE mergeCompactInline #-}
 mergeCompactInline safety k1 v1 h1 k2 v2 h2 shift =
   let !mask0@(Mask (Exts.W# i1)) = hashToMask shift h1
@@ -442,6 +463,14 @@ delete' safety !k !m = case matchMap m of
       (# (# k', v #) | #) -> SingletonMap k' v
       (# | (# didIShrink, node #) #) -> ManyMap (size - Exts.W# didIShrink) node
 
+deleteFromNode :: (MapRepr keyStorage valStorage a1 a2, Eq a1) =>
+                        Safety
+                        -> Hash
+                        -> a1
+                        -> Word
+                        -> MapNode keyStorage valStorage a1 a2
+                        -> (# (# a1, a2 #) |
+                              (# Exts.Word#, MapNode keyStorage valStorage a1 a2 #) #)
 deleteFromNode safety !h !k !shift = \case
   node@(CollisionNode keys vals) -> case findCollisionIndex k keys of
     Nothing -> 
@@ -513,8 +542,6 @@ deleteFromNode safety !h !k !shift = \case
             (# | (# didIGrow, child' #) #) ->
               let node' = CompactNode bitmap' keys vals (Array.replaceAt safety children childIndex child')
               in (# | (# didIGrow, node' #) #)
-
-
 
 lookup :: (MapRepr keys vals k v, Eq k, Hashable k) => k -> HashMap keys vals k v -> Maybe v
 {-# INLINE lookup #-}

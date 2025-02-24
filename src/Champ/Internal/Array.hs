@@ -405,7 +405,7 @@ insertAt Unsafe src i x =
 
 replaceAt :: (Array arr, Element arr a) => Safety -> arr a -> Int -> a -> arr a
 {-# INLINE replaceAt #-}
-replaceAt safety src i x = 
+replaceAt safety src i x =
   let (# oldX #) = (Contiguous.index# src i)
   in if x `ptrEq` oldX then src
   else case safety of
