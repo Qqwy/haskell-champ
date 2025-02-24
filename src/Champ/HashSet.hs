@@ -6,20 +6,45 @@ module Champ.HashSet (
     HashSet(..),
     HashSetB,
     HashSetU,
+    -- * Construction
     empty,
     singleton,
+
+    -- * Combine
+    union,
+    unions,
+
+    -- * Basic interface
+    null,
     size,
-    insert,
-    Champ.HashSet.fromList,
-    Champ.HashSet.toList,
     member,
+    insert,
+    delete,
     lookup,
+    -- TODO isSubsetOf
+
+    -- * Transformations
     map,
     map',
+    convert,
+
+    -- * Difference and intersection
+    difference,
+    -- TODO intersection
+
+    -- * Folds
     foldr,
     foldl',
     Champ.HashSet.foldMap,
-    convert,
+
+    -- * Conversions
+    -- ** Lists
+    Champ.HashSet.fromList,
+    Champ.HashSet.toList,
+
+    -- ** HashMaps
+    toMap,
+    fromMap,
     keysSet,
     -- TODO keysSet'
 ) where
@@ -32,7 +57,7 @@ import Data.List qualified
 import Data.Coerce (coerce)
 import GHC.IsList (IsList (..))
 
-newtype HashSet elems e = HashSet { toMap :: Champ.Internal.HashMap elems Unexistent e () }
+newtype HashSet elems e = HashSet { asMap :: Champ.Internal.HashMap elems Unexistent e () }
 type role HashSet nominal nominal
 
 instance (Show e, SetRepr elems e) => Show (HashSet elems e) where
@@ -114,6 +139,17 @@ foldMap :: (Monoid m, SetRepr elems e) => (e -> m) -> HashSet elems e -> m
 {-# INLINE foldMap #-}
 foldMap f set = Champ.Internal.foldMapWithKey (\e () -> f e) (coerce set)
 
+union :: (Hashable e, SetRepr elems e) => HashSet elems e -> HashSet elems e -> HashSet elems e
+union = coerce Champ.Internal.union
+
+unions :: (Hashable e, SetRepr elems e) => [HashSet elems e] -> HashSet elems e
+unions = coerce Champ.Internal.unions
+
+delete :: (Hashable e, SetRepr elems e) => e -> HashSet elems e -> HashSet elems e
+delete = coerce Champ.Internal.delete
+
+difference :: (Hashable e, SetRepr elems e) => HashSet elems e -> HashSet elems e -> HashSet elems e
+difference = coerce Champ.Internal.difference
 
 -- TODO: Implement the other foldXWithKey's as well,
 -- so we can wrap them here
@@ -131,6 +167,19 @@ instance Foldable (HashSet Boxed) where
 convert :: forall s1 s2 {es} {es'} {e}. (s1 ~ HashSet es, s2 ~ HashSet es', SetRepr es e, SetRepr es' e) => HashSet es e -> HashSet es' e
 convert = coerce Champ.Internal.convert
 
+
+-- | \(O(1)\) Convert to set to the equivalent 'HashMap' with @()@ values.
+--
+-- >>> HashSet.toMap (HashSet.singleton 1)
+-- Champ.HashMap.fromList [(1,())]
+toMap :: HashSet elems e -> Champ.Internal.HashMap elems Unexistent e ()
+toMap = asMap
+
+-- | \(O(1)\) Convert from the equivalent 'HashMap' with @()@ values.
+--
+-- >>> HashSet.fromMap (HashMap.singleton 1 ())
+fromMap :: Champ.Internal.HashMap elems Unexistent e () -> HashSet elems e
+fromMap = HashSet
 
 -- | \(O(n)\) Produce a `HashSet` of all the keys in the given `HashMap`.
 --
