@@ -323,10 +323,22 @@ deleteFromNode safety !h !k !shift = \case
         -- Delete locally
         let existingKey = indexKey node bitpos
         in if 
-             | existingKey /= k -> (# |  (# 0## , node #) #)
-             | existingKey == k && (Contiguous.size keys == 1) ->
-              let (# existingVal #) = indexVal# node bitpos
-              in (# (# existingKey, existingVal #) | #)
+             | existingKey /= k -> 
+              -- Deleting something with the same hash
+              -- but actually a different key; nothing to do
+              (# |  (# 0## , node #) #)
+             | existingKey == k && (Contiguous.size keys == 2) ->
+              -- Collapse this array of two elements into a singleton node;
+              -- and bubble it up to be merged inline one layer up
+              case (dataIndex node bitpos) of
+                0 ->
+                  let (# existingVal #) = Contiguous.index# vals 1
+                      existingKey = Contiguous.index keys 1
+                  in (# (# existingKey, existingVal #) | #)
+                1 ->
+                  let (# existingVal #) = Contiguous.index# vals 0
+                      existingKey = Contiguous.index keys 0
+                  in (# (# existingKey, existingVal #) | #)
              | otherwise ->
               let idx = dataIndex node bitpos
                   keys' = Array.deleteAt safety keys idx
@@ -337,19 +349,23 @@ deleteFromNode safety !h !k !shift = \case
       InChild ->
         -- Recurse
         let child = indexChild node bitpos
+            childIndex = childrenIndex node bitpos
+            bitmap' = bitmap .^. (bitpos `unsafeShiftL` HASH_CODE_LENGTH)
         in
           case deleteFromNode safety h k (nextShift shift) child of
             (# (# k', v' #) | #) ->
               -- Child became too small, replace with inline
-              error "TODO"
+              (Array.deleteAt safety children childIndex)
+              & CompactNode bitmap' keys vals 
+              & insertNewInline safety bitpos k' v'
+              & (\node' -> (# | (# 1##, node' #) #) )
             (# | (# 0##, child #) #) -> 
               -- Child unchanged, short circuit
               (# | (# 0##, node #) #)
             (# | (# 1##, child' #) #) ->
               -- TODO update bitmap
-              let node' = CompactNode bitmap keys vals (Array.replaceAt safety children (childrenIndex node bitpos) child')
+              let node' = CompactNode bitmap' keys vals (Array.replaceAt safety children childIndex child')
               in (# | (# 1##, node' #) #)
-            
 
 -- | \(O(\log32 n)\) Associate the specified value with the specified
 -- key in this map.  If this map previously contained a mapping for
@@ -372,18 +388,19 @@ insert' safety !k v !m = case matchMap m of
       else
         let !(# size, node #) =
               Contiguous.empty
-                & MapNode (maskToBitpos (hashToMask 0 (hash k))) (Array.singleton safety k) (Array.singleton safety v)
-                & insertInNode safety (hash k') k' v' 0
+                & MapNode (maskToBitpos (hashToMask 0 (hash k'))) (Array.singleton safety k') (Array.singleton safety v')
+                & insertInNode safety (hash k) k v 0
          in ManyMap (1 + Exts.W# size) node
   (# | | (# size, node0 #) #) ->
     let (# didIGrow, node' #) = insertInNode safety (hash k) k v 0 node0
      in ManyMap (size + Exts.W# didIGrow) node'
 
 {-# INLINEABLE insertInNode #-}
-insertInNode safety !h !k v !shift !node@(CollisionNode _ _) = (# 1##, insertCollision safety k v node #)
-insertInNode safety !h !k v !shift !node@(CompactNode !bitmap !keys !vals !children) =
-  let !bitpos = maskToBitpos $ hashToMask shift h
-   in case bitposLocation node bitpos of
+insertInNode safety !h !k v !shift = \case
+  !node@(CollisionNode _ _) -> (# 1##, insertCollision safety k v node #)
+  !node@(CompactNode !bitmap !keys !vals !children) ->
+    let !bitpos = maskToBitpos $ hashToMask shift h
+    in case bitposLocation node bitpos of
         Inline ->
           -- exists inline; potentially turn inline to subnode with two keys
           insertMergeWithInline safety bitpos k v h shift node
@@ -439,10 +456,14 @@ insertMergeWithInline safety bitpos k v h shift node@(CompactNode bitmap keys va
         | existingKey == k -> (# 1##, CompactNode bitmap' keys (Array.replaceAt safety vals idx v) children #)
         | otherwise ->
             let newIdx = childrenIndex node bitpos
+                -- SAFETY: The forcing of `child`/`pairNode` here is extremely important
+                -- if we're in `Unsafe` mode about to delete `existingVal` from the values array;
+                -- then when we are too lazy in the _fetching_ of `existingVal`,
+                -- we'd fetch off-by-one!
+                !child = pairNode safety existingKey existingVal (hash existingKey) k v h (nextShift shift)
                 keys' = Array.deleteAt safety keys idx
                 vals' = Array.deleteAt safety vals idx
-                child = pairNode safety existingKey existingVal (hash existingKey) k v h (nextShift shift)
-                children' = Array.insertAt safety children newIdx child
+                !children' = Array.insertAt safety children newIdx child
              in (# 1##, CompactNode bitmap' keys' vals' children' #)
 
 {-# INLINE pairNode #-}

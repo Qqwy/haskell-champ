@@ -465,10 +465,10 @@ replaceAt Unsafe src i x = Contiguous.create $ do
 deleteAt :: (Array arr, Element arr a) => Safety -> arr a -> Int -> arr a 
 {-# INLINE deleteAt #-}
 deleteAt Safe src i = Contiguous.deleteAt src i
-deleteAt Unsafe src i= Contiguous.create $ do
+deleteAt Unsafe src i = Contiguous.create $ do
+  let !size = Contiguous.size src
+  let i' = i + 1
   dst <- unsafeThaw src
-  let !i' = i + 1
-  size <- Contiguous.sizeMut dst
   copyMut dst i (sliceMut dst i' (size - i'))
   unsafeShrinkMut dst (size - 1)
 
