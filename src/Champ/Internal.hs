@@ -243,6 +243,14 @@ fromList :: (Hashable k, MapRepr keys vals k v) => [(k, v)] -> HashMap keys vals
 {-# INLINE fromList #-}
 fromList = Foldable.foldl' (\m (k, v) -> unsafeInsert k v m) empty
 
+-- | \(O(n \log n)\) Construct a map from a list of elements.  Uses
+-- the provided function @f@ to merge duplicate entries with
+-- @(f newVal oldVal)@.
+--
+fromListWith :: (Eq k, Hashable k, MapRepr keys vals k v) => (v -> v -> v) -> [(k, v)] -> HashMap keys vals k v
+fromListWith f = List.foldl' (\ m (k, v) -> unsafeInsertWith f k v m) empty
+{-# INLINE fromListWith #-}
+
 -- | \(O(n)\) Return a list of this map's elements (key-value pairs).
 --
 -- The resulting list is produced lazily and may participate in list fusion.

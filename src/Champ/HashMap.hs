@@ -82,12 +82,12 @@ module Champ.HashMap (
     Champ.Internal.toList,
     Champ.Internal.keys,
     Champ.Internal.elems,
-    -- TODO fromListWith
+    Champ.Internal.fromListWith,
     -- TODO fromListWithKey
 
     -- ** HashSets
-    Champ.HashSet.keysSet
-    -- Champ.HashSet.keysSet'
+    Champ.HashSet.keysSet,
+    Champ.HashSet.keysSet'
 ) where
 
 import GHC.Stack (HasCallStack)
