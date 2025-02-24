@@ -48,7 +48,7 @@ module Champ.HashSet (
     toMap,
     fromMap,
     keysSet,
-    -- TODO keysSet'
+    keysSet'
 ) where
 
 import Prelude hiding (map, foldr, lookup)
@@ -207,9 +207,8 @@ fromMap = HashSet
 -- >>> HashSet.keysSet (HashMap.fromList [(1, "a"), (2, "b")]
 -- Champ.HashSet.fromList [1,2]
 keysSet :: (Champ.Internal.MapRepr keys vals k v, SetRepr keys k) => Champ.Internal.HashMap keys vals k v -> HashSet keys k
-keysSet = coerce . Champ.Internal.map' (const ())
+keysSet = keysSet'
 
--- -- | Like `keysSet` but allows switching the storage mechanism of the keys (that become the set's elements).
--- TODO requires mapWithKey'
--- keysSet' :: (Champ.Internal.MapRepr keys vals k v, SetRepr keys' k) => Champ.Internal.HashMap keys vals k v -> HashSet keys' k
--- keysSet' = HashSet . Champ.Internal.map' (const ())
+-- | Like `keysSet` but allows switching the storage mechanism of the keys (that become the set's elements).
+keysSet' :: (Champ.Internal.MapRepr keys vals k v, SetRepr keys' k) => Champ.Internal.HashMap keys vals k v -> HashSet keys' k
+keysSet' = HashSet . Champ.Internal.convertDropVals
