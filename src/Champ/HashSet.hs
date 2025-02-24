@@ -36,7 +36,7 @@ module Champ.HashSet (
     Champ.HashSet.foldr,
     Champ.HashSet.foldl',
     Champ.HashSet.foldr',
-    -- TODO foldl
+    Champ.HashSet.foldl,
     Champ.HashSet.foldMap,
 
     -- * Conversions
