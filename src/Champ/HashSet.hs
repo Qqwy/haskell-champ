@@ -15,7 +15,7 @@ module Champ.HashSet (
     unions,
 
     -- * Basic interface
-    null,
+    Champ.HashSet.null,
     size,
     member,
     insert,
@@ -97,6 +97,10 @@ empty :: (SetRepr elems e) => HashSet elems e
 {-# INLINE empty #-}
 empty = coerce Champ.Internal.empty
 
+null :: (SetRepr elems e) => HashSet elems e -> Bool
+{-# INLINE null #-}
+null = coerce Champ.Internal.null
+
 size :: (SetRepr elems e) => HashSet elems e -> Int
 {-# INLINE size #-}
 size = coerce Champ.Internal.size
@@ -138,6 +142,10 @@ foldr' :: (SetRepr elems e) => (e -> r -> r) -> r -> HashSet elems e -> r
 {-# INLINE foldr' #-}
 foldr' fun acc set = Champ.Internal.foldrWithKey' (\e () r -> fun e r) acc (coerce set)
 
+foldl :: (SetRepr elems e) => (r -> e -> r) -> r -> HashSet elems e -> r
+{-# INLINE foldl #-}
+foldl fun acc set = Champ.Internal.foldlWithKey (\r e () -> fun r e) acc (coerce set)
+
 foldl' :: (SetRepr elems e) => (r -> e -> r) -> r -> HashSet elems e -> r
 {-# INLINE foldl' #-}
 foldl' fun acc set = Champ.Internal.foldlWithKey' (\r e () -> fun r e) acc (coerce set)
@@ -166,10 +174,14 @@ instance Foldable (HashSet Boxed) where
     foldr = Champ.HashSet.foldr
     {-# INLINE foldr' #-}
     foldr' = Champ.HashSet.foldr'
+    {-# INLINE foldl #-}
+    foldl = Champ.HashSet.foldl
     {-# INLINE foldl' #-}
     foldl' = Champ.HashSet.foldl'
     {-# INLINE foldMap #-}
     foldMap = Champ.HashSet.foldMap
+    {-# INLINE null #-}
+    null = Champ.HashSet.null
     {-# INLINE length #-}
     length = Champ.HashSet.size
 

@@ -889,17 +889,17 @@ foldrWithKey' f !z0 m = case matchMap m of
         & (\acc -> (Array.foldrZipWith' f) acc keys vals)
         & flip (Contiguous.foldr' go) children
 
--- {-# INLINE foldlWithKey #-}
--- foldlWithKey :: (MapRepr keys vals k v) => (r -> k -> v -> r) -> r -> HashMap keys vals k v -> r
--- foldlWithKey f z0 m = case matchMap m of
---   (# (# #) | | #) -> z0
---   (# | (# k, v #) | #) -> f z0 k v
---   (# | | (# _size, node0 #) #) -> Exts.inline go z0 node0
---   where
---     go !z (MapNode _bitmap keys !vals !children) =
---       z
---         & flip (Contiguous.foldl go) children
---         & (\acc -> (Contiguous.foldlZipWith f) acc keys vals)
+{-# INLINE foldlWithKey #-}
+foldlWithKey :: (MapRepr keys vals k v) => (r -> k -> v -> r) -> r -> HashMap keys vals k v -> r
+foldlWithKey f z0 m = case matchMap m of
+  (# (# #) | | #) -> z0
+  (# | (# k, v #) | #) -> f z0 k v
+  (# | | (# _size, node0 #) #) -> Exts.inline go z0 node0
+  where
+    go !z (MapNode _bitmap keys !vals !children) =
+      z
+        & flip (Contiguous.foldl go) children
+        & (\acc -> (Array.foldlZipWith f) acc keys vals)
 
 {-# INLINE foldlWithKey' #-}
 foldlWithKey' :: (MapRepr keys vals k v) => (r -> k -> v -> r) -> r -> HashMap keys vals k v -> r

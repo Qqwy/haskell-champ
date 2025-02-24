@@ -28,6 +28,7 @@ module Champ.Internal.Array (
   -- sumStrictArray, 
   -- sumLazyArray,
   foldrZipWith',
+  foldlZipWith,
   -- * Arrays to store zero-size values
   UnitArray,
   IsUnit,
@@ -457,18 +458,59 @@ ifoldrZipWith' ::
   arr1 a ->
   arr2 b ->
   c
-ifoldrZipWith' f !z arr1 arr2 = go (sz - 1) z
+ifoldrZipWith' f !z !arr1 !arr2 = go (sz - 1) z
   where
   !sz = min (Contiguous.size arr1) (Contiguous.size arr2)
   go !ix !acc =
-    if ix > -1
-      then case Contiguous.index# arr1 ix of
+    if ix == -1
+      then acc
+      else case Contiguous.index# arr1 ix of
         (# x #) -> case Contiguous.index# arr2 ix of
           (# y #) -> go (ix - 1) (f ix x y acc)
-      else acc
 {-# INLINE ifoldrZipWith' #-}
 
+foldlZipWith ::
+  ( Contiguous arr1
+  , Contiguous arr2
+  , Element arr1 a
+  , Element arr2 b
+  ) =>
+  (c -> a -> b -> c) ->
+  c ->
+  arr1 a ->
+  arr2 b ->
+  c
+{-# INLINE foldlZipWith #-}
+foldlZipWith f = ifoldlZipWith (\_ c x y -> f c x y)
 
+ifoldlZipWith ::
+  ( Contiguous arr1
+  , Contiguous arr2
+  , Element arr1 a
+  , Element arr2 b
+  ) =>
+  (Int -> c -> a -> b -> c) ->
+  c ->
+  arr1 a ->
+  arr2 b ->
+  c
+{-# INLINE ifoldlZipWith #-}
+ifoldlZipWith f z arr1 arr2 = go (sz - 1)
+  where 
+    !sz = min (size arr1) (size arr2)
+    go !i = 
+      if i == -1
+      then z
+      else case index# arr1 i of
+        (# x #) -> case index# arr2 i of
+          (# y #) -> f i (go (i - 1)) x y
+  --     go !ix acc =
+  --       if ix == -1
+  --         then acc
+  --         else case index# arr1 ix of
+  --           (# x #) -> case index# arr2 ix of
+  --             (# y #) -> go (ix + 1) (f ix acc x y)
+  --  in go 0 z
 
 
 
