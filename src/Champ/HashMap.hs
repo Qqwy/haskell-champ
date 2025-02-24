@@ -18,11 +18,11 @@ module Champ.HashMap (
     Champ.Internal.size,
     Champ.Internal.member,
     Champ.Internal.lookup,
-    -- TODO (!?),
-    -- TODO findWithDefault
-    -- TODO lookupDefault
+    (!?),
+    (!),
+    findWithDefault,
     Champ.Internal.insert,
-    -- TODO insertWith
+    Champ.Internal.insertWith,
     Champ.Internal.delete,
     Champ.Internal.adjust,
     -- TODO Champ.Internal.update,
@@ -55,12 +55,12 @@ module Champ.HashMap (
     -- * Folds
     Champ.Internal.foldMapWithKey,
     Champ.Internal.foldr,
-    Champ.Internal.foldl,
     Champ.Internal.foldr',
+    Champ.Internal.foldl,
     Champ.Internal.foldl',
     Champ.Internal.foldrWithKey,
     Champ.Internal.foldrWithKey',
-    -- TODO foldlWithKey
+    Champ.Internal.foldlWithKey,
     Champ.Internal.foldlWithKey',
 
     -- * Filter
@@ -90,6 +90,34 @@ module Champ.HashMap (
     -- Champ.HashSet.keysSet'
 ) where
 
+import GHC.Stack (HasCallStack)
+import Champ.Internal (HashMap, MapRepr)
 import Champ.Internal qualified
 import Champ.Internal.Storage qualified
 import Champ.HashSet qualified
+import Data.Hashable (Hashable)
+
+(!?) :: (Hashable k, MapRepr keys vals k v) => HashMap keys vals k v -> k -> Maybe v
+(!?) m k = Champ.Internal.lookup k m
+{-# INLINE (!?) #-}
+
+-- | \(O(\log n)\) Return the value to which the specified key is mapped.
+-- Calls 'error' if this map contains no mapping for the key.
+(!) :: (HasCallStack, Hashable k, MapRepr keys vals k v) => HashMap keys vals k v -> k -> v
+(!) m k = case Champ.Internal.lookup k m of
+    Just v  -> v
+    Nothing -> error "Champ.HashMap.(!): key not found"
+{-# INLINABLE (!) #-}
+-- TODO: Proper exception type?
+
+infixl 9 !
+
+-- | \(O(\log n)\) Return the value to which the specified key is mapped,
+-- or the default value if this map contains no mapping for the key.
+findWithDefault :: (Eq k, Hashable k, MapRepr keys vals k v)
+              => v          -- ^ Default value to return.
+              -> k -> HashMap keys vals k v -> v
+findWithDefault def k t = case Champ.Internal.lookup k t of
+    Just v -> v
+    _      -> def
+{-# INLINABLE findWithDefault #-}

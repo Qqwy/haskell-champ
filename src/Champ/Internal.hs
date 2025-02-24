@@ -442,6 +442,28 @@ mergeCompactInline safety k1 v1 h1 k2 v2 h2 shift =
       vals = Array.doubletonBranchless safety c v1 v2
    in CompactNode bitmap keys vals Contiguous.empty
 
+-- | \(O(\log32 n)\) Associate the value with the key in this map.  If
+-- this map previously contained a mapping for the key, the old value
+-- is replaced by the result of applying the given function to the new
+-- and old value.  Example:
+--
+-- > insertWith f k v map
+-- >   where f new old = new + old
+--
+-- The current implementation is very simple
+-- but not very performant since it walks over the map twice
+insertWith :: (Hashable k, MapRepr keys vals k v) => (v -> v -> v) -> k -> v -> HashMap keys vals k v -> HashMap keys vals k v
+{-# INLINE insertWith #-}
+insertWith f k v m = 
+  case lookupKV k m of
+    Nothing -> insert k v m
+    Just (k', v') -> insert k' (f v v') m
+
+unsafeInsertWith :: (Hashable k, MapRepr keys vals k v) => (v -> v -> v) -> k -> v -> HashMap keys vals k v -> HashMap keys vals k v
+unsafeInsertWith f k v m = 
+  case lookupKV k m of
+    Nothing -> unsafeInsert k v m
+    Just (k', v') -> unsafeInsert k' (f v v') m
 
 delete :: (Hashable k, MapRepr keys vals k v) => k -> HashMap keys vals k v -> HashMap keys vals k v
 {-# INLINE delete #-}
