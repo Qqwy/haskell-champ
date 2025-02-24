@@ -18,6 +18,7 @@ module Champ.HashSet (
     map',
     foldr,
     foldl',
+    Champ.HashSet.foldMap,
     convert,
 ) where
 
@@ -95,6 +96,11 @@ foldl' :: (SetRepr elems e) => (r -> e -> r) -> r -> HashSet elems e -> r
 {-# INLINE foldl' #-}
 foldl' fun acc set = Champ.Internal.foldlWithKey' (\r e () -> fun r e) acc (coerce set)
 
+foldMap :: (Monoid m, SetRepr elems e) => (e -> m) -> HashSet elems e -> m
+{-# INLINE foldMap #-}
+foldMap f set = Champ.Internal.foldMapWithKey (\e () -> f e) (coerce set)
+
+
 -- TODO: Implement the other foldXWithKey's as well,
 -- so we can wrap them here
 
@@ -103,6 +109,8 @@ instance Foldable (HashSet Boxed) where
     foldr = Champ.HashSet.foldr
     {-# INLINE foldl' #-}
     foldl' = Champ.HashSet.foldl'
+    {-# INLINE foldMap #-}
+    foldMap = Champ.HashSet.foldMap
     {-# INLINE length #-}
     length = Champ.HashSet.size
 

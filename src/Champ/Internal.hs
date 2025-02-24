@@ -754,7 +754,7 @@ foldMapWithKey f m = case matchMap m of
   (# | | (# _size, node0 #) #) -> Exts.inline go node0
   where
     go (MapNode _bitmap keys vals !children) = 
-      (Contiguous.foldrZipWith (\k v acc' -> acc' <> (f k v) )) mempty keys vals
+      (Contiguous.foldrZipWith (\k v acc -> acc <> (f k v) )) mempty keys vals
       <> Contiguous.foldMap go children
 {-# INLINE foldMapWithKey #-}
 
