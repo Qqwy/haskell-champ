@@ -10,6 +10,10 @@
 {-# OPTIONS_GHC -ddump-simpl -ddump-stg-from-core -ddump-to-file #-}
 {-# OPTIONS_GHC -funbox-strict-fields #-}
 
+#if __GLASGOW_HASKELL__ >= 906
+{-# LANGUAGE TypeData #-}
+#endif
+
 module Champ.Internal.Storage where
 
 import Champ.Internal.Array qualified as Array
@@ -21,12 +25,20 @@ import Data.Kind (Type)
 -- except that it makes more sense to combine strict boxed/unboxed together
 -- (as keys are always strict)
 -- whereas `RuntimeRep` combines boxed types together (regardless of levity).
-data Storage 
+#if __GLASGOW_HASKELL__ >= 906
+type data Storage 
+#else
+data Storage
+#endif
   = Lazy -- ^ It might be a thunk, and therefore is definitely boxed. (AKA of kind `Type` AKA `TYPE '(BoxedRep Lifted)`)
   | Strict StrictStorage -- ^ It is definitely not a thunk, may or may not be boxed
   | Unexistent -- ^ The value has no runtime representation; used as value type for `Set`.
 
-data StrictStorage 
+#if __GLASGOW_HASKELL__ >= 906
+type data StrictStorage 
+#else
+data StrictStorage
+#endif
   = Boxed -- ^ The value is boxed (AKA of kind `UnliftedType` AKA `TYPE '(BoxedRep Unlifted)`)
   | Unboxed -- ^ The value is of some unboxed kind.
 

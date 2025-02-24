@@ -1,12 +1,15 @@
 module Champ.HashMap (
     -- * Data types
-    Champ.Internal.HashMap,
+    -- ** Concrete types
     Champ.Internal.HashMapBL,
     Champ.Internal.HashMapBB,
     Champ.Internal.HashMapBU,
     Champ.Internal.HashMapUL,
     Champ.Internal.HashMapUB,
     Champ.Internal.HashMapUU,
+    -- * Generic type
+    Champ.Internal.HashMap,
+    Champ.Internal.Storage.Storage(..),
     -- * Construction
     Champ.Internal.empty,
     Champ.Internal.singleton,
@@ -88,4 +91,5 @@ module Champ.HashMap (
 ) where
 
 import Champ.Internal qualified
+import Champ.Internal.Storage qualified
 import Champ.HashSet qualified

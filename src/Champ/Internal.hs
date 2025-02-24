@@ -968,14 +968,14 @@ convert m = case matchMap m of
 
 {-# RULES 
 "Champ.HashMap.convert to the identical type" forall (h :: HashMap ks vs k v). convert @(HashMap ks vs) @(HashMap ks vs) h = h
-#-}
+  #-}
 
 
 convertDropVals :: forall h1 h2 {ks} {ks'} {vs} {k} {v}. (h1 ~ HashMap ks vs, h2 ~ HashMap ks' Unexistent, MapRepr ks vs k v, MapRepr ks' Unexistent k ()) => HashMap ks vs k v -> HashMap ks' Unexistent k ()
 {-# INLINE [2] convertDropVals #-}
 convertDropVals m = case matchMap m of
   (# (# #) | | #) -> EmptyMap
-  (# | (# k, v #) | #) -> SingletonMap k ()
+  (# | (# k, _v #) | #) -> SingletonMap k ()
   (# | | (# size, node #) #) -> ManyMap size (convert' node)
   where
     convert' :: MapNode ks vs k v -> MapNode ks' Unexistent k ()

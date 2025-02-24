@@ -3,9 +3,13 @@
 {-# LANGUAGE RoleAnnotations #-}
 {-# LANGUAGE UndecidableInstances #-}
 module Champ.HashSet (
-    HashSet(..),
+    -- ** Concrete types
     HashSetB,
     HashSetU,
+    -- ** Generic type
+    HashSet(..),
+    Champ.Internal.Storage.Storage(Unexistent),
+    Champ.Internal.Storage.StrictStorage(..),
     -- * Construction
     empty,
     singleton,
