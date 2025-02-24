@@ -297,6 +297,60 @@ mapKeys :: (Eq k2, Hashable k2, MapRepr keys vals k1 v, MapRepr keys2 vals k2 v)
 {-# INLINE mapKeys #-}
 mapKeys f = Champ.Internal.fromList . Champ.Internal.foldrWithKey (\k x xs -> (f k, x) : xs) []
 
+delete :: (Hashable k, MapRepr keys vals k v) => k -> HashMap keys vals k v -> HashMap keys vals k v
+delete = delete' Safe
+
+delete' :: (Hashable k, MapRepr keys vals k v) => Safety -> k -> HashMap keys vals k v -> HashMap keys vals k v
+delete' safety !k !m = case matchMap m of
+  (# (# #) | | #) -> EmptyMap
+  (# | (# k', v #) | #) 
+    | k == k' -> EmptyMap
+    | otherwise -> SingletonMap k' v
+  (# | | (# size, node0 #) #) ->
+    case deleteFromNode safety (hash k) k 0 node0 of
+      (# (# k', v #) | #) -> SingletonMap k' v
+      (# | (# didIShrink, node #) #) -> ManyMap (size - Exts.W# didIShrink) node
+
+deleteFromNode safety !h !k !shift = \case
+  node@CollisionNode{} -> error "TODO"
+  node@(CompactNode !bitmap !keys !vals !children) ->
+    let !bitpos = maskToBitpos (hashToMask shift h)
+    in case bitposLocation node bitpos of
+      Nowhere ->
+        -- Nothing to delete, return self
+        (# | (# 0##, node #) #)
+      Inline ->
+        -- Delete locally
+        let existingKey = indexKey node bitpos
+        in if 
+             | existingKey /= k -> (# |  (# 0## , node #) #)
+             | existingKey == k && (Contiguous.size keys == 1) ->
+              let (# existingVal #) = indexVal# node bitpos
+              in (# (# existingKey, existingVal #) | #)
+             | otherwise ->
+              let idx = dataIndex node bitpos
+                  keys' = Array.deleteAt safety keys idx
+                  vals' = Array.deleteAt safety vals idx
+                  bitmap' = bitmap .^. bitpos
+              in
+                (# | (# 1##, CompactNode bitmap' keys' vals' children #) #)
+      InChild ->
+        -- Recurse
+        let child = indexChild node bitpos
+        in
+          case deleteFromNode safety h k (nextShift shift) child of
+            (# (# k', v' #) | #) ->
+              -- Child became too small, replace with inline
+              error "TODO"
+            (# | (# 0##, child #) #) -> 
+              -- Child unchanged, short circuit
+              (# | (# 0##, node #) #)
+            (# | (# 1##, child' #) #) ->
+              -- TODO update bitmap
+              let node' = CompactNode bitmap keys vals (Array.replaceAt safety children (childrenIndex node bitpos) child')
+              in (# | (# 1##, node' #) #)
+            
+
 -- | \(O(\log32 n)\) Associate the specified value with the specified
 -- key in this map.  If this map previously contained a mapping for
 -- the key, the old value is replaced.
@@ -819,8 +873,10 @@ instance (Show k, Show v, MapRepr keys vals k v) => Show (HashMap keys vals k v)
 -- For example, turn a `HashMapBL` into a `HashMapBB` to force all laziness in all its values.
 -- Or turn a `HashMapBB` into a `HashMapUU` to unbox all keys and values.
 --
--- O(n), walks over the complete original hashmap and constructs a deep copy of all of its parts,
+-- \(O(n)\), walks over the complete original hashmap and constructs a deep copy of all of its parts,
 -- with the new storage mechanism.
+--
+-- (There is a rewrite rule in place that turns convert `@h @h` into a no-op)
 convert :: forall h1 h2 {ks} {ks'} {vs} {vs'} {k} {v}. (h1 ~ HashMap ks vs, h2 ~ HashMap ks' vs', MapRepr ks vs k v, MapRepr ks' vs' k v) => HashMap ks vs k v -> HashMap ks' vs' k v
 {-# INLINE [2] convert #-}
 convert m = case matchMap m of
@@ -835,6 +891,11 @@ convert m = case matchMap m of
 "Champ.HashMap.convert to the identical type" forall (h :: HashMap ks vs k v). convert @(HashMap ks vs) @(HashMap ks vs) h = h
 #-}
 
+-- | Print the internal representation of the hashmap.
+--
+-- Used for debugging the internals of Champ.HashMap
+-- and potentially figure out where its internal invariants might have been broken.
+-- Not intended for wider usage.
 debugShow :: (Show (ArrayOf (Strict keys) k), Show (ArrayOf vals v), Show k, Show v, MapRepr keys vals k v) => HashMap keys vals k v -> String
 debugShow EmptyMap = "EmptyMap"
 debugShow (SingletonMap k v) = "(SingletonMap " <> show k <> " " <> show v <> ")"
