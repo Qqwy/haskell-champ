@@ -56,7 +56,7 @@ module Champ.HashMap (
     Champ.Internal.foldr',
     Champ.Internal.foldl',
     Champ.Internal.foldrWithKey,
-    -- TODO foldrWithKey'
+    Champ.Internal.foldrWithKey',
     -- TODO foldlWithKey
     Champ.Internal.foldlWithKey',
 
