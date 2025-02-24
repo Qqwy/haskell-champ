@@ -1,7 +1,10 @@
-module Collision where
+module Champ.Internal.Collision where
 
+import Champ.Internal.Array (Array, Element)
+import Champ.Internal.Util (ptrEq)
 import Data.List  (sortBy)
 import Data.Maybe (fromMaybe)
+import Data.Primitive.Contiguous qualified as Contiguous
 
 -- | Under the assumption that two lists have the same length,
 -- will try to check whether they have the same elements.
@@ -63,3 +66,8 @@ unorderedCompare c as bs = go (sortBy cmpA as) (sortBy cmpB bs)
 
     inB a = (length $ filter (\b -> c a b == GT) bs, negate $ length $ filter (\b -> c a b == LT) bs)
     inA b = (length $ filter (\a -> c a b == LT) as, negate $ length $ filter (\a -> c a b == GT) as)
+
+
+findCollisionIndex :: (Eq a, Array arr, Element arr a) => a -> arr a -> Maybe Int
+{-# INLINE findCollisionIndex #-}
+findCollisionIndex k keys = Contiguous.findIndex (\existingKey -> existingKey `ptrEq` k || existingKey == k) keys

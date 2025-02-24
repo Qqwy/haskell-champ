@@ -10,9 +10,9 @@
 {-# OPTIONS_GHC -ddump-simpl -ddump-stg-from-core -ddump-to-file #-}
 {-# OPTIONS_GHC -funbox-strict-fields #-}
 
-module Storage where
+module Champ.Internal.Storage where
 
-import Array qualified
+import Champ.Internal.Array qualified as Array
 import Data.Kind (Type)
 
 -- | The different ways of storing data.

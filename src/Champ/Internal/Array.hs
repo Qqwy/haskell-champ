@@ -11,9 +11,10 @@
 {-# LANGUAGE UnliftedDatatypes #-}
 {-# OPTIONS_GHC -ddump-simpl -ddump-cmm -ddump-stg-tags -ddump-stg-final -ddump-asm -ddump-to-file #-}
 
-module Array (
+module Champ.Internal.Array (
   -- * Array class
   Array,
+  Element,
   -- * Simple arrays:
   SmallArray, 
   SmallUnliftedArray, 
@@ -31,12 +32,13 @@ module Array (
   IsUnit,
   -- * Conditionally safe interface
   Safety(..),
-  Array.insertAt,
-  Array.replaceAt,
-  Array.deleteAt,
-  Array.singleton
+  Champ.Internal.Array.insertAt,
+  Champ.Internal.Array.replaceAt,
+  Champ.Internal.Array.deleteAt,
+  Champ.Internal.Array.singleton
 ) where
 
+import Champ.Internal.Util (ptrEq)
 import Control.DeepSeq (NFData)
 import Control.Monad.Primitive
 import Control.Monad.ST (runST)
@@ -218,8 +220,11 @@ instance (Eq a) => Eq (StrictSmallArray a) where
 -- which was not worth it to do yet. (PRs accepted!)
 data UnitArray (a :: Type) where 
   UnitArray :: {-# UNPACK #-} !Int -> UnitArray a
+  deriving Show
+
 data MutableUnitArray s (a :: Type) where 
   MutableUnitArray :: {-# UNPACK #-} !Int -> MutableUnitArray s a
+  deriving Show
 
 data UnitArray# (a :: Type) :: UnliftedType where 
   UnitArray# :: {-# UNPACK #-} !Int -> UnitArray# a
@@ -419,16 +424,6 @@ doubletonBranchless Unsafe idx0Or1 a b = run $ do
 --   in if elem' `ptrEq` elem
 --      then arr
 --      else Contiguous.replaceAt arr idx elem'
-
-------------------------------------------------------------------------
--- Pointer equality
-
--- | Check if two the two arguments are the same value.  N.B. This
--- function might give false negatives (due to GC moving objects, or things being unpacked/repacked.)
--- but never false positives
-ptrEq :: a -> a -> Bool
-{-# INLINE ptrEq #-}
-ptrEq x y = Exts.isTrue# (Exts.reallyUnsafePtrEquality# x y Exts.==# 1#)
 
 -- | Allow running certain operations
 -- in either a 'Safe' (copy-on-write)

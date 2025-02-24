@@ -17,8 +17,11 @@
 
 module Champ.Internal where
 
-import Array (Array, StrictSmallArray, UnitArray, IsUnit, Safety(..))
-import Array qualified
+import Champ.Internal.Array (Array, StrictSmallArray, UnitArray, IsUnit, Safety(..))
+import Champ.Internal.Array qualified as Array
+import Champ.Internal.Collision qualified as Collision
+import Champ.Internal.Storage (ArrayOf, Storage (..), StrictStorage (..))
+import Champ.Internal.Util (ptrEq)
 import Control.DeepSeq (NFData (..))
 import Control.Monad qualified
 import Data.Bits hiding (shift)
@@ -36,14 +39,12 @@ import Data.Word (Word64)
 import GHC.Exts qualified as Exts
 import GHC.IsList (IsList (..))
 import Numeric (showBin)
-import Storage (ArrayOf, Storage (..), StrictStorage (..))
 import Prelude hiding (lookup)
 import Data.Coerce (Coercible)
 import Data.Coerce qualified
 import Unsafe.Coerce (unsafeCoerce)
 import Data.Type.Coercion (Coercion(Coercion))
 
-import Collision qualified
 
 #define BIT_PARTITION_SIZE 5
 #define HASH_CODE_LENGTH (1 `unsafeShiftL` BIT_PARTITION_SIZE)
@@ -378,13 +379,12 @@ insertNewInline safety bitpos k v node@(MapNode bitmap keys vals children) =
 {-# INLINE insertMergeWithInline #-}
 insertMergeWithInline :: (Hashable k, MapRepr keys vals k v) => Safety -> Bitmap -> k -> v -> Hash -> Word -> MapNode keys vals k v -> (# Exts.Word#, MapNode keys vals k v #)
 insertMergeWithInline safety bitpos k v h shift node@(CompactNode bitmap keys vals children) =
-  let bitmap' = bitmap .^. bitpos .|. (bitpos `unsafeShiftL` HASH_CODE_LENGTH)
-      idx = dataIndex node bitpos
+  let idx = dataIndex node bitpos
       existingKey = indexKey node bitpos
       (# existingVal #) = indexVal# node bitpos
    in if
         | existingKey == k && v `ptrEq` existingVal -> (# 0##, node #)
-        | existingKey == k -> (# 1##, CompactNode bitmap' keys (Array.replaceAt safety vals idx v) children #)
+        | existingKey == k -> (# 1##, CompactNode bitmap keys (Array.replaceAt safety vals idx v) children #)
         | otherwise ->
             let newIdx = childrenIndex node bitpos
                 -- SAFETY: The forcing of `child`/`pairNode` here is extremely important
@@ -395,6 +395,7 @@ insertMergeWithInline safety bitpos k v h shift node@(CompactNode bitmap keys va
                 keys' = Array.deleteAt safety keys idx
                 vals' = Array.deleteAt safety vals idx
                 !children' = Array.insertAt safety children newIdx child
+                bitmap' = bitmap .^. bitpos .|. (bitpos `unsafeShiftL` HASH_CODE_LENGTH)
              in (# 1##, CompactNode bitmap' keys' vals' children' #)
 
 {-# INLINE pairNode #-}
@@ -446,7 +447,7 @@ delete' safety !k !m = case matchMap m of
       (# | (# didIShrink, node #) #) -> ManyMap (size - Exts.W# didIShrink) node
 
 deleteFromNode safety !h !k !shift = \case
-  node@(CollisionNode keys vals) -> case Contiguous.findIndex (\existingKey -> existingKey == k) keys of
+  node@(CollisionNode keys vals) -> case findCollisionIndex k keys of
     Nothing -> 
       (# | (# 0##, node #) #)
     Just idx | Contiguous.size keys == 2 ->
@@ -555,7 +556,7 @@ lookupKV !k m = case matchMap m of
                 {-# INLINEABLE lookup' #-}
                 lookup' !_s !(CollisionNode keys vals) =
                     keys
-                        & Contiguous.findIndex (\k' -> k' == k)
+                        & findCollisionIndex k
                         & fmap (\idx -> (Contiguous.index keys idx, Contiguous.index vals idx))
                 lookup' !s !node@(CompactNode _bitmap _keys _vals _children) =
                     let !bitpos = maskToBitpos $ hashToMask s h
@@ -569,6 +570,10 @@ lookupKV !k m = case matchMap m of
 
 -- mylookup :: Int -> HashMapUU Int Int -> Maybe Int
 -- mylookup = lookup
+
+findCollisionIndex :: (Eq a, Array arr, Element arr a) => a -> arr a -> Maybe Int
+{-# INLINE findCollisionIndex #-}
+findCollisionIndex k keys = Contiguous.findIndex (\existingKey -> existingKey `ptrEq` k || existingKey == k) keys
 
 indexKey :: MapRepr keys vals k v => MapNode keys vals k v -> Bitmap -> k
 {-# INLINE indexKey #-}
@@ -597,10 +602,15 @@ member k m =
 
 instance (MapRepr keys vals k v, Eq v, Eq k) => Eq (HashMap keys vals k v) where
   {-# INLINE (==) #-}
-  EmptyMap == EmptyMap = True
-  (SingletonMap k v) == (SingletonMap k' v') = (k == k') && (v == v')
-  (ManyMap sz node) == (ManyMap sz' node') = sz == sz' && node == node'
-  _ == _ = False
+  a == b = 
+    if a `ptrEq` b then True 
+    else 
+      case (a, b) of
+        (EmptyMap, EmptyMap) -> True
+        ((SingletonMap k v), (SingletonMap k' v')) -> (k == k') && (v == v')
+        ((ManyMap sz node), (ManyMap sz' node')) -> 
+          sz == sz' && node == node'
+        (_, _) -> False
 
 instance (MapRepr keys vals k v, Eq v, Eq k) => Eq (MapNode keys vals k v) where
   {-# INLINEABLE (==) #-}
@@ -1083,16 +1093,6 @@ nextShift s = s + BIT_PARTITION_SIZE
 
 -- sumLazy :: HashMapBL Int Int -> Int
 -- sumLazy = foldr' (+) 0
-
-------------------------------------------------------------------------
--- Pointer equality
-
--- | Check if two the two arguments are the same value.  N.B. This
--- function might give false negatives (due to GC moving objects, or things being unpacked/repacked.)
--- but never false positives
-ptrEq :: a -> a -> Bool
-ptrEq x y = Exts.isTrue# (Exts.reallyUnsafePtrEquality# x y Exts.==# 1#)
-{-# INLINE ptrEq #-}
 
 -- | Simplified usage of `withCoercible` for the common case where you want to directly coerce the hashmap itself.
 --

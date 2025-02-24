@@ -63,9 +63,10 @@ library
       Champ.HashMap,
       Champ.HashSet,
       Champ.Internal,
-      Array, 
-      Collision,
-      Storage, 
+      Champ.Internal.Array,
+      Champ.Internal.Collision,
+      Champ.Internal.Storage,
+      Champ.Internal.Util,
 
     -- Modules included in this library but not exported.
     -- other-modules:
