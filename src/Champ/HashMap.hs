@@ -33,7 +33,7 @@ module Champ.HashMap (
     -- * Combine
     -- ** Union
     Champ.Internal.union,
-    -- TODO unionWith
+    Champ.Internal.unionWith,
     -- TODO unionWithKey
     Champ.Internal.unions,
     -- ** Compose
@@ -49,8 +49,8 @@ module Champ.HashMap (
     Champ.Internal.difference,
     Champ.Internal.differenceWith,
     Champ.Internal.intersection,
-    Champ.Internal.intersectionWith
-    Champ.Internal.intersectionWithKey
+    Champ.Internal.intersectionWith,
+    Champ.Internal.intersectionWithKey,
 
     -- * Folds
     Champ.Internal.foldMapWithKey,
@@ -83,7 +83,7 @@ module Champ.HashMap (
     Champ.Internal.keys,
     Champ.Internal.elems,
     Champ.Internal.fromListWith,
-    -- TODO fromListWithKey
+    Champ.Internal.fromListWithKey,
 
     -- ** HashSets
     Champ.HashSet.keysSet,

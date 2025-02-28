@@ -205,8 +205,8 @@ map_repr_instance (Unboxed_Unboxed, Unboxed, Strict Unboxed, (Prim k, Prim v))
 map_repr_instance (Boxed_Unexistent, Boxed, Unexistent, (IsUnit v))
 map_repr_instance (Unboxed_Unexistent, Unboxed, Unexistent, (Prim k, IsUnit v))
 
-{-# INLINE null #-}
 null :: (MapRepr keys vals k v) => HashMap keys vals k v -> Bool
+{-# INLINE null #-}
 null EmptyMap = True
 null _ = False
 
@@ -216,12 +216,12 @@ size EmptyMap = 0
 size (SingletonMap _k _v) = 1
 size (ManyMap s _) = fromIntegral s
 
-{-# INLINE empty #-}
 empty :: (MapRepr keys vals k v) => HashMap keys vals k v
+{-# INLINE empty #-}
 empty = EmptyMap
 
-{-# INLINE singleton #-}
 singleton :: (MapRepr keys vals k v) => k -> v -> HashMap keys vals k v
+{-# INLINE singleton #-}
 singleton !k v = SingletonMap k v
 
 data Location = Inline | InChild | Nowhere
@@ -246,10 +246,16 @@ fromList = Foldable.foldl' (\m (k, v) -> unsafeInsert k v m) empty
 -- | \(O(n \log n)\) Construct a map from a list of elements.  Uses
 -- the provided function @f@ to merge duplicate entries with
 -- @(f newVal oldVal)@.
---
 fromListWith :: (Eq k, Hashable k, MapRepr keys vals k v) => (v -> v -> v) -> [(k, v)] -> HashMap keys vals k v
-fromListWith f = List.foldl' (\ m (k, v) -> unsafeInsertWith f k v m) empty
 {-# INLINE fromListWith #-}
+fromListWith f = List.foldl' (\m (k, v) -> unsafeInsertWith f k v m) empty
+
+-- | \(O(n \log n)\) Construct a map from a list of elements.  Uses
+-- the provided function @f@ to merge duplicate entries with
+-- @(f key newVal oldVal)@.
+fromListWithKey :: (Eq k, Hashable k, MapRepr keys vals k v) => (k -> v -> v -> v) -> [(k, v)] -> HashMap keys vals k v
+{-# INLINE fromListWithKey #-}
+fromListWithKey f = List.foldl' (\m (k, v) -> unsafeInsertWithKey f k v m) empty
 
 -- | \(O(n)\) Return a list of this map's elements (key-value pairs).
 --
@@ -468,10 +474,21 @@ insertWith f k v m =
     Just (k', v') -> insert k' (f v v') m
 
 unsafeInsertWith :: (Hashable k, MapRepr keys vals k v) => (v -> v -> v) -> k -> v -> HashMap keys vals k v -> HashMap keys vals k v
-unsafeInsertWith f k v m = 
+{-# INLINE unsafeInsertWith #-}
+unsafeInsertWith f = unsafeInsertWithKey# (\_ a b -> (# f a b #))
+
+unsafeInsertWithKey :: (Hashable k, MapRepr keys vals k v) => (k -> v -> v -> v) -> k -> v -> HashMap keys vals k v -> HashMap keys vals k v
+{-# INLINE unsafeInsertWithKey #-}
+unsafeInsertWithKey f = unsafeInsertWithKey# (\k' a b -> (# f k' a b #))
+
+unsafeInsertWithKey# :: (Hashable k, MapRepr keys vals k v) => (k -> v -> v -> (# v #)) -> k -> v -> HashMap keys vals k v -> HashMap keys vals k v
+{-# INLINE unsafeInsertWithKey# #-}
+unsafeInsertWithKey# f k v m = 
   case lookupKV k m of
     Nothing -> unsafeInsert k v m
-    Just (k', v') -> unsafeInsert k' (f v v') m
+    Just (k2, v2) ->
+      case f k2 v v2 of
+        (# v3 #) -> unsafeInsert k2 v3 m
 
 delete :: (Hashable k, MapRepr keys vals k v) => k -> HashMap keys vals k v -> HashMap keys vals k v
 {-# INLINE delete #-}
@@ -1030,15 +1047,23 @@ debugShowNode (CompactNode bitmap keys vals children) = "(CompactNode " <> show 
       & fmap debugShowNode
       & List.intercalate ","
 
--- | The union of two maps. If a key occurs in both maps, the
+-- | \(O(n + m)\) The union of two maps. If a key occurs in both maps, the
 -- mapping from the first will be the mapping in the result.
 --
--- \(O(n + m)\)
--- The current implementation is simple but not fast;
+-- The current implementation is simple but not the most performant;
 -- performing repeated insertion
 union :: (Hashable k, MapRepr keys vals k v) => HashMap keys vals k v -> HashMap keys vals k v -> HashMap keys vals k v
 {-# INLINE union #-}
 union l r = Champ.Internal.fromList (Champ.Internal.toList r <> Champ.Internal.toList l) 
+
+-- | \(O(n + m)\) The union of two maps. If a key occurs in both maps, the
+-- function is called with both values to create the resulting value.
+-- 
+-- The current implementation is simple but not the most performant;
+-- performing repeated insertion
+unionWith :: (Hashable k, MapRepr keys vals k v) => (v -> v -> v) -> HashMap keys vals k v -> HashMap keys vals k v -> HashMap keys vals k v
+{-# INLINE unionWith #-}
+unionWith f l r = Champ.Internal.fromListWith f (Champ.Internal.toList r <> Champ.Internal.toList l)
 
 unions :: (Hashable k, MapRepr keys vals k v) => [HashMap keys vals k v] -> HashMap keys vals k v
 {-# INLINE unions #-}
