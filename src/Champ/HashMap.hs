@@ -65,10 +65,10 @@ module Champ.HashMap (
     Champ.Internal.foldlWithKey',
 
     -- * Filter
-    -- TODO filter
-    -- TODO filterWithKey
-    -- TODO mapMaybe
-    -- TODO mapMaybeWithKey
+    Champ.Internal.filter,
+    Champ.Internal.filterWithKey,
+    Champ.Internal.mapMaybe,
+    Champ.Internal.mapMaybeWithKey,
 
     -- * Conversions
     -- ** Between map types

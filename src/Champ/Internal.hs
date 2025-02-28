@@ -43,7 +43,7 @@ import Data.Word (Word64)
 import GHC.Exts qualified as Exts
 import GHC.IsList (IsList (..))
 import Numeric (showBin)
-import Prelude hiding (lookup)
+import Prelude hiding (lookup, filter)
 import Data.Coerce (Coercible)
 import Data.Coerce qualified
 import Unsafe.Coerce (unsafeCoerce)
@@ -819,7 +819,41 @@ mapWithKey' !f = \case
         in
           CompactNode bitmap keys vals' children'
 
+-- | Transform this map by applying a function to every key-value pair
+-- and retaining only some of them.
+--
+-- O(n log32(n)). Simple, naive, implementation. It is possible to write an O(n) implementation of this
+-- by traversing the existing map instead.
+mapMaybeWithKey :: (Eq k, Hashable k, MapRepr keys vals k v) => (k -> v -> Maybe v) -> HashMap keys vals k v -> HashMap keys vals k v
+{-# INLINE mapMaybeWithKey #-}
+mapMaybeWithKey f = Champ.Internal.fromList . Maybe.mapMaybe (\(k, v) -> (\r -> (k, r)) <$> f k v) . Champ.Internal.toList
 
+-- | Transform this map by applying a function to every value
+-- and retaining only some of them.
+--
+-- O(n log32(n)). Simple, naive, implementation. It is possible to write an O(n) implementation of this
+-- by traversing the existing map instead.
+mapMaybe :: (Eq k, Hashable k, MapRepr keys vals k v) => (v -> Maybe v) -> HashMap keys vals k v -> HashMap keys vals k v
+{-# INLINE mapMaybe #-}
+mapMaybe f = mapMaybeWithKey (const f)
+
+-- | \(O(n log32(n))\) Filter this map by retaining only elements satisfying a
+-- predicate.
+--
+-- Simple, naive, implementation. It is possible to write an O(n) implementation of this
+-- by traversing the existing map instead.
+filterWithKey :: (Eq k, Hashable k, MapRepr keys vals k v) => (k -> v -> Bool) -> HashMap keys vals k v -> HashMap keys vals k v
+{-# INLINE filterWithKey #-}
+filterWithKey f = Champ.Internal.fromList . List.filter (\(k, v) -> f k v) . Champ.Internal.toList
+
+-- | \(O(n)\) Filter this map by retaining only elements satisfying a
+-- predicate.
+--
+-- Simple, naive, implementation. It is possible to write an O(n) implementation of this
+-- by traversing the existing map instead.
+filter :: (Eq k, Hashable k, MapRepr keys vals k v) => (v -> Bool) -> HashMap keys vals k v -> HashMap keys vals k v
+{-# INLINE filter #-}
+filter f = filterWithKey (const f)
 
 instance Foldable (HashMapBL k) where
   {-# INLINE foldr #-}
