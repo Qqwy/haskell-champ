@@ -43,7 +43,7 @@ import Data.Word (Word64)
 import GHC.Exts qualified as Exts
 import GHC.IsList (IsList (..))
 import Numeric (showBin)
-import Prelude hiding (lookup, filter)
+import Prelude hiding (null, lookup, filter)
 import Data.Coerce (Coercible)
 import Data.Coerce qualified
 import Unsafe.Coerce (unsafeCoerce)
@@ -824,18 +824,35 @@ mapWithKey' !f = \case
 --
 -- O(n log32(n)). Simple, naive, implementation. It is possible to write an O(n) implementation of this
 -- by traversing the existing map instead.
-mapMaybeWithKey :: (Eq k, Hashable k, MapRepr keys vals k v) => (k -> v -> Maybe v) -> HashMap keys vals k v -> HashMap keys vals k v
+mapMaybeWithKey :: (Eq k, Hashable k, MapRepr keys vals k v, MapRepr keys vals k v') => (k -> v -> Maybe v') -> HashMap keys vals k v -> HashMap keys vals k v'
 {-# INLINE mapMaybeWithKey #-}
-mapMaybeWithKey f = Champ.Internal.fromList . Maybe.mapMaybe (\(k, v) -> (\r -> (k, r)) <$> f k v) . Champ.Internal.toList
+mapMaybeWithKey = mapMaybeWithKey'
+
+-- | Transform this map by applying a function to every key-value pair
+-- and retaining only some of them.
+--
+-- Allows changing the value storage type
+-- that is: you can switch between HashMapBL <-> HashMapBB <-> HashMapBU,
+-- or switch between HashMapUL <-> HashMapUB <-> HashMapUU.
+--
+-- O(n log32(n)). Simple, naive, implementation. It is possible to write an O(n) implementation of this
+-- by traversing the existing map instead.
+mapMaybeWithKey' :: (Eq k, Hashable k, MapRepr keys vals k v, MapRepr keys vals' k v') => (k -> v -> Maybe v') -> HashMap keys vals k v -> HashMap keys vals' k v'
+{-# INLINE mapMaybeWithKey' #-}
+mapMaybeWithKey' f = Champ.Internal.fromList . Maybe.mapMaybe (\(k, v) -> (\r -> (k, r)) <$> f k v) . Champ.Internal.toList
 
 -- | Transform this map by applying a function to every value
 -- and retaining only some of them.
 --
 -- O(n log32(n)). Simple, naive, implementation. It is possible to write an O(n) implementation of this
 -- by traversing the existing map instead.
-mapMaybe :: (Eq k, Hashable k, MapRepr keys vals k v) => (v -> Maybe v) -> HashMap keys vals k v -> HashMap keys vals k v
+mapMaybe :: (Eq k, Hashable k, MapRepr keys vals k v, MapRepr keys vals k v') => (v -> Maybe v') -> HashMap keys vals k v -> HashMap keys vals k v'
 {-# INLINE mapMaybe #-}
-mapMaybe f = mapMaybeWithKey (const f)
+mapMaybe f = mapMaybeWithKey' (const f)
+
+mapMaybe' :: (Eq k, Hashable k, MapRepr keys vals k v, MapRepr keys vals' k v') => (v -> Maybe v') -> HashMap keys vals k v -> HashMap keys vals' k v'
+{-# INLINE mapMaybe' #-}
+mapMaybe' f = mapMaybeWithKey' (const f)
 
 -- | \(O(n log32(n))\) Filter this map by retaining only elements satisfying a
 -- predicate.
@@ -1134,7 +1151,7 @@ union :: (Hashable k, MapRepr keys vals k v) => HashMap keys vals k v -> HashMap
 {-# INLINE union #-}
 union l r = Champ.Internal.fromList (Champ.Internal.toList r <> Champ.Internal.toList l) 
 
--- | \(O(n + m)\) The union of two maps. If a key occurs in both maps, the
+-- | \(O(n + m * log32(n + m))\) The union of two maps. If a key occurs in both maps, the
 -- function is called with both values to create the resulting value.
 -- 
 -- The current implementation is simple but not the most performant;
@@ -1143,6 +1160,21 @@ unionWith :: (Hashable k, MapRepr keys vals k v) => (v -> v -> v) -> HashMap key
 {-# INLINE unionWith #-}
 unionWith f l r = Champ.Internal.fromListWith f (Champ.Internal.toList r <> Champ.Internal.toList l)
 
+-- | \(O(n + m * log32(n + m))\) The union of two maps. If a key occurs in both maps, the
+-- function is called with the key and both values to create the resulting value.
+-- 
+-- The current implementation is simple but not the most performant;
+-- performing repeated insertion
+unionWithKey :: (Hashable k, MapRepr keys vals k v) => (k -> v -> v -> v) -> HashMap keys vals k v -> HashMap keys vals k v -> HashMap keys vals k v
+{-# INLINE unionWithKey #-}
+unionWithKey f l r = Champ.Internal.fromListWithKey f (Champ.Internal.toList r <> Champ.Internal.toList l)
+
+-- | The union of a list of maps.
+--
+-- O((n * m) * log32(n * m)) for @n@ maps each having at most @m@ keys.
+-- 
+-- The current implementation is simple but not the most performant;
+-- performing repeated insertion
 unions :: (Hashable k, MapRepr keys vals k v) => [HashMap keys vals k v] -> HashMap keys vals k v
 {-# INLINE unions #-}
 unions maps = 
@@ -1217,6 +1249,24 @@ intersectionWithKey f a b = foldlWithKey' go empty a
                  Nothing -> m
                  Just (k', w) -> unsafeInsert k' (f k' v w) m
 {-# INLINABLE intersectionWithKey #-}
+
+-- | Relate the keys of one map to the values of
+-- the other, by using the values of the former as keys for lookups
+-- in the latter.
+--
+-- Complexity: \( O (n * \log(m)) \), where \(m\) is the size of the first argument
+--
+-- >>> compose (fromList [('a', "A"), ('b', "B")]) (fromList [(1,'a'),(2,'b'),(3,'z')])
+-- fromList [(1,"A"),(2,"B")]
+--
+-- @
+-- ('compose' bc ab '!?') = (bc '!?') <=< (ab '!?')
+-- @
+compose :: (Eq a, Hashable a, Eq b, Hashable b, MapRepr as bs a b, MapRepr bs' cs b c, MapRepr as cs a c) => HashMap bs' cs b c -> HashMap as bs a b -> HashMap as cs a c
+{-# INLINE compose #-}
+compose bc !ab
+  | null bc = empty
+  | otherwise = mapMaybe' (\b -> lookup b bc) ab
 
 -- Inside a MapNode,
 -- the lower 32 bits indicate the inline leaves

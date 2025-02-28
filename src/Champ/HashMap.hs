@@ -34,10 +34,10 @@ module Champ.HashMap (
     -- ** Union
     Champ.Internal.union,
     Champ.Internal.unionWith,
-    -- TODO unionWithKey
+    Champ.Internal.unionWithKey,
     Champ.Internal.unions,
     -- ** Compose
-    -- TODO compose
+    Champ.Internal.compose,
     -- * Transformations
     Champ.Internal.map,
     Champ.Internal.map',
@@ -68,7 +68,9 @@ module Champ.HashMap (
     Champ.Internal.filter,
     Champ.Internal.filterWithKey,
     Champ.Internal.mapMaybe,
+    Champ.Internal.mapMaybe',
     Champ.Internal.mapMaybeWithKey,
+    Champ.Internal.mapMaybeWithKey',
 
     -- * Conversions
     -- ** Between map types
