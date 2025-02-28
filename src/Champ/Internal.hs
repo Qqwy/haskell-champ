@@ -985,7 +985,6 @@ instance (Show k, Show v, MapRepr keys vals k v) => Show (HashMap keys vals k v)
 -- \(O(n)\), walks over the complete original hashmap and constructs a deep copy of all of its parts,
 -- with the new storage mechanism.
 --
--- (There is a rewrite rule in place that turns convert `@h @h` into a no-op)
 convert :: forall h1 h2 {ks} {ks'} {vs} {vs'} {k} {v}. (h1 ~ HashMap ks vs, h2 ~ HashMap ks' vs', MapRepr ks vs k v, MapRepr ks' vs' k v) => HashMap ks vs k v -> HashMap ks' vs' k v
 {-# INLINE [2] convert #-}
 convert m = case matchMap m of
@@ -996,9 +995,9 @@ convert m = case matchMap m of
     convert' :: MapNode ks vs k v -> MapNode ks' vs' k v
     convert' (MapNode bitmap keys vals children) = (MapNode bitmap (Contiguous.convert keys) (Contiguous.convert vals) (Contiguous.map convert' children))
 
-{-# RULES 
-"Champ.HashMap.convert to the identical type" forall (h :: HashMap ks vs k v). convert @(HashMap ks vs) @(HashMap ks vs) h = h
-  #-}
+-- {-# RULES 
+-- "Champ.HashMap.convert to the identical type" forall (h :: HashMap ks vs k v). convert @(HashMap ks vs) @(HashMap ks vs) h = h
+--   #-}
 
 
 convertDropVals :: forall h1 h2 {ks} {ks'} {vs} {k} {v}. (h1 ~ HashMap ks vs, h2 ~ HashMap ks' Unexistent, MapRepr ks vs k v, MapRepr ks' Unexistent k ()) => HashMap ks vs k v -> HashMap ks' Unexistent k ()
@@ -1052,12 +1051,28 @@ unions maps =
 
 -- | \(O(n \log m)\) Difference of two maps. Return elements of the first map
 -- not existing in the second.
+--
+-- The current implementation is very simple but not the most performant,
+-- as we fold one map over the other instead of walking over the two maps in lock-step.
 difference :: (Hashable k, MapRepr keys vals k v, MapRepr keys vals' k w) => HashMap keys vals k v -> HashMap keys vals' k w -> HashMap keys vals k v
 {-# INLINE difference #-}
 difference a b = foldlWithKey' go empty a
   where
-    go m k v = case lookup k b of
-                 Nothing -> unsafeInsert k v m
+    go m k v = case member k b of
+                 False -> unsafeInsert k v m
+                 _       -> m
+
+-- | \(O(n \log m)\) Difference of two maps. Return elements of the first map
+-- not existing in the second.
+--
+-- The current implementation is very simple but not the most performant,
+-- as we fold one map over the other instead of walking over the two maps in lock-step.
+intersection :: (Hashable k, MapRepr keys vals k v, MapRepr keys vals' k w) => HashMap keys vals k v -> HashMap keys vals' k w -> HashMap keys vals k v
+{-# INLINE intersection #-}
+intersection a b = foldlWithKey' go empty a
+  where
+    go m k v = case lookupKV k b of
+                 Just (k', _) -> unsafeInsert k' v m
                  _       -> m
 
 -- | \(O(n \log m)\) Difference with a combining function. When two equal keys are
@@ -1067,19 +1082,26 @@ difference a b = foldlWithKey' go empty a
 differenceWith :: (Hashable k, MapRepr keys vals k v, MapRepr keys vals' k w) => (v -> w -> Maybe v) -> HashMap keys vals k v -> HashMap keys vals' k w -> HashMap keys vals k v
 differenceWith f a b = foldlWithKey' go empty a
   where
-    go m k v = case lookup k b of
+    go m k v = case lookupKV k b of
                  Nothing -> unsafeInsert k v m
-                 Just w  -> maybe m (\y -> unsafeInsert k y m) (f v w)
+                 Just (k', w)  -> maybe m (\y -> unsafeInsert k' y m) (f v w)
 {-# INLINABLE differenceWith #-}
 
+-- | \(O(n \log m)\) Intersection with a combining function. When two equal keys are
+-- encountered, the combining function is applied to the values of these keys.
+-- If it returns 'Nothing', the element is discarded (proper set intersection). If
+-- it returns (@'Just' y@), the element is updated with a new value @y@.
+intersectionWith :: (Hashable k, MapRepr keys vals1 k v1, MapRepr keys vals2 k v2, MapRepr keys vals3 k v3) => (v1 -> v2 -> v3) -> HashMap keys vals1 k v1 -> HashMap keys vals2 k v2 -> HashMap keys vals3 k v3
+intersectionWith f = Exts.inline intersectionWithKey (const f)
+{-# INLINABLE intersectionWith #-}
 
--- mysumOne :: HashMapBL Int Int -> Int
--- mysumOne = foldr' (+) 0
-
--- mysumTwo :: HashMapBL Int Int -> Int
--- mysumTwo = foldr'2 (+) 0
-
--- Helper functions & types:
+intersectionWithKey :: (Hashable k, MapRepr keys vals1 k v1, MapRepr keys vals2 k v2, MapRepr keys vals3 k v3) => (k -> v1 -> v2 -> v3) -> HashMap keys vals1 k v1 -> HashMap keys vals2 k v2 -> HashMap keys vals3 k v3
+intersectionWithKey f a b = foldlWithKey' go empty a
+  where
+    go m k v = case lookupKV k b of
+                 Nothing -> m
+                 Just (k', w) -> unsafeInsert k' (f k' v w) m
+{-# INLINABLE intersectionWithKey #-}
 
 -- Inside a MapNode,
 -- the lower 32 bits indicate the inline leaves
