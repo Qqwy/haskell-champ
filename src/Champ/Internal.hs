@@ -288,6 +288,7 @@ adjust f k m = case lookupKV k m of
 -- The current implementation is very simple,
 -- but is not super performant.
 alter :: (Hashable k, MapRepr keys vals k v) => (Maybe v -> Maybe v) -> k -> HashMap keys vals k v -> HashMap keys vals k v
+{-# INLINABLE alter #-}
 alter f k m = case lookupKV k m of
   Nothing -> 
     case f Nothing of
@@ -297,6 +298,14 @@ alter f k m = case lookupKV k m of
     case f (Just v) of
       Nothing -> delete k' m
       Just v' -> if ptrEq v v' then m else insert k' v' m
+
+-- | \(O(\log n)\)  The expression @('update' f k map)@ updates the value @x@ at @k@
+-- (if it is in the map). If @(f x)@ is 'Nothing', the element is deleted.
+-- If it is @('Just' y)@, the key @k@ is bound to the new value @y@.
+update :: (Eq k, Hashable k, MapRepr keys vals k v) => (v -> Maybe v) -> k -> HashMap keys vals k v -> HashMap keys vals k v
+{-# INLINABLE update #-}
+update f = alter (>>= f)
+
 
 -- | \(O(n)\).
 -- @'mapKeys' f s@ is the map obtained by applying @f@ to each key of @s@.
