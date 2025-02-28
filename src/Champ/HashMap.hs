@@ -48,9 +48,9 @@ module Champ.HashMap (
     -- * Difference and intersection
     Champ.Internal.difference,
     Champ.Internal.differenceWith,
-    -- TODO intersection
-    -- TODO intersectionWith
-    -- TODO intersectionWithKey
+    Champ.Internal.intersection,
+    Champ.Internal.intersectionWith
+    Champ.Internal.intersectionWithKey
 
     -- * Folds
     Champ.Internal.foldMapWithKey,
