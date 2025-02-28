@@ -1268,6 +1268,87 @@ compose bc !ab
   | null bc = empty
   | otherwise = mapMaybe' (\b -> lookup b bc) ab
 
+{-# INLINE isSubmapOfBy #-}
+isSubmapOfBy comp !m1 !m2 = go comp m1 m2
+  where
+    -- An empty map is always a submap of another map
+    go _ EmptyMap _ = True
+    -- Any non-empty map cannot be a submap of an empty map 
+    go _ _ EmptyMap = False
+    -- If only one entry, look it up in the second map
+    go _ (SingletonMap k v) m = 
+      case lookup k m of
+        Nothing -> False
+        Just v' -> comp v v'
+    -- a ManyMap is never a submap of a SingletonMap as it has > 1 elements
+    go _ ManyMap{} SingletonMap{} = False
+    -- Otherwise, ensure that it has less elements than the other map,
+    -- and then look inside the nodes
+    go comp (ManyMap size1 node1) (ManyMap size2 node2) = size1 < size2 && isSubmapOfByNode comp node1 node2
+
+-- Collision nodes only occur at the deepest level, so
+-- we can never have a CollisionNode be a subset of a CompactNode
+-- or vice-versa
+isSubmapOfByNode _comp CollisionNode{} CompactNode{} = False
+isSubmapOfByNode _comp CompactNode{} CollisionNode{} = False
+-- worst-case; O(n * m) complexity
+isSubmapOfByNode comp (CollisionNode keys vals) (CollisionNode keys' vals') = 
+  Contiguous.size keys <= Contiguous.size keys'
+  && subsetArray comp keys vals keys' vals'
+-- Nice case, we can compare the bitmaps
+isSubmapOfByNode comp node@CompactNode{} node'@CompactNode{} =
+  submapBitmapIndexed comp node node'
+
+subsetArray = error "TODO"
+
+submapBitmapIndexed comp node1@(CompactNode b1 k1 v1 c1) node2@(CompactNode b2 k2 v2 c2) 
+  = subsetBitmapsL
+  && subsetBitmapsC 
+  && goLeaves 0 0 (orbitmapL .&. negate orbitmapL)
+  && goChildren 0 0 (orbitmapC .&. negate orbitmapC)
+    where
+      orbitmapL = leavesBitmap node1 .|. leavesBitmap node2
+      andbitmapL = leavesBitmap node1 .&. leavesBitmap node2
+      subsetBitmapsL = orbitmapL == leavesBitmap node2
+      orbitmapC = childrenBitmap node1 .|. childrenBitmap node2
+      andbitmapC = childrenBitmap node1 .&. childrenBitmap node2
+      subsetBitmapsC = orbitmapC == childrenBitmap node2
+      goLeaves :: Int -> Int -> Bitmap -> Bool
+      goLeaves !i !j !b
+        | b > orbitmapL =
+          -- Recursion finished; all leaves of node1 are in node2
+          True
+        | andbitmapL .&. b /= 0 = 
+          -- The key occurs in both nodes. Compare keys, values
+          (Contiguous.index k1 i) == (Contiguous.index k2 j)
+          && (Contiguous.index v1 i) `comp` (Contiguous.index v2 j)
+          && goLeaves (i+1) (j+1) (b `unsafeShiftL` 1)
+        | b2 .&. b /= 0 = 
+          -- The key occurs in k2 but not in k1; skip it by incrementing index into k2/v2
+          goLeaves i (j+1) (b `unsafeShiftL` 1)
+        | otherwise = 
+          -- The bit is not set in either bitmap. Move to the next bit
+          goLeaves i j (b `unsafeShiftL` 1)
+      goChildren :: Int -> Int -> Bitmap -> Bool
+      goChildren !i !j !b
+        | b > orbitmapC =
+          -- Recursion finished; all leaves of node1 are in node2
+          True
+        | andbitmapC .&. b /= 0 = 
+          -- The child occurs in both nodes. Compare keys, values
+          isSubmapOfByNode comp (Contiguous.index c1 i) (Contiguous.index c2 j)
+          && goChildren (i+1) (j+1) (b `unsafeShiftL` 1)
+        | b2 .&. b /= 0 = 
+          -- The child occurs in k2 but not in k1; skip it by incrementing index into k2/v2
+          goChildren i (j+1) (b `unsafeShiftL` 1)
+        | otherwise = 
+          -- The bit is not set in either bitmap. Move to the next bit
+          goChildren i j (b `unsafeShiftL` 1)
+
+      -- {-# INLINE goChildren #-}
+      -- goChildren c1 c2 = Contiguous.foldlZipWith' (\x n1 n2 -> x && isSubmapOfByNode comp n1 n2) True c1 c2
+
+
 -- Inside a MapNode,
 -- the lower 32 bits indicate the inline leaves
 -- and the higher 32 bits indicate child nodes
