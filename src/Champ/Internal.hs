@@ -774,17 +774,52 @@ map = map'
 -- fromList [(1, "10"), (2, "20")]
 map' :: (MapRepr keys as k a, MapRepr keys bs k b) => (a -> b) -> HashMap keys as k a -> HashMap keys bs k b
 {-# INLINE map' #-}
-map' !_f EmptyMap = EmptyMap
-map' !f (SingletonMap k v) = SingletonMap k (f v)
-map' !f (ManyMap sz node) = ManyMap sz (mapNode node)
-  where
-    mapNode (CollisionNode keys vals) = (CollisionNode keys (Contiguous.map f vals))
-    mapNode (CompactNode bitmap keys vals children) =
-      let
-        vals' = Contiguous.map f vals
-        children' = Contiguous.map mapNode children
-      in
-        CompactNode bitmap keys vals' children'
+map' !f = \case 
+  EmptyMap -> EmptyMap
+  (SingletonMap k v) -> SingletonMap k (f v)
+  (ManyMap sz node) -> ManyMap sz (mapNode node)
+    where
+      mapNode (CollisionNode keys vals) = (CollisionNode keys (Contiguous.map f vals))
+      mapNode (CompactNode bitmap keys vals children) =
+        let
+          vals' = Contiguous.map f vals
+          children' = Contiguous.map mapNode children
+        in
+          CompactNode bitmap keys vals' children'
+
+-- | Map a function over the values in a hashmap while passing the key to the mapping function.
+--
+-- O(n)
+mapWithKey :: (MapRepr keys vals k a, MapRepr keys vals k b) => (k -> a -> b) -> HashMap keys vals k a -> HashMap keys vals k b
+{-# INLINE mapWithKey #-}
+mapWithKey = mapWithKey'
+
+-- | Map a function over the values in a hashmap while passing the key to the mapping function,
+-- and allowing to switch the value storage type.
+--
+-- that is: you can switch between HashMapBL <-> HashMapBB <-> HashMapBU,
+-- or switch between HashMapUL <-> HashMapUB <-> HashMapUU.
+--
+-- When using this function, you will need 
+-- to specify the type of the output map.
+--
+-- O(n)
+mapWithKey' :: (MapRepr keys as k a, MapRepr keys bs k b) => (k -> a -> b) -> HashMap keys as k a -> HashMap keys bs k b
+{-# INLINE mapWithKey' #-}
+mapWithKey' !f = \case 
+  EmptyMap -> EmptyMap
+  (SingletonMap k v) -> SingletonMap k (f k v)
+  (ManyMap sz node) -> ManyMap sz (mapNodeWithKey node)
+    where
+      mapNodeWithKey (CollisionNode keys vals) = (CollisionNode keys (Contiguous.zipWith f keys vals))
+      mapNodeWithKey (CompactNode bitmap keys vals children) =
+        let
+          vals' = Contiguous.zipWith f keys vals
+          children' = Contiguous.map mapNodeWithKey children
+        in
+          CompactNode bitmap keys vals' children'
+
+
 
 instance Foldable (HashMapBL k) where
   {-# INLINE foldr #-}

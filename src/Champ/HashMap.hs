@@ -41,7 +41,8 @@ module Champ.HashMap (
     -- * Transformations
     Champ.Internal.map,
     Champ.Internal.map',
-    -- TODO mapWithKey
+    Champ.Internal.mapWithKey,
+    Champ.Internal.mapWithKey',
     -- TODO traverseWithKey
     Champ.Internal.mapKeys,
 
