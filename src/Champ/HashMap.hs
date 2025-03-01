@@ -25,7 +25,7 @@ module Champ.HashMap (
     Champ.Internal.insertWith,
     Champ.Internal.delete,
     Champ.Internal.adjust,
-    -- TODO Champ.Internal.update,
+    Champ.Internal.update,
     Champ.Internal.alter,
     -- TODO alterF
     -- TODO isSubmapOf
@@ -33,15 +33,16 @@ module Champ.HashMap (
     -- * Combine
     -- ** Union
     Champ.Internal.union,
-    -- TODO unionWith
-    -- TODO unionWithKey
+    Champ.Internal.unionWith,
+    Champ.Internal.unionWithKey,
     Champ.Internal.unions,
     -- ** Compose
-    -- TODO compose
+    Champ.Internal.compose,
     -- * Transformations
     Champ.Internal.map,
     Champ.Internal.map',
-    -- TODO mapWithKey
+    Champ.Internal.mapWithKey,
+    Champ.Internal.mapWithKey',
     -- TODO traverseWithKey
     Champ.Internal.mapKeys,
 
@@ -49,8 +50,8 @@ module Champ.HashMap (
     Champ.Internal.difference,
     Champ.Internal.differenceWith,
     Champ.Internal.intersection,
-    Champ.Internal.intersectionWith
-    Champ.Internal.intersectionWithKey
+    Champ.Internal.intersectionWith,
+    Champ.Internal.intersectionWithKey,
 
     -- * Folds
     Champ.Internal.foldMapWithKey,
@@ -64,10 +65,12 @@ module Champ.HashMap (
     Champ.Internal.foldlWithKey',
 
     -- * Filter
-    -- TODO filter
-    -- TODO filterWithKey
-    -- TODO mapMaybe
-    -- TODO mapMaybeWithKey
+    Champ.Internal.filter,
+    Champ.Internal.filterWithKey,
+    Champ.Internal.mapMaybe,
+    Champ.Internal.mapMaybe',
+    Champ.Internal.mapMaybeWithKey,
+    Champ.Internal.mapMaybeWithKey',
 
     -- * Conversions
     -- ** Between map types
@@ -83,7 +86,7 @@ module Champ.HashMap (
     Champ.Internal.keys,
     Champ.Internal.elems,
     Champ.Internal.fromListWith,
-    -- TODO fromListWithKey
+    Champ.Internal.fromListWithKey,
 
     -- ** HashSets
     Champ.HashSet.keysSet,

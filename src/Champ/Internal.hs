@@ -43,7 +43,7 @@ import Data.Word (Word64)
 import GHC.Exts qualified as Exts
 import GHC.IsList (IsList (..))
 import Numeric (showBin)
-import Prelude hiding (lookup)
+import Prelude hiding (null, lookup, filter)
 import Data.Coerce (Coercible)
 import Data.Coerce qualified
 import Unsafe.Coerce (unsafeCoerce)
@@ -205,8 +205,8 @@ map_repr_instance (Unboxed_Unboxed, Unboxed, Strict Unboxed, (Prim k, Prim v))
 map_repr_instance (Boxed_Unexistent, Boxed, Unexistent, (IsUnit v))
 map_repr_instance (Unboxed_Unexistent, Unboxed, Unexistent, (Prim k, IsUnit v))
 
-{-# INLINE null #-}
 null :: (MapRepr keys vals k v) => HashMap keys vals k v -> Bool
+{-# INLINE null #-}
 null EmptyMap = True
 null _ = False
 
@@ -216,12 +216,12 @@ size EmptyMap = 0
 size (SingletonMap _k _v) = 1
 size (ManyMap s _) = fromIntegral s
 
-{-# INLINE empty #-}
 empty :: (MapRepr keys vals k v) => HashMap keys vals k v
+{-# INLINE empty #-}
 empty = EmptyMap
 
-{-# INLINE singleton #-}
 singleton :: (MapRepr keys vals k v) => k -> v -> HashMap keys vals k v
+{-# INLINE singleton #-}
 singleton !k v = SingletonMap k v
 
 data Location = Inline | InChild | Nowhere
@@ -246,10 +246,16 @@ fromList = Foldable.foldl' (\m (k, v) -> unsafeInsert k v m) empty
 -- | \(O(n \log n)\) Construct a map from a list of elements.  Uses
 -- the provided function @f@ to merge duplicate entries with
 -- @(f newVal oldVal)@.
---
 fromListWith :: (Eq k, Hashable k, MapRepr keys vals k v) => (v -> v -> v) -> [(k, v)] -> HashMap keys vals k v
-fromListWith f = List.foldl' (\ m (k, v) -> unsafeInsertWith f k v m) empty
 {-# INLINE fromListWith #-}
+fromListWith f = List.foldl' (\m (k, v) -> unsafeInsertWith f k v m) empty
+
+-- | \(O(n \log n)\) Construct a map from a list of elements.  Uses
+-- the provided function @f@ to merge duplicate entries with
+-- @(f key newVal oldVal)@.
+fromListWithKey :: (Eq k, Hashable k, MapRepr keys vals k v) => (k -> v -> v -> v) -> [(k, v)] -> HashMap keys vals k v
+{-# INLINE fromListWithKey #-}
+fromListWithKey f = List.foldl' (\m (k, v) -> unsafeInsertWithKey f k v m) empty
 
 -- | \(O(n)\) Return a list of this map's elements (key-value pairs).
 --
@@ -282,6 +288,7 @@ adjust f k m = case lookupKV k m of
 -- The current implementation is very simple,
 -- but is not super performant.
 alter :: (Hashable k, MapRepr keys vals k v) => (Maybe v -> Maybe v) -> k -> HashMap keys vals k v -> HashMap keys vals k v
+{-# INLINABLE alter #-}
 alter f k m = case lookupKV k m of
   Nothing -> 
     case f Nothing of
@@ -291,6 +298,14 @@ alter f k m = case lookupKV k m of
     case f (Just v) of
       Nothing -> delete k' m
       Just v' -> if ptrEq v v' then m else insert k' v' m
+
+-- | \(O(\log n)\)  The expression @('update' f k map)@ updates the value @x@ at @k@
+-- (if it is in the map). If @(f x)@ is 'Nothing', the element is deleted.
+-- If it is @('Just' y)@, the key @k@ is bound to the new value @y@.
+update :: (Eq k, Hashable k, MapRepr keys vals k v) => (v -> Maybe v) -> k -> HashMap keys vals k v -> HashMap keys vals k v
+{-# INLINABLE update #-}
+update f = alter (>>= f)
+
 
 -- | \(O(n)\).
 -- @'mapKeys' f s@ is the map obtained by applying @f@ to each key of @s@.
@@ -468,10 +483,21 @@ insertWith f k v m =
     Just (k', v') -> insert k' (f v v') m
 
 unsafeInsertWith :: (Hashable k, MapRepr keys vals k v) => (v -> v -> v) -> k -> v -> HashMap keys vals k v -> HashMap keys vals k v
-unsafeInsertWith f k v m = 
+{-# INLINE unsafeInsertWith #-}
+unsafeInsertWith f = unsafeInsertWithKey# (\_ a b -> (# f a b #))
+
+unsafeInsertWithKey :: (Hashable k, MapRepr keys vals k v) => (k -> v -> v -> v) -> k -> v -> HashMap keys vals k v -> HashMap keys vals k v
+{-# INLINE unsafeInsertWithKey #-}
+unsafeInsertWithKey f = unsafeInsertWithKey# (\k' a b -> (# f k' a b #))
+
+unsafeInsertWithKey# :: (Hashable k, MapRepr keys vals k v) => (k -> v -> v -> (# v #)) -> k -> v -> HashMap keys vals k v -> HashMap keys vals k v
+{-# INLINE unsafeInsertWithKey# #-}
+unsafeInsertWithKey# f k v m = 
   case lookupKV k m of
     Nothing -> unsafeInsert k v m
-    Just (k', v') -> unsafeInsert k' (f v v') m
+    Just (k2, v2) ->
+      case f k2 v v2 of
+        (# v3 #) -> unsafeInsert k2 v3 m
 
 delete :: (Hashable k, MapRepr keys vals k v) => k -> HashMap keys vals k v -> HashMap keys vals k v
 {-# INLINE delete #-}
@@ -748,17 +774,103 @@ map = map'
 -- fromList [(1, "10"), (2, "20")]
 map' :: (MapRepr keys as k a, MapRepr keys bs k b) => (a -> b) -> HashMap keys as k a -> HashMap keys bs k b
 {-# INLINE map' #-}
-map' !_f EmptyMap = EmptyMap
-map' !f (SingletonMap k v) = SingletonMap k (f v)
-map' !f (ManyMap sz node) = ManyMap sz (mapNode node)
-  where
-    mapNode (CollisionNode keys vals) = (CollisionNode keys (Contiguous.map f vals))
-    mapNode (CompactNode bitmap keys vals children) =
-      let
-        vals' = Contiguous.map f vals
-        children' = Contiguous.map mapNode children
-      in
-        CompactNode bitmap keys vals' children'
+map' !f = \case 
+  EmptyMap -> EmptyMap
+  (SingletonMap k v) -> SingletonMap k (f v)
+  (ManyMap sz node) -> ManyMap sz (mapNode node)
+    where
+      mapNode (CollisionNode keys vals) = (CollisionNode keys (Contiguous.map f vals))
+      mapNode (CompactNode bitmap keys vals children) =
+        let
+          vals' = Contiguous.map f vals
+          children' = Contiguous.map mapNode children
+        in
+          CompactNode bitmap keys vals' children'
+
+-- | Map a function over the values in a hashmap while passing the key to the mapping function.
+--
+-- O(n)
+mapWithKey :: (MapRepr keys vals k a, MapRepr keys vals k b) => (k -> a -> b) -> HashMap keys vals k a -> HashMap keys vals k b
+{-# INLINE mapWithKey #-}
+mapWithKey = mapWithKey'
+
+-- | Map a function over the values in a hashmap while passing the key to the mapping function,
+-- and allowing to switch the value storage type.
+--
+-- that is: you can switch between HashMapBL <-> HashMapBB <-> HashMapBU,
+-- or switch between HashMapUL <-> HashMapUB <-> HashMapUU.
+--
+-- When using this function, you will need 
+-- to specify the type of the output map.
+--
+-- O(n)
+mapWithKey' :: (MapRepr keys as k a, MapRepr keys bs k b) => (k -> a -> b) -> HashMap keys as k a -> HashMap keys bs k b
+{-# INLINE mapWithKey' #-}
+mapWithKey' !f = \case 
+  EmptyMap -> EmptyMap
+  (SingletonMap k v) -> SingletonMap k (f k v)
+  (ManyMap sz node) -> ManyMap sz (mapNodeWithKey node)
+    where
+      mapNodeWithKey (CollisionNode keys vals) = (CollisionNode keys (Contiguous.zipWith f keys vals))
+      mapNodeWithKey (CompactNode bitmap keys vals children) =
+        let
+          vals' = Contiguous.zipWith f keys vals
+          children' = Contiguous.map mapNodeWithKey children
+        in
+          CompactNode bitmap keys vals' children'
+
+-- | Transform this map by applying a function to every key-value pair
+-- and retaining only some of them.
+--
+-- O(n log32(n)). Simple, naive, implementation. It is possible to write an O(n) implementation of this
+-- by traversing the existing map instead.
+mapMaybeWithKey :: (Eq k, Hashable k, MapRepr keys vals k v, MapRepr keys vals k v') => (k -> v -> Maybe v') -> HashMap keys vals k v -> HashMap keys vals k v'
+{-# INLINE mapMaybeWithKey #-}
+mapMaybeWithKey = mapMaybeWithKey'
+
+-- | Transform this map by applying a function to every key-value pair
+-- and retaining only some of them.
+--
+-- Allows changing the value storage type
+-- that is: you can switch between HashMapBL <-> HashMapBB <-> HashMapBU,
+-- or switch between HashMapUL <-> HashMapUB <-> HashMapUU.
+--
+-- O(n log32(n)). Simple, naive, implementation. It is possible to write an O(n) implementation of this
+-- by traversing the existing map instead.
+mapMaybeWithKey' :: (Eq k, Hashable k, MapRepr keys vals k v, MapRepr keys vals' k v') => (k -> v -> Maybe v') -> HashMap keys vals k v -> HashMap keys vals' k v'
+{-# INLINE mapMaybeWithKey' #-}
+mapMaybeWithKey' f = Champ.Internal.fromList . Maybe.mapMaybe (\(k, v) -> (\r -> (k, r)) <$> f k v) . Champ.Internal.toList
+
+-- | Transform this map by applying a function to every value
+-- and retaining only some of them.
+--
+-- O(n log32(n)). Simple, naive, implementation. It is possible to write an O(n) implementation of this
+-- by traversing the existing map instead.
+mapMaybe :: (Eq k, Hashable k, MapRepr keys vals k v, MapRepr keys vals k v') => (v -> Maybe v') -> HashMap keys vals k v -> HashMap keys vals k v'
+{-# INLINE mapMaybe #-}
+mapMaybe f = mapMaybeWithKey' (const f)
+
+mapMaybe' :: (Eq k, Hashable k, MapRepr keys vals k v, MapRepr keys vals' k v') => (v -> Maybe v') -> HashMap keys vals k v -> HashMap keys vals' k v'
+{-# INLINE mapMaybe' #-}
+mapMaybe' f = mapMaybeWithKey' (const f)
+
+-- | \(O(n log32(n))\) Filter this map by retaining only elements satisfying a
+-- predicate.
+--
+-- Simple, naive, implementation. It is possible to write an O(n) implementation of this
+-- by traversing the existing map instead.
+filterWithKey :: (Eq k, Hashable k, MapRepr keys vals k v) => (k -> v -> Bool) -> HashMap keys vals k v -> HashMap keys vals k v
+{-# INLINE filterWithKey #-}
+filterWithKey f = Champ.Internal.fromList . List.filter (\(k, v) -> f k v) . Champ.Internal.toList
+
+-- | \(O(n)\) Filter this map by retaining only elements satisfying a
+-- predicate.
+--
+-- Simple, naive, implementation. It is possible to write an O(n) implementation of this
+-- by traversing the existing map instead.
+filter :: (Eq k, Hashable k, MapRepr keys vals k v) => (v -> Bool) -> HashMap keys vals k v -> HashMap keys vals k v
+{-# INLINE filter #-}
+filter f = filterWithKey (const f)
 
 instance Foldable (HashMapBL k) where
   {-# INLINE foldr #-}
@@ -1030,16 +1142,39 @@ debugShowNode (CompactNode bitmap keys vals children) = "(CompactNode " <> show 
       & fmap debugShowNode
       & List.intercalate ","
 
--- | The union of two maps. If a key occurs in both maps, the
+-- | \(O(n + m)\) The union of two maps. If a key occurs in both maps, the
 -- mapping from the first will be the mapping in the result.
 --
--- \(O(n + m)\)
--- The current implementation is simple but not fast;
+-- The current implementation is simple but not the most performant;
 -- performing repeated insertion
 union :: (Hashable k, MapRepr keys vals k v) => HashMap keys vals k v -> HashMap keys vals k v -> HashMap keys vals k v
 {-# INLINE union #-}
 union l r = Champ.Internal.fromList (Champ.Internal.toList r <> Champ.Internal.toList l) 
 
+-- | \(O(n + m * log32(n + m))\) The union of two maps. If a key occurs in both maps, the
+-- function is called with both values to create the resulting value.
+-- 
+-- The current implementation is simple but not the most performant;
+-- performing repeated insertion
+unionWith :: (Hashable k, MapRepr keys vals k v) => (v -> v -> v) -> HashMap keys vals k v -> HashMap keys vals k v -> HashMap keys vals k v
+{-# INLINE unionWith #-}
+unionWith f l r = Champ.Internal.fromListWith f (Champ.Internal.toList r <> Champ.Internal.toList l)
+
+-- | \(O(n + m * log32(n + m))\) The union of two maps. If a key occurs in both maps, the
+-- function is called with the key and both values to create the resulting value.
+-- 
+-- The current implementation is simple but not the most performant;
+-- performing repeated insertion
+unionWithKey :: (Hashable k, MapRepr keys vals k v) => (k -> v -> v -> v) -> HashMap keys vals k v -> HashMap keys vals k v -> HashMap keys vals k v
+{-# INLINE unionWithKey #-}
+unionWithKey f l r = Champ.Internal.fromListWithKey f (Champ.Internal.toList r <> Champ.Internal.toList l)
+
+-- | The union of a list of maps.
+--
+-- O((n * m) * log32(n * m)) for @n@ maps each having at most @m@ keys.
+-- 
+-- The current implementation is simple but not the most performant;
+-- performing repeated insertion
 unions :: (Hashable k, MapRepr keys vals k v) => [HashMap keys vals k v] -> HashMap keys vals k v
 {-# INLINE unions #-}
 unions maps = 
@@ -1079,6 +1214,9 @@ intersection a b = foldlWithKey' go empty a
 -- encountered, the combining function is applied to the values of these keys.
 -- If it returns 'Nothing', the element is discarded (proper set difference). If
 -- it returns (@'Just' y@), the element is updated with a new value @y@.
+--
+-- The current implementation is very simple but not the most performant,
+-- as we fold one map over the other instead of walking over the two maps in lock-step.
 differenceWith :: (Hashable k, MapRepr keys vals k v, MapRepr keys vals' k w) => (v -> w -> Maybe v) -> HashMap keys vals k v -> HashMap keys vals' k w -> HashMap keys vals k v
 differenceWith f a b = foldlWithKey' go empty a
   where
@@ -1087,14 +1225,23 @@ differenceWith f a b = foldlWithKey' go empty a
                  Just (k', w)  -> maybe m (\y -> unsafeInsert k' y m) (f v w)
 {-# INLINABLE differenceWith #-}
 
--- | \(O(n \log m)\) Intersection with a combining function. When two equal keys are
--- encountered, the combining function is applied to the values of these keys.
--- If it returns 'Nothing', the element is discarded (proper set intersection). If
--- it returns (@'Just' y@), the element is updated with a new value @y@.
+-- | \(O(n \log m)\) Intersection with a combining function
+--
+-- When a key exists in both maps, the combining function is applied to the values.
+--
+-- The current implementation is very simple but not the most performant,
+-- as we fold one map over the other instead of walking over the two maps in lock-step.
 intersectionWith :: (Hashable k, MapRepr keys vals1 k v1, MapRepr keys vals2 k v2, MapRepr keys vals3 k v3) => (v1 -> v2 -> v3) -> HashMap keys vals1 k v1 -> HashMap keys vals2 k v2 -> HashMap keys vals3 k v3
 intersectionWith f = Exts.inline intersectionWithKey (const f)
 {-# INLINABLE intersectionWith #-}
 
+-- | \(O(n \log m)\) Intersection with a combining function that also receives the key.
+--
+-- When a key exists in both maps, the combining function is applied to the values.
+-- Variant of `intersectionWith`
+--
+-- The current implementation is very simple but not the most performant,
+-- as we fold one map over the other instead of walking over the two maps in lock-step.
 intersectionWithKey :: (Hashable k, MapRepr keys vals1 k v1, MapRepr keys vals2 k v2, MapRepr keys vals3 k v3) => (k -> v1 -> v2 -> v3) -> HashMap keys vals1 k v1 -> HashMap keys vals2 k v2 -> HashMap keys vals3 k v3
 intersectionWithKey f a b = foldlWithKey' go empty a
   where
@@ -1102,6 +1249,24 @@ intersectionWithKey f a b = foldlWithKey' go empty a
                  Nothing -> m
                  Just (k', w) -> unsafeInsert k' (f k' v w) m
 {-# INLINABLE intersectionWithKey #-}
+
+-- | Relate the keys of one map to the values of
+-- the other, by using the values of the former as keys for lookups
+-- in the latter.
+--
+-- Complexity: \( O (n * \log(m)) \), where \(m\) is the size of the first argument
+--
+-- >>> compose (fromList [('a', "A"), ('b', "B")]) (fromList [(1,'a'),(2,'b'),(3,'z')])
+-- fromList [(1,"A"),(2,"B")]
+--
+-- @
+-- ('compose' bc ab '!?') = (bc '!?') <=< (ab '!?')
+-- @
+compose :: (Eq a, Hashable a, Eq b, Hashable b, MapRepr as bs a b, MapRepr bs' cs b c, MapRepr as cs a c) => HashMap bs' cs b c -> HashMap as bs a b -> HashMap as cs a c
+{-# INLINE compose #-}
+compose bc !ab
+  | null bc = empty
+  | otherwise = mapMaybe' (\b -> lookup b bc) ab
 
 -- Inside a MapNode,
 -- the lower 32 bits indicate the inline leaves
