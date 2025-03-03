@@ -55,9 +55,11 @@ For a `Champ.HashSetB` the overhead is `N+7*log32(n)`. For a `Champ.HashSetU` th
 
 Part of this work was sponsored by [Channable](https://www.channable.com/)
 
-<a href="https://www.channable.com"><img src="https://www.channable.com/_next/image?url=https%3A%2F%2Fmedia.graphassets.com%2FcntRnbAcSrCmS1wLTWrb&w=256&q=100" align="left" height="48"  ></a>
+<a href="https://www.channable.com"><img src="https://www.channable.com/_next/image?url=https%3A%2F%2Fmedia.graphassets.com%2FcntRnbAcSrCmS1wLTWrb&w=256&q=100" height="48"  ></a>
+
+---
 
 ## Development
 
-Q: In my IDE, HLS does not work for some modules, saying "can't execute `cpphs`".
-A: Make sure `cpphs` is available in your path, for example using `cabal install cpphs` (and then restart your HLS). `cpphs` is a portable Haskell implementation of the C preproessor macro parser. (We use CPP to reduce boilerplate for the eight different kinds of hashmaps we support, and crucially rely on 'token pasting' which is done differently by different versions of `gcc`, `clang`, etc.).
+* Q: In my IDE, HLS does not work for some modules, saying "can't execute `cpphs`".
+  * A: Make sure `cpphs` is available in your path, for example using `cabal install cpphs` (and then restart your HLS). `cpphs` is a portable Haskell implementation of the C preproessor macro parser. (We use CPP to reduce boilerplate for the eight different kinds of hashmaps we support, and crucially rely on 'token pasting' which is done differently by different versions of `gcc`, `clang`, etc.).
