@@ -34,7 +34,7 @@ module Champ.HashSet (
 
     -- * Difference and intersection
     difference,
-    -- TODO intersection
+    intersection,
 
     -- * Folds
     Champ.HashSet.foldr,
@@ -67,6 +67,10 @@ import GHC.IsList (IsList (..))
 newtype HashSet elems e = HashSet { asMap :: Champ.Internal.HashMap elems Unexistent e () }
 type role HashSet nominal nominal
 
+type SetRepr elems e = Champ.Internal.MapRepr elems Unexistent e ()
+type HashSetB e = HashSet Boxed e
+type HashSetU e = HashSet Unboxed e
+
 instance (Show e, SetRepr elems e) => Show (HashSet elems e) where
     show set = "Champ.HashSet.fromList " <> show (Champ.HashSet.toList set)
 
@@ -80,10 +84,6 @@ instance (Hashable e, Eq e, SetRepr elems e) => IsList (HashSet elems e) where
 instance (Eq e, SetRepr elems e) => Eq (HashSet elems e) where
     {-# INLINE (==) #-}
     (HashSet a) == (HashSet b) = a == b
-
-type SetRepr elems e = Champ.Internal.MapRepr elems Unexistent e ()
-type HashSetB e = HashSet Boxed e
-type HashSetU e = HashSet Unboxed e
 
 insert :: (Hashable e, SetRepr elems e) => e -> HashSet elems e -> HashSet elems e
 {-# INLINE insert #-}
@@ -159,16 +159,24 @@ foldMap :: (Monoid m, SetRepr elems e) => (e -> m) -> HashSet elems e -> m
 foldMap f set = Champ.Internal.foldMapWithKey (\e () -> f e) (coerce set)
 
 union :: (Hashable e, SetRepr elems e) => HashSet elems e -> HashSet elems e -> HashSet elems e
+{-# INLINE union #-}
 union = coerce Champ.Internal.union
 
 unions :: (Hashable e, SetRepr elems e) => [HashSet elems e] -> HashSet elems e
+{-# INLINE unions #-}
 unions = coerce Champ.Internal.unions
 
 delete :: (Hashable e, SetRepr elems e) => e -> HashSet elems e -> HashSet elems e
+{-# INLINE delete #-}
 delete = coerce Champ.Internal.delete
 
 difference :: (Hashable e, SetRepr elems e) => HashSet elems e -> HashSet elems e -> HashSet elems e
+{-# INLINE difference #-}
 difference = coerce Champ.Internal.difference
+
+intersection :: (Hashable e, SetRepr elems e) => HashSet elems e -> HashSet elems e -> HashSet elems e
+{-# INLINE intersection #-}
+intersection = coerce Champ.Internal.intersection
 
 -- TODO: Implement the other foldXWithKey's as well,
 -- so we can wrap them here
@@ -198,12 +206,14 @@ convert = coerce Champ.Internal.convert
 -- >>> HashSet.toMap (HashSet.singleton 1)
 -- Champ.HashMap.fromList [(1,())]
 toMap :: HashSet elems e -> Champ.Internal.HashMap elems Unexistent e ()
+{-# INLINE toMap #-}
 toMap = asMap
 
 -- | \(O(1)\) Convert from the equivalent 'HashMap' with @()@ values.
 --
 -- >>> HashSet.fromMap (HashMap.singleton 1 ())
 fromMap :: Champ.Internal.HashMap elems Unexistent e () -> HashSet elems e
+{-# INLINE fromMap #-}
 fromMap = HashSet
 
 -- | \(O(n)\) Produce a `HashSet` of all the keys in the given `HashMap`.
@@ -211,8 +221,10 @@ fromMap = HashSet
 -- >>> HashSet.keysSet (HashMap.fromList [(1, "a"), (2, "b")]
 -- Champ.HashSet.fromList [1,2]
 keysSet :: (Champ.Internal.MapRepr keys vals k v, SetRepr keys k) => Champ.Internal.HashMap keys vals k v -> HashSet keys k
+{-# INLINE keysSet #-}
 keysSet = keysSet'
 
 -- | Like `keysSet` but allows switching the storage mechanism of the keys (that become the set's elements).
 keysSet' :: (Champ.Internal.MapRepr keys vals k v, SetRepr keys' k) => Champ.Internal.HashMap keys vals k v -> HashSet keys' k
+{-# INLINE keysSet' #-}
 keysSet' = HashSet . Champ.Internal.convertDropVals
