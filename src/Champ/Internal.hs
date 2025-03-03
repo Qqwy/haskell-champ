@@ -194,16 +194,16 @@ instance constraints => MapRepr (keystorage) (valstorage) k v where             
   | ManyMap_/**/name !Word MAP_NODE_FIELDS(keystorage, valstorage)                                                       \
 }
 
-map_repr_instance (Boxed_Lazy, Boxed, Lazy, ())
-map_repr_instance (Boxed_Boxed, Boxed, Strict Boxed, ())
-map_repr_instance (Boxed_Unboxed, Boxed, Strict Unboxed, (Prim v))
+map_repr_instance(Boxed_Lazy, Boxed, Lazy, ())
+map_repr_instance(Boxed_Boxed, Boxed, Strict Boxed, ())
+map_repr_instance(Boxed_Unboxed, Boxed, Strict Unboxed, (Prim v))
 
-map_repr_instance (Unboxed_Lazy, Unboxed, Lazy, (Prim k))
-map_repr_instance (Unboxed_Boxed, Unboxed, Strict Boxed, (Prim k))
-map_repr_instance (Unboxed_Unboxed, Unboxed, Strict Unboxed, (Prim k, Prim v))
+map_repr_instance(Unboxed_Lazy, Unboxed, Lazy, (Prim k))
+map_repr_instance(Unboxed_Boxed, Unboxed, Strict Boxed, (Prim k))
+map_repr_instance(Unboxed_Unboxed, Unboxed, Strict Unboxed, (Prim k, Prim v))
 
-map_repr_instance (Boxed_Unexistent, Boxed, Unexistent, (IsUnit v))
-map_repr_instance (Unboxed_Unexistent, Unboxed, Unexistent, (Prim k, IsUnit v))
+map_repr_instance(Boxed_Unexistent, Boxed, Unexistent, (IsUnit v))
+map_repr_instance(Unboxed_Unexistent, Unboxed, Unexistent, (Prim k, IsUnit v))
 
 null :: (MapRepr keys vals k v) => HashMap keys vals k v -> Bool
 {-# INLINE null #-}
