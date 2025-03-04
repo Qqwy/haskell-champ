@@ -9,7 +9,117 @@ but CHAMP maps/sets use significantly less memory and are significantly more per
 
 ## Basic Usage
 
-_To be written_
+The `Champ` root module only contains commonly-used types, and (all or some of it) can be imported non-qualified.
+The `Champ.HashMap` resp. `Champ.HashSet` modules are intended to be imported qualified:
+
+```haskell
+import Champ
+import qualified Champ.HashMap
+import qualified Champ.HashSet
+```
+
+If you're currently using `unordered-containers`' `Data.HashMap`/`Data.HashSet`, you might be able to switch out those types
+for `Champ`'s by just switching which module you import.
+
+`Champ` comes with many different types of `HashMap`, see the dedicated section below for details.
+`HashMapBL` corresponds to a 'lazy hashmap' and `HashMapBB` to a 'strict hashmap'.
+
+Some simple usage:
+
+### Create a HashMap from a list:
+
+```haskell
+>>> x = Champ.HashMap.fromList [("a", 1), ("b", 2), ("c", 3)] :: HashMapBB
+Champ.HashMap.fromList [("a", 1), ("b", 2), ("c", 3)]
+```
+
+If `OverloadedLists` is enabled, list literals can also immediately be used to construct hashmap constants.
+
+### Insert, update, or delete individual elements
+
+```haskell
+>>> y = Champ.HashMap.insert "e" 42 x
+Champ.HashMap.fromList [("a", 1), ("b", 2), ("c", 3), ("e", 42)]
+```
+
+```haskell
+>>> y = Champ.HashMap.delete "b" x
+Champ.HashMap.fromList [("a", 1), ("c", 3)]
+```
+
+```haskell
+>>> y = Champ.HashMap.update "b" (+100) x
+Champ.HashMap.fromList [("a", 1), ("b", 102), ("c", 3)]
+```
+
+### Checking membership
+
+```haskell
+>>> Champ.HashMap.member "b" x
+True
+>>> Champ.HashMap.member "z" x
+False
+```
+
+### Size
+
+```haskell
+>>> Champ.HashMap.size x
+3
+```
+**Champ hashmaps keep track of their size.**
+
+This means that looking up the size takes O(1) constant-time,
+rather than `O(n)` in the case of `unordered-containers`.
+
+### Other
+
+This is only the tip of the iceberg, there are a _lot_ of useful functions
+to manipulate HashMaps and HashSets with!
+
+### Types
+
+There is not a single `HashMap` type.
+You might notice that most functions have signatures of the shape `MapRepr keys vals k v => HashMap keys vals k v -> ...`.
+
+This is because we have _many_ different kinds of hashmaps with different semantics for the key and value types.
+Depending on whether you want lazy or strict semantics,
+and whether your keys or values can be unboxed or not, you can choose one of the following:
+
+| Type        | Key semantics     |  Value semantics    |  Notes/Constraints                         |
+|-------------|-------------------|---------------------|--------------------------------------------|
+| HashMapBL   | Strict boxed keys | Lazy values         |  Same semantics as 'Data.HashMap.Lazy'     |
+| HashMapBB   | Strict boxed keys | Strict boxed values |  Same semantics as 'Data.HashMap.Strict'   |
+| HashMapBU   | Strict boxed keys | Unboxed values      |  Requires 'Prim v'                         |
+| HashMapBUl  | Strict boxed keys | Unlifted values     |  Requires 'PrimUnlifted v'                 |
+| HashMapUL   | Unboxed keys      | Lazy values         |  Requires 'Prim k'                         |
+| HashMapUB   | Unboxed keys      | Strict boxed values |  Requires 'Prim k'                         |
+| HashMapUU   | Unboxed keys      | Unboxed values      |  Requires 'Prim k, Prim v'                 |
+| HashMapUUl  | Unboxed keys      | Unlifted values     |  Requires 'Prim k, PrimUnlifted v'         |
+| HashMapUlL  | Unlifted keys     | Lazy values         |  Requires 'PrimUnlifted k'                 |
+| HashMapUlB  | Unlifted keys     | Strict boxed values |  Requires 'PrimUnlifted k'                 |
+| HashMapUlU  | Unlifted keys     | Unboxed values      |  Requires 'PrimUnlifted k, Prim v'         |
+| HashMapUlUl | Unlifted keys     | Unlifted values     |  Requires 'PrimUnlifted k, PrimUnlifted v' |
+
+| Type       |  Value semantics      |  Notes/Constraints                         |
+|------------|-----------------------|--------------------------------------------|
+| HashSetB   | Strict boxed elements |  Same semantics as 'Data.HashSet' _(but much smaller)_ |
+| HashSetU   | Unboxed elements      |  Requires 'Prim v'                         |
+| HashSetUl  | Unlifted elements     |  Requires 'PrimUnlifted v'                 |
+
+
+`HashMapBL` and `HashMapBB` (and `HashSetB`) are are the easiest/most flexible to work with,
+since any normal Haskell type can be used as key or value type (and therefore these kinds of hashmaps can implement all typeclasses you'd expect).
+
+On the other hand, by unlifting or even unboxing the keys and/or values, a lot of extra performance is gained.
+However, this requires using e.g. `Champ.HashMap.map` and `Champ.HashMap.foldr` instead of `Functor`'s `fmap` or `Foldable`'s `foldr`
+since adding constraints on the key resp. value types restricts what typeclasses can be implemented.
+
+It is recommended in application code to pick a concrete map type to use,
+because this will allow GHC to create an optimized implementation.
+
+In library code, either pick a concrete type, or write it against a fully general `MapRepr keys vals k v => HashMap keys vals k v`
+and add `SPECIALIZE` pragmas for each of the concrete types for optimal performance.
 
 ## How does CHAMP work?
 
