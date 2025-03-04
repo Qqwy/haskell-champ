@@ -22,7 +22,7 @@
 
 module Champ.Internal where
 
-import Champ.Internal.Array (Array, StrictSmallArray, IsUnit, Safety(..))
+import Champ.Internal.Array (Array, StrictSmallArray, IsUnit, PrimUnlifted, Safety(..))
 import Champ.Internal.Array qualified as Array
 import Champ.Internal.Collision qualified as Collision
 import Champ.Internal.Storage (ArrayOf, Storage (..), StrictStorage (..))
@@ -54,17 +54,23 @@ import Data.Type.Coercion (Coercion(Coercion))
 #define HASH_CODE_LENGTH (1 `unsafeShiftL` BIT_PARTITION_SIZE)
 #define BIT_PARTITION_MASK (HASH_CODE_LENGTH - 1)
 
+-- * Boxed keys: 
 type HashMapBL = HashMap Boxed Lazy
-
 type HashMapBB = HashMap Boxed (Strict Boxed)
-
 type HashMapBU = HashMap Boxed (Strict Unboxed)
+type HashMapBUl = HashMap Boxed (Strict Unlifted)
 
+-- * Unboxed keys:
 type HashMapUL = HashMap Unboxed Lazy
-
 type HashMapUB = HashMap Unboxed (Strict Boxed)
-
 type HashMapUU = HashMap Unboxed (Strict Unboxed)
+type HashMapUUl = HashMap Unboxed (Strict Unlifted)
+
+-- * Unlifted keys:
+type HashMapUlL = HashMap Unlifted Lazy
+type HashMapUlB = HashMap Unlifted (Strict Boxed)
+type HashMapUlU = HashMap Unlifted (Strict Unboxed)
+type HashMapUlUl = HashMap Unlifted (Strict Unlifted)
 
 pattern EmptyMap ::
   forall (keyStorage :: StrictStorage) (valStorage :: Storage) k v.
@@ -194,14 +200,27 @@ instance constraints => MapRepr (keystorage) (valstorage) k v where             
   | ManyMap_/**/name !Word MAP_NODE_FIELDS(keystorage, valstorage)                                                       \
 }
 
+-- HashMap variants:
+-- ** Boxed keys:
 map_repr_instance(Boxed_Lazy, Boxed, Lazy, ())
 map_repr_instance(Boxed_Boxed, Boxed, Strict Boxed, ())
+map_repr_instance(Boxed_Unlifted, Boxed, Strict Unlifted, (PrimUnlifted v))
 map_repr_instance(Boxed_Unboxed, Boxed, Strict Unboxed, (Prim v))
 
+-- ** Unboxed keys:
 map_repr_instance(Unboxed_Lazy, Unboxed, Lazy, (Prim k))
 map_repr_instance(Unboxed_Boxed, Unboxed, Strict Boxed, (Prim k))
+map_repr_instance(Unboxed_Unlifted, Unboxed, Strict Unlifted, (Prim k, PrimUnlifted v))
 map_repr_instance(Unboxed_Unboxed, Unboxed, Strict Unboxed, (Prim k, Prim v))
 
+-- * Unlifted keys:
+map_repr_instance(Unlifted_Lazy, Unlifted, Lazy, (PrimUnlifted k))
+map_repr_instance(Unlifted_Boxed, Unlifted, Strict Boxed, (PrimUnlifted k))
+map_repr_instance(Unlifted_Unlifted, Unlifted, Strict Unlifted, (PrimUnlifted k, PrimUnlifted v))
+map_repr_instance(Unlifted_Unboxed, Unlifted, Strict Unboxed, (PrimUnlifted k, Prim v))
+
+
+-- HashSet internals:
 map_repr_instance(Boxed_Unexistent, Boxed, Unexistent, (IsUnit v))
 map_repr_instance(Unboxed_Unexistent, Unboxed, Unexistent, (Prim k, IsUnit v))
 

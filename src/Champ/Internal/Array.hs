@@ -19,6 +19,7 @@ module Champ.Internal.Array (
   SmallArray, 
   SmallUnliftedArray, 
   SmallUnliftedArray_, 
+  SmallUnliftedArray'(..),
   StrictSmallArray, 
   PrimArray, 
   -- * Dealing with strict values:
@@ -32,6 +33,7 @@ module Champ.Internal.Array (
   -- * Arrays to store zero-size values
   UnitArray,
   IsUnit,
+  PrimUnlifted,
   -- * Conditionally safe interface
   Safety(..),
   Champ.Internal.Array.insertAt,
@@ -55,7 +57,8 @@ import Data.Primitive.Contiguous qualified as Contiguous
 import Data.Primitive.Contiguous.Class (Contiguous (..), ContiguousU (..), MutableSlice (..), Slice (..))
 import Data.Primitive.PrimArray qualified as PrimArray
 import Data.Primitive.SmallArray qualified as SmallArray
-import Data.Primitive.Unlifted.Class (PrimUnlifted (..))
+import Data.Primitive.Unlifted.Class (PrimUnlifted (..), Unlifted)
+import Data.Primitive.Unlifted.Class qualified as Unlifted
 import Data.Primitive.Unlifted.SmallArray (SmallMutableUnliftedArray_ (..), SmallUnliftedArray_ (..), mapSmallUnliftedArray, unsafeThawSmallUnliftedArray, shrinkSmallMutableUnliftedArray)
 import Data.Primitive.Unlifted.SmallArray.Primops (SmallMutableUnliftedArray# (SmallMutableUnliftedArray#), SmallUnliftedArray# (SmallUnliftedArray#))
 import GHC.Exts (Levity (..), RuntimeRep (BoxedRep), SmallArray#, SmallMutableArray#, TYPE)
@@ -80,6 +83,7 @@ instance PrimUnlifted (Strictly a) where
 -- allowing storage of _any_ `a` by virtue of `Data.Elevator.Strict`
 newtype StrictSmallArray a = StrictSmallArray (SmallUnliftedArray_ (Strict a) (Strictly a))
   deriving (Show)
+
 
 instance Functor StrictSmallArray where
   fmap f (StrictSmallArray arr) = StrictSmallArray (mapSmallUnliftedArray (Strictly . f . unStrictly) arr)
@@ -205,6 +209,21 @@ instance Contiguous.ContiguousU StrictSmallArray where
 instance (Eq a) => Eq (StrictSmallArray a) where
   (StrictSmallArray l) == (StrictSmallArray r) = l == r
 
+newtype SmallUnliftedArray' a = SmallUnliftedArray' (SmallUnliftedArray_ (Unlifted.Unlifted a) a)
+newtype MutableSmallUnliftedArray' s a = MutableSmallUnliftedArray' (SmallMutableUnliftedArray_ (Unlifted.Unlifted a) s a)
+
+newtype SmallUnliftedArray'# a = SmallUnliftedArray'# (SmallUnliftedArray# (Unlifted.Unlifted a))
+newtype MutableSmallUnliftedArray'# s a = MutableSmallUnliftedArray'# (SmallMutableUnliftedArray# s (Unlifted.Unlifted a))
+
+instance Contiguous.Contiguous SmallUnliftedArray' where
+  type Element SmallUnliftedArray' = PrimUnlifted
+  type Mutable SmallUnliftedArray' = MutableSmallUnliftedArray'
+  type Sliced SmallUnliftedArray' = Slice SmallUnliftedArray'
+  type MutableSliced SmallUnliftedArray' = MutableSlice SmallUnliftedArray'
+
+instance Contiguous.ContiguousU SmallUnliftedArray' where
+  type Unlifted SmallUnliftedArray' = SmallUnliftedArray'#
+  type UnliftedMut SmallUnliftedArray' = MutableSmallUnliftedArray'#
 
 -- Array containing any number of `()`'s.
 --
@@ -351,6 +370,12 @@ instance Array StrictSmallArray where
   unsafeShrinkMut (StrictSmallMutableArray sa) s = do
     shrinkSmallMutableUnliftedArray sa s
     pure (StrictSmallMutableArray sa)
+
+instance Array SmallUnliftedArray' where
+  unsafeThaw (SmallUnliftedArray' sa) = MutableSmallUnliftedArray' <$> unsafeThawSmallUnliftedArray sa
+  unsafeShrinkMut (MutableSmallUnliftedArray' sa) s = do
+    shrinkSmallMutableUnliftedArray sa s
+    pure (MutableSmallUnliftedArray' sa)
 
 instance Array UnitArray where
   unsafeThaw (UnitArray l) = pure $ MutableUnitArray l

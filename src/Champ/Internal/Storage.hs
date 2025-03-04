@@ -39,8 +39,9 @@ type data StrictStorage
 #else
 data StrictStorage
 #endif
-  = Boxed -- ^ The value is boxed (AKA of kind `UnliftedType` AKA `TYPE '(BoxedRep Unlifted)`)
-  | Unboxed -- ^ The value is of some unboxed kind.
+  = Boxed -- ^ The value is boxed (AKA of kind `UnliftedType` AKA `TYPE '(BoxedRep Unlifted)`), by forcing the value of any `Type` and wrapping it in a `Data.Elevator.Strict` wrapper.
+  | Unboxed -- ^ The value is of some unboxed kind, i.e. implement `Prim`.
+  | Unlifted -- ^ Similar to 'Boxed', but for types that have a natural `UnliftedType` equivalent, i.e. implement `PrimUnlifted`
 
 -- | Different kinds of values can be stored in different kinds of arrays:
 --
@@ -55,5 +56,6 @@ data StrictStorage
 type family ArrayOf (s :: Storage) = (r :: Type -> Type) | r -> s where
   ArrayOf Lazy = Array.SmallArray
   ArrayOf (Strict Boxed) = Array.StrictSmallArray
+  ArrayOf (Strict Unlifted) = Array.SmallUnliftedArray'
   ArrayOf (Strict Unboxed) = Array.PrimArray
   ArrayOf Unexistent = Array.UnitArray
