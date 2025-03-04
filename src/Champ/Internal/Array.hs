@@ -46,12 +46,11 @@ import Champ.Internal.Util (ptrEq)
 import Control.DeepSeq (NFData)
 import Control.Monad.Primitive
 import Control.Monad.ST (runST)
-import Data.Coerce (coerce)
 import Data.Elevator (Strict (Strict), UnliftedType)
 import Data.Foldable qualified as Foldable
 import Data.Hashable (Hashable)
 import Data.Kind (Type)
-import Data.Primitive (Prim, PrimArray, SmallArray)
+import Data.Primitive (PrimArray, SmallArray)
 import Data.Primitive.Contiguous (SmallUnliftedArray, Always)
 import Data.Primitive.Contiguous qualified as Contiguous
 import Data.Primitive.Contiguous.Class (Contiguous (..), ContiguousU (..), MutableSlice (..), Slice (..))
@@ -61,10 +60,9 @@ import Data.Primitive.Unlifted.Class (PrimUnlifted (..), Unlifted)
 import Data.Primitive.Unlifted.Class qualified as Unlifted
 import Data.Primitive.Unlifted.SmallArray (SmallMutableUnliftedArray_ (..), SmallUnliftedArray_ (..), mapSmallUnliftedArray, unsafeThawSmallUnliftedArray, shrinkSmallMutableUnliftedArray)
 import Data.Primitive.Unlifted.SmallArray.Primops (SmallMutableUnliftedArray# (SmallMutableUnliftedArray#), SmallUnliftedArray# (SmallUnliftedArray#))
-import GHC.Exts (Levity (..), RuntimeRep (BoxedRep), SmallArray#, SmallMutableArray#, TYPE)
+import GHC.Exts (SmallArray#, SmallMutableArray#)
 import GHC.Exts qualified as Exts
-import Prelude hiding (foldl, foldl', foldr, foldr', length, null, read)
-import Debug.Trace qualified
+import Prelude hiding (foldl, foldl', foldr, length, null, read)
 import System.IO.Unsafe
 
 -- | Helper newtype to implement `PrimUnlifted` for any datatype
@@ -209,6 +207,10 @@ instance Contiguous.ContiguousU StrictSmallArray where
 instance (Eq a) => Eq (StrictSmallArray a) where
   (StrictSmallArray l) == (StrictSmallArray r) = l == r
 
+-- We define our own newtype wrapper
+-- since it is not possible to use primitive-unlifted's `SmallUnliftedArray`
+-- in type families (which we need for `ArrayOf`)
+-- as it has an extra free-floating `unlifted_a` type parameter.
 newtype SmallUnliftedArray' a = SmallUnliftedArray' (SmallUnliftedArray_ (Unlifted.Unlifted a) a)
 newtype MutableSmallUnliftedArray' s a = MutableSmallUnliftedArray' (SmallMutableUnliftedArray_ (Unlifted.Unlifted a) s a)
 
@@ -220,10 +222,91 @@ instance Contiguous.Contiguous SmallUnliftedArray' where
   type Mutable SmallUnliftedArray' = MutableSmallUnliftedArray'
   type Sliced SmallUnliftedArray' = Slice SmallUnliftedArray'
   type MutableSliced SmallUnliftedArray' = MutableSlice SmallUnliftedArray'
+  {-# INLINE new #-}
+  new n = MutableSmallUnliftedArray' <$> new n
+  {-# INLINE replicateMut #-}
+  replicateMut n x = MutableSmallUnliftedArray' <$> replicateMut n x
+  {-# INLINE shrink #-}
+  shrink (MutableSmallUnliftedArray' arr) n = MutableSmallUnliftedArray' <$> shrink arr n
+  {-# INLINE empty #-}
+  empty = SmallUnliftedArray' empty
+  {-# INLINE singleton #-}
+  singleton = SmallUnliftedArray' . Contiguous.singleton
+  {-# INLINE doubleton #-}
+  doubleton a b = SmallUnliftedArray' $ doubleton a b
+  {-# INLINE tripleton #-}
+  tripleton a b c = SmallUnliftedArray' $ tripleton a b c
+  {-# INLINE quadrupleton #-}
+  quadrupleton a b c d = SmallUnliftedArray' $ quadrupleton a b c d
+  {-# INLINE quintupleton #-}
+  quintupleton a b c d e = SmallUnliftedArray' $ quintupleton a b c d e
+  {-# INLINE sextupleton #-}
+  sextupleton a b c d e f = SmallUnliftedArray' $ sextupleton a b c d e f
+  {-# INLINE index #-}
+  index (SmallUnliftedArray' ary) idx = index ary idx
+  {-# INLINE index# #-}
+  index# (SmallUnliftedArray' ary) idx | (# v #) <- index# ary idx = (# v #)
+  {-# INLINE indexM #-}
+  indexM (SmallUnliftedArray' ary) idx = indexM ary idx
+  {-# INLINE size #-}
+  size (SmallUnliftedArray' ary) = size ary
+  {-# INLINE sizeMut #-}
+  sizeMut (MutableSmallUnliftedArray' ary) = sizeMut ary
+  {-# INLINE equals #-}
+  equals (SmallUnliftedArray' lhs) (SmallUnliftedArray' rhs) = equals lhs rhs
+  {-# INLINE equalsMut #-}
+  equalsMut (MutableSmallUnliftedArray' lhs) (MutableSmallUnliftedArray' rhs) = equalsMut lhs rhs
+  {-# INLINE rnf #-}
+  rnf (SmallUnliftedArray' ary) = rnf ary
+  {-# INLINE null #-}
+  null (SmallUnliftedArray' ary) = null ary
+  {-# INLINE read #-}
+  read (MutableSmallUnliftedArray' ary) idx = read ary idx
+  {-# INLINE write #-}
+  write (MutableSmallUnliftedArray' ary) idx x = write ary idx x
+  {-# INLINE slice #-}
+  slice base offset length = Slice {offset, length, base = unlift base}
+  {-# INLINE sliceMut #-}
+  sliceMut baseMut offsetMut lengthMut = MutableSlice {offsetMut, lengthMut, baseMut = unliftMut baseMut}
+  {-# INLINE toSlice #-}
+  toSlice base = Slice {offset = 0, length = size base, base = unlift base}
+  {-# INLINE toSliceMut #-}
+  toSliceMut baseMut = do
+    lengthMut <- sizeMut baseMut
+    pure MutableSlice {offsetMut = 0, lengthMut, baseMut = unliftMut baseMut}
+  {-# INLINE clone_ #-}
+  clone_ (SmallUnliftedArray' ary) offset length = SmallUnliftedArray' $ clone_ ary offset length
+  {-# INLINE cloneMut_ #-}
+  cloneMut_ (MutableSmallUnliftedArray' ary) offset length = MutableSmallUnliftedArray' <$> cloneMut_ ary offset length
+  {-# INLINE copy_ #-}
+  copy_ (MutableSmallUnliftedArray' dst) dstOffset (SmallUnliftedArray' src) srcOffset length = copy_ dst dstOffset src srcOffset length
+  {-# INLINE copyMut_ #-}
+  copyMut_ (MutableSmallUnliftedArray' dst) dstOffset (MutableSmallUnliftedArray' src) srcOffset length = copyMut_ dst dstOffset src srcOffset length
+  {-# INLINE freeze_ #-}
+  freeze_ (MutableSmallUnliftedArray' ary) offset length = SmallUnliftedArray' <$> freeze_ ary offset length
+  {-# INLINE unsafeFreeze #-}
+  unsafeFreeze (MutableSmallUnliftedArray' ary) = SmallUnliftedArray' <$> unsafeFreeze ary
+  {-# INLINE unsafeShrinkAndFreeze #-}
+  unsafeShrinkAndFreeze (MutableSmallUnliftedArray' ary) length = SmallUnliftedArray' <$> unsafeShrinkAndFreeze ary length
+  {-# INLINE thaw_ #-}
+  thaw_ (SmallUnliftedArray' ary) offset length = MutableSmallUnliftedArray' <$> thaw_ ary offset length
+  run = runST -- NOTE: not relying on a manually-written run-st here as modern GHCs inline runST properly.
+
 
 instance Contiguous.ContiguousU SmallUnliftedArray' where
   type Unlifted SmallUnliftedArray' = SmallUnliftedArray'#
   type UnliftedMut SmallUnliftedArray' = MutableSmallUnliftedArray'#
+  {-# INLINE resize #-}
+  resize (MutableSmallUnliftedArray' ary) length = MutableSmallUnliftedArray' <$> resize ary length
+  {-# INLINE unlift #-}
+  unlift (SmallUnliftedArray' (SmallUnliftedArray x)) = SmallUnliftedArray'# x
+  {-# INLINE unliftMut #-}
+  unliftMut (MutableSmallUnliftedArray' (SmallMutableUnliftedArray x)) = MutableSmallUnliftedArray'# x
+  {-# INLINE lift #-}
+  lift (SmallUnliftedArray'# x) = SmallUnliftedArray' (SmallUnliftedArray x)
+  {-# INLINE liftMut #-}
+  liftMut (MutableSmallUnliftedArray'# x) = MutableSmallUnliftedArray' (SmallMutableUnliftedArray x)
+
 
 -- Array containing any number of `()`'s.
 --
