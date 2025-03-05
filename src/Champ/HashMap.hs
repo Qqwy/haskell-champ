@@ -43,8 +43,11 @@ module Champ.HashMap (
     Champ.Internal.map',
     Champ.Internal.mapWithKey,
     Champ.Internal.mapWithKey',
-    -- TODO traverseWithKey
     Champ.Internal.mapKeys,
+    Champ.Internal.traverse,
+    Champ.Internal.traverse',
+    Champ.Internal.traverseWithKey,
+    Champ.Internal.traverseWithKey',
 
     -- * Difference and intersection
     Champ.Internal.difference,
