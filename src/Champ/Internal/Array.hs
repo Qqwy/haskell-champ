@@ -26,8 +26,6 @@ module Champ.Internal.Array (
   Strictly (..), 
   -- * Array helper functions:
   doubletonBranchless, 
-  -- sumStrictArray, 
-  -- sumLazyArray,
   foldrZipWith',
   foldlZipWith,
   -- * Arrays to store zero-size values
@@ -61,9 +59,7 @@ import Data.Primitive.Unlifted.Class qualified as Unlifted
 import Data.Primitive.Unlifted.SmallArray (SmallMutableUnliftedArray_ (..), SmallUnliftedArray_ (..), mapSmallUnliftedArray, unsafeThawSmallUnliftedArray, shrinkSmallMutableUnliftedArray)
 import Data.Primitive.Unlifted.SmallArray.Primops (SmallMutableUnliftedArray# (SmallMutableUnliftedArray#), SmallUnliftedArray# (SmallUnliftedArray#))
 import GHC.Exts (SmallArray#, SmallMutableArray#)
-import GHC.Exts qualified as Exts
 import Prelude hiding (foldl, foldl', foldr, length, null, read)
-import System.IO.Unsafe
 
 -- | Helper newtype to implement `PrimUnlifted` for any datatype
 -- to turn it into a `Data.Elevator.Strict`
@@ -529,11 +525,11 @@ deleteAt :: (Array arr, Element arr a) => Safety -> arr a -> Int -> arr a
 {-# INLINE deleteAt #-}
 deleteAt Safe src i = Contiguous.deleteAt src i
 deleteAt Unsafe src i = Contiguous.create $ do
-  let !size = Contiguous.size src
+  let !len = Contiguous.size src
   let i' = i + 1
   dst <- unsafeThaw src
-  copyMut dst i (sliceMut dst i' (size - i'))
-  unsafeShrinkMut dst (size - 1)
+  copyMut dst i (sliceMut dst i' (len - i'))
+  unsafeShrinkMut dst (len - 1)
 
 singleton :: (Array arr, Element arr a) => Safety -> a -> arr a
 singleton Safe a = Contiguous.singleton a
@@ -612,19 +608,3 @@ ifoldlZipWith f z arr1 arr2 = go (sz - 1)
       else case index# arr1 i of
         (# x #) -> case index# arr2 i of
           (# y #) -> f i (go (i - 1)) x y
-  --     go !ix acc =
-  --       if ix == -1
-  --         then acc
-  --         else case index# arr1 ix of
-  --           (# x #) -> case index# arr2 ix of
-  --             (# y #) -> go (ix + 1) (f ix acc x y)
-  --  in go 0 z
-
-
-
-
-
-
-
-addrOf :: a -> Exts.Ptr ()
-addrOf a = unsafePerformIO $ primitive (\s0 -> case Exts.anyToAddr# a s0 of (# s1, addr #) -> (# s1, Exts.Ptr addr #))
