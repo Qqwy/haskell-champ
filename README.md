@@ -124,9 +124,9 @@ and add `SPECIALIZE` pragmas for each of the concrete types for optimal performa
 ## How does CHAMP work?
 
 The basic improvement over HAMT is that we store _two_ 32-bit bitmaps.
-together each pair of bits indicates 'not in here' (if both are zero), 'exists inline' (`01`) or 'exists in child' (`10`). (`11` is unused).
-This then allows us to store all inline-children together, and separately store all child-nodes together.
-and store all child-nodes in their own array.
+together each pair of bits indicates 'not in here' (`00`), 'exists inline' (`01`) or 'exists in child' (`10`). <sub>(`11` is unused.)</sub>
+
+This then allows us, instead of intermingling inline key-value pairs and child-nodes in one shared array, to store all inline key-value-pairs together, and separately store all child-nodes together.
 
 Side note: In the original paper, which focused on the Java Virtual Machine, a single array was used for both inline key-value-pairs and child-nodes. 
 But for the Haskell (GHC) runtime, using three specialized arrays, one for the inline keys, one for the inline values, and one for the child-nodes works better,
