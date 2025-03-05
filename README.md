@@ -125,18 +125,20 @@ and add `SPECIALIZE` pragmas for each of the concrete types for optimal performa
 
 The basic improvement over HAMT is that we store _two_ 32-bit bitmaps.
 together each pair of bits indicates 'not in here' (if both are zero), 'exists inline' (`01`) or 'exists in child' (`10`). (`11` is unused).
-This then allows us to store all inline-children right next to each-other in one array (or rather: in a keys-array and a values-array)
+This then allows us to store all inline-children together, and separately store all child-nodes together.
 and store all child-nodes in their own array.
 
-Side note: In the original papers, a single array was used for both, but using separate arrays
-works better with Haskell's runtime, because it allows us to make different choices
-as to what _kind_ the key-type, value-type and child-nodes should be: Lazy, Strict (boxed), or fully unboxed.
+Side note: In the original paper, which focused on the Java Virtual Machine, a single array was used for both inline key-value-pairs and child-nodes. 
+But for the Haskell (GHC) runtime, using three specialized arrays, one for the inline keys, one for the inline values, and one for the child-nodes works better,
+because it allows us to make different choices as to what _kind_ the key-type, value-type and child-nodes should be: Lazy, Strict (boxed), or fully unboxed.
 
-Storing these inline key-value pairs separate from the nested children:
-- allows us to get rid of intermediate boxes around the inline key-value pairs
-- allows us to implement recursive algorithms as a tight loop over the inline key-value pairs (with great data locality, everything already in the cache line!), followed by a loop over the children
+Storing these inline key-value pairs together rather than intermingled with nested children:
+- allows us to get rid of intermediate boxes around the inline key-value pairs, greatly reducing memory usage
+- allows us to implement recursive algorithms as _first_ a tight loop over the inline key-value pairs (with great data locality, everything already in the cache line!), and _then_ a loop over the children.
 
 This greatly improves performance compared to HAMT implementations.
+
+### Memory usage
 
 _TODO: Double-check memory calculations in this section_
 
