@@ -1,5 +1,6 @@
 {-# LANGUAGE GHC2021 #-}
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE ApplicativeDo #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MagicHash #-}
@@ -805,6 +806,49 @@ map' !f = \case
           children' = Contiguous.map mapNode children
         in
           CompactNode bitmap keys vals' children'
+
+instance Traversable (HashMapBL k) where
+  traverse = Champ.Internal.traverse
+
+instance Traversable (HashMapBB k) where
+  traverse = Champ.Internal.traverse
+
+traverse :: (Applicative f, MapRepr keys vals k a, MapRepr keys vals k b) => (a -> f b) -> HashMap keys vals k a -> f (HashMap keys vals k b)
+{-# INLINE traverse #-}
+traverse f = traverseWithKey (const f)
+
+traverse' :: (Applicative f, MapRepr keys as k a, MapRepr keys bs k b) => (a -> f b) -> HashMap keys as k a -> f (HashMap keys bs k b)
+{-# INLINE traverse' #-}
+traverse' f = traverseWithKey' (const f)
+
+traverseWithKey :: (Applicative f, MapRepr keys vals k a, MapRepr keys vals k b) => (k -> a -> f b) -> HashMap keys vals k a -> f (HashMap keys vals k b)
+{-# INLINE traverseWithKey #-}
+traverseWithKey = traverseWithKey'
+
+traverseWithKey' :: (Applicative f, MapRepr keys as k a, MapRepr keys bs k b) => (k -> a -> f b) -> HashMap keys as k a -> f (HashMap keys bs k b)
+{-# INLINE traverseWithKey' #-}
+traverseWithKey' !f = \case
+  EmptyMap -> pure EmptyMap
+  (SingletonMap k v) -> do
+    v' <- f k v
+    pure (SingletonMap k v')
+  ManyMap sz node -> do
+    node' <- traverseNodeWithKey f node
+    pure (ManyMap sz node')
+  where
+    traverseNodeWithKey :: (Applicative f, MapRepr keys as k a, MapRepr keys bs k b) => (k -> a -> f b) -> MapNode keys as k a -> f (MapNode keys bs k b)
+    {-# INLINE traverseNodeWithKey #-}
+    traverseNodeWithKey f = \case
+      CollisionNode keys vals -> do
+        vals' <- traverseInlineKVs f keys vals
+        pure (CollisionNode keys vals')
+      CompactNode bitmap keys vals children -> do
+        vals' <- traverseInlineKVs f keys vals
+        children' <- Contiguous.traverse (traverseNodeWithKey f) children
+        pure (CompactNode bitmap keys vals' children')
+    traverseInlineKVs :: (Applicative f, MapRepr keys as k a, MapRepr keys bs k b) => (k -> a -> f b) -> ArrayOf (Strict keys) k -> ArrayOf as a -> f (ArrayOf bs b)
+    {-# INLINE traverseInlineKVs #-}
+    traverseInlineKVs f keys = Contiguous.itraverse (\i v -> let (# k #) = Contiguous.index# keys i in f k v)
 
 -- | Map a function over the values in a hashmap while passing the key to the mapping function.
 --

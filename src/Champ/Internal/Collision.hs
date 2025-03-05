@@ -52,7 +52,7 @@ deleteBy eq x (y:ys)  = if x `eq` y then Just ys else fmap (y :) (deleteBy eq x 
 -- So when comparing elements from the list, we count how many elements are
 -- "less and greater" in the other list, and use the count as a metric.
 --
--- This code is a straigyt copy of `Data.HashMap.Internal.List.unorderedCompare 
+-- This code is a straight copy of `Data.HashMap.Internal.List.unorderedCompare 
 unorderedCompare :: (a -> b -> Ordering) -> [a] -> [b] -> Ordering
 unorderedCompare c as bs = go (sortBy cmpA as) (sortBy cmpB bs)
   where
