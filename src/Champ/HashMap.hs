@@ -18,6 +18,7 @@ module Champ.HashMap (
     Champ.Internal.size,
     Champ.Internal.member,
     Champ.Internal.lookup,
+    Champ.Internal.lookupKV,
     (!?),
     (!),
     findWithDefault,

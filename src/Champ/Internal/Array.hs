@@ -28,6 +28,7 @@ module Champ.Internal.Array (
   doubletonBranchless, 
   foldrZipWith',
   foldlZipWith,
+  findIndex#,
   -- * Arrays to store zero-size values
   UnitArray,
   IsUnit,
@@ -608,3 +609,22 @@ ifoldlZipWith f z arr1 arr2 = go (sz - 1)
       else case index# arr1 i of
         (# x #) -> case index# arr2 i of
           (# y #) -> f i (go (i - 1)) x y
+
+{- | 'findIndex' takes a predicate and an array, and returns the index of
+  the leftmost element of the array matching the prediate, or an unboxed 'Nothing'
+  if there is no such element.
+
+  This implementation is taken from Contiguous
+  but made to return an unboxed Maybe instead
+-}
+findIndex# ::
+  (Contiguous arr, Element arr a) =>
+  (a -> Bool) ->
+  arr a ->
+  (# (# #) | Int #)
+findIndex# p xs = loop 0
+ where
+  loop i
+    | i < size xs = if p (index xs i) then (# | i #) else loop (i + 1)
+    | otherwise = (# (# #) | #)
+{-# INLINE findIndex# #-}

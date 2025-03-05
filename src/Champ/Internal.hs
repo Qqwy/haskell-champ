@@ -291,11 +291,13 @@ toList hashmap = Exts.build (\fusedCons fusedNil -> foldrWithKey (\k v xs -> (k,
 -- The current implementation is very simple
 -- but is not super performant as it will traverse the map twice.
 adjust :: (Hashable k, MapRepr keys vals k v) => (v -> v) -> k -> HashMap keys vals k v -> HashMap keys vals k v
-adjust f k m = case lookupKV k m of
-  Nothing -> m
-  Just (k', v) -> 
-    let v' = f v 
-    in insert k' v' m 
+adjust f k m = 
+  let h = hash k in
+  case lookupKVKnownHash# h k m of
+    (# (# #) | #) -> m
+    (# | (# k', v #) #) -> 
+      let v' = f v 
+      in insert' Safe h k' v' m 
 
 -- | \(O(\log n)\)  The expression @('alter' f k map)@ alters the value @x@ at @k@, or
 -- absence thereof.
@@ -309,15 +311,18 @@ adjust f k m = case lookupKV k m of
 -- but is not super performant.
 alter :: (Hashable k, MapRepr keys vals k v) => (Maybe v -> Maybe v) -> k -> HashMap keys vals k v -> HashMap keys vals k v
 {-# INLINABLE alter #-}
-alter f k m = case lookupKV k m of
+alter f k m = 
+  let h = hash k
+  in
+  case lookupKVKnownHash h k m of
   Nothing -> 
     case f Nothing of
       Nothing -> m
-      Just v -> insert k v m
+      Just v -> insert' Safe h k v m
   Just (k', v) -> 
     case f (Just v) of
-      Nothing -> delete k' m
-      Just v' -> if ptrEq v v' then m else insert k' v' m
+      Nothing -> delete' Safe h k' m
+      Just v' -> if ptrEq v v' then m else insert' Safe h k' v' m
 
 -- | \(O(\log n)\)  The expression @('update' f k map)@ updates the value @x@ at @k@
 -- (if it is in the map). If @(f x)@ is 'Nothing', the element is deleted.
@@ -326,6 +331,34 @@ update :: (Eq k, Hashable k, MapRepr keys vals k v) => (v -> Maybe v) -> k -> Ha
 {-# INLINABLE update #-}
 update f = alter (>>= f)
 
+-- | \(O(\log n)\)  The expression @('alterF' f k map)@ alters the value @x@ at
+-- @k@, or absence thereof.
+--
+--  'alterF' can be used to insert, delete, or update a value in a map.
+--
+-- 'alterF' is a flipped version of the 'at' combinator from
+-- <https://hackage.haskell.org/package/lens/docs/Control-Lens-At.html#v:at Control.Lens.At>.
+--
+--
+-- The current implementation does not (yet) have a set of rewrite rules in place
+-- that optimize particular common kinds of `f`. 
+alterF :: (MapRepr keys vals a1 a2, Hashable a1, Functor f) => (Maybe a2 -> f (Maybe a2)) -> a1 -> HashMap keys vals a1 a2 -> f (HashMap keys vals a1 a2)
+{-# INLINE alterF #-}
+alterF f = \ !k !m ->
+  let
+    !h = hash k
+  in
+    case lookupKVKnownHash h k m of
+      Nothing -> do
+        mv <- (f Nothing)
+        pure $ case mv of
+          Nothing -> m
+          Just v -> (insert' Safe h k v m)
+      Just (k', v) -> do 
+        mv <- (f (Just v))
+        pure $ case mv of
+          Nothing -> delete' Safe h k' m
+          Just v' -> insert' Safe h k' v' m
 
 -- | \(O(n)\).
 -- @'mapKeys' f s@ is the map obtained by applying @f@ to each key of @s@.
@@ -350,15 +383,15 @@ mapKeys f = Champ.Internal.fromList . Champ.Internal.foldrWithKey (\k x xs -> (f
 -- the key, the old value is replaced.
 insert :: (Hashable k, MapRepr keys vals k v) => k -> v -> HashMap keys vals k v -> HashMap keys vals k v
 {-# INLINE insert #-}
-insert = insert' Safe
+insert k = insert' Safe (hash k) k
 
 unsafeInsert :: (Hashable k, MapRepr keys vals k v) => k -> v -> HashMap keys vals k v -> HashMap keys vals k v
 {-# INLINE unsafeInsert #-}
-unsafeInsert = insert' Unsafe
+unsafeInsert k = insert' Unsafe (hash k) k
 
-insert' :: (Hashable k, MapRepr keys vals k v) => Safety -> k -> v -> HashMap keys vals k v -> HashMap keys vals k v
+insert' :: (Hashable k, MapRepr keys vals k v) => Safety -> Hash -> k -> v -> HashMap keys vals k v -> HashMap keys vals k v
 {-# INLINE insert' #-}
-insert' safety !k v !m = case matchMap m of
+insert' safety h !k v !m = case matchMap m of
   (# (# #) | | #) -> singleton k v
   (# | (# k', v' #) | #) ->
     if k == k'
@@ -366,11 +399,11 @@ insert' safety !k v !m = case matchMap m of
       else
         let !(# size, node #) =
               Contiguous.empty
-                & MapNode (maskToBitpos (hashToMask 0 (hash k'))) (Array.singleton safety k') (Array.singleton safety v')
-                & insertInNode safety (hash k) k v 0
+                & MapNode (maskToBitpos (hashToMask 0 h)) (Array.singleton safety k') (Array.singleton safety v')
+                & insertInNode safety h k v 0
          in ManyMap (1 + Exts.W# size) node
   (# | | (# size, node0 #) #) ->
-    let !(# didIGrow, node' #) = insertInNode safety (hash k) k v 0 node0
+    let !(# didIGrow, node' #) = insertInNode safety h k v 0 node0
      in ManyMap (size + Exts.W# didIGrow) node'
 
 insertInNode :: (MapRepr keys vals k v, Hashable k) =>
@@ -498,9 +531,11 @@ mergeCompactInline safety k1 v1 h1 k2 v2 h2 shift =
 insertWith :: (Hashable k, MapRepr keys vals k v) => (v -> v -> v) -> k -> v -> HashMap keys vals k v -> HashMap keys vals k v
 {-# INLINE insertWith #-}
 insertWith f k v m = 
-  case lookupKV k m of
-    Nothing -> insert k v m
-    Just (k', v') -> insert k' (f v v') m
+  let h = hash k
+  in
+  case lookupKVKnownHash# h k m of
+    (# (# #) | #) -> insert' Safe h k v m
+    (# | (# k', v' #) #) -> insert' Safe h k' (f v v') m
 
 unsafeInsertWith :: (Hashable k, MapRepr keys vals k v) => (v -> v -> v) -> k -> v -> HashMap keys vals k v -> HashMap keys vals k v
 {-# INLINE unsafeInsertWith #-}
@@ -513,29 +548,30 @@ unsafeInsertWithKey f = unsafeInsertWithKey# (\k' a b -> (# f k' a b #))
 unsafeInsertWithKey# :: (Hashable k, MapRepr keys vals k v) => (k -> v -> v -> (# v #)) -> k -> v -> HashMap keys vals k v -> HashMap keys vals k v
 {-# INLINE unsafeInsertWithKey# #-}
 unsafeInsertWithKey# f k v m = 
-  case lookupKV k m of
-    Nothing -> unsafeInsert k v m
-    Just (k2, v2) ->
+  let h = hash k in
+  case lookupKVKnownHash# h k m of
+    (# (# #) | #) -> insert' Unsafe h k v m
+    (# | (# k2, v2 #) #) ->
       case f k2 v v2 of
-        (# v3 #) -> unsafeInsert k2 v3 m
+        (# v3 #) -> insert' Unsafe h k2 v3 m
 
 delete :: (Hashable k, MapRepr keys vals k v) => k -> HashMap keys vals k v -> HashMap keys vals k v
 {-# INLINE delete #-}
-delete = delete' Safe
+delete k = delete' Safe (hash k) k
 
 unsafeDelete :: (Hashable k, MapRepr keys vals k v) => k -> HashMap keys vals k v -> HashMap keys vals k v
 {-# INLINE unsafeDelete #-}
-unsafeDelete = delete' Safe
+unsafeDelete k = delete' Unsafe (hash k) k
 
-delete' :: (Hashable k, MapRepr keys vals k v) => Safety -> k -> HashMap keys vals k v -> HashMap keys vals k v
+delete' :: (Hashable k, MapRepr keys vals k v) => Safety -> Hash -> k -> HashMap keys vals k v -> HashMap keys vals k v
 {-# INLINE delete' #-}
-delete' safety !k !m = case matchMap m of
+delete' safety h !k !m = case matchMap m of
   (# (# #) | | #) -> EmptyMap
   (# | (# k', v #) | #) 
     | k == k' -> EmptyMap
     | otherwise -> SingletonMap k' v
   (# | | (# size, node0 #) #) ->
-    case deleteFromNode safety (hash k) k 0 node0 of
+    case deleteFromNode safety h k 0 node0 of
       (# (# k', v #) | #) -> SingletonMap k' v
       (# | (# didIShrink, node #) #) -> ManyMap (size - Exts.W# didIShrink) node
 
@@ -548,10 +584,10 @@ deleteFromNode :: (MapRepr keyStorage valStorage a1 a2, Eq a1) =>
                         -> (# (# a1, a2 #) |
                               (# Exts.Word#, MapNode keyStorage valStorage a1 a2 #) #)
 deleteFromNode safety !h !k !shift = \case
-  node@(CollisionNode keys vals) -> case findCollisionIndex k keys of
-    Nothing -> 
+  node@(CollisionNode keys vals) -> case findCollisionIndex# k keys of
+    (# (# #) | #) -> 
       (# | (# 0##, node #) #)
-    Just idx | Contiguous.size keys == 2 ->
+    (# | idx #) | Contiguous.size keys == 2 ->
       case idx of
         0 ->
           let (# existingVal #) = Contiguous.index# vals 1
@@ -562,7 +598,7 @@ deleteFromNode safety !h !k !shift = \case
               existingKey = Contiguous.index keys 0
           in (# (# existingKey, existingVal #) | #)
         _ -> error "Unreachable"
-    Just idx ->
+    (# | idx #) ->
       let keys' = Array.deleteAt safety keys idx
           vals' = Array.deleteAt safety vals idx
           node' = CollisionNode keys' vals'
@@ -621,7 +657,9 @@ deleteFromNode safety !h !k !shift = \case
 
 lookup :: (MapRepr keys vals k v, Eq k, Hashable k) => k -> HashMap keys vals k v -> Maybe v
 {-# INLINE lookup #-}
-lookup k m = snd <$> lookupKV k m
+lookup k m = case lookupKV# k m of
+  (# (# #) | #) -> Nothing
+  (# | (# _k, v #) #) -> Just v
 
 -- | Version of lookup that also returns the found key.
 --
@@ -631,44 +669,56 @@ lookup k m = snd <$> lookupKV k m
 -- as well as deduplicate the memory you're holding onto.
 lookupKV :: (MapRepr keys vals k v, Eq k, Hashable k) => k -> HashMap keys vals k v -> Maybe (k, v)
 {-# INLINE lookupKV #-}
-lookupKV !k m = case matchMap m of
-  (# (# #) | | #) -> Nothing
-  (# | (# k', v #) | #) -> if k == k' then Just (k', v) else Nothing
+lookupKV !k = lookupKVKnownHash (hash k) k
+
+lookupKV# :: (MapRepr keys vals k v, Eq k, Hashable k) => k -> HashMap keys vals k v -> (# (# #) | (# k, v #) #)
+{-# INLINE lookupKV# #-}
+lookupKV# !k = lookupKVKnownHash# (hash k) k
+
+lookupKVKnownHash :: (MapRepr keys vals a b, Hashable a) => Hash -> a -> HashMap keys vals a b -> Maybe (a, b)
+lookupKVKnownHash h k m = case lookupKVKnownHash# h k m of
+  (# (# #) | #) -> Nothing
+  (# | (# k, v #) #) -> Just (k, v)
+
+lookupKVKnownHash# :: (MapRepr keys vals k v, Eq k, Hashable k) => Hash -> k -> HashMap keys vals k v -> (# (# #) | (# k, v #) #)
+{-# INLINE lookupKVKnownHash# #-}
+lookupKVKnownHash# h !k m = case matchMap m of
+  (# (# #) | | #) -> (# (# #) | #)
+  (# | (# k', v #) | #) -> if k == k' then (# | (# k', v #) #) else (# (# #) | #)
   (# | | (# _size, node0 #) #) ->
     -- NOTE: Manually inlining the first iteration of lookup'
     -- (which will _never_ be in a collision node)
     -- results in a noticeable speedup for maps that have at most 32 elements.
-    let !h = hash k 
-        !bitpos = maskToBitpos $ hashToMask 0 h
+    let !bitpos = maskToBitpos $ hashToMask 0 h
     in case bitposLocation node0 bitpos of
-        Nowhere -> Nothing
+        Nowhere -> (# (# #) | #)
         Inline ->
             let k' = indexKey node0 bitpos
                 (# v #) = indexVal# node0 bitpos
-            in if k == k' then Just (k', v) else Nothing
+            in if k == k' then (# | (# k', v #) #) else (# (# #) | #)
         InChild -> lookup' (nextShift 0) (indexChild node0 bitpos)
             where
                 {-# INLINEABLE lookup' #-}
                 lookup' !_s !(CollisionNode keys vals) =
-                    keys
-                        & findCollisionIndex k
-                        & fmap (\idx -> (Contiguous.index keys idx, Contiguous.index vals idx))
+                  case findCollisionIndex# k keys of
+                    (# (# #) | #) -> (# (# #) | #)
+                    (# | idx #) -> (# | (# Contiguous.index keys idx, Contiguous.index vals idx #) #)
                 lookup' !s !node@(CompactNode _bitmap _keys _vals _children) =
                     let !bitpos = maskToBitpos $ hashToMask s h
                     in case bitposLocation node bitpos of
-                            Nowhere -> Nothing
+                            Nowhere -> (# (# #) | #) 
                             Inline ->
                                 let k' = indexKey node bitpos
                                     (# v #) = indexVal# node bitpos
-                                in if k == k' then Just (k', v) else Nothing
+                                in if k == k' then (# | (# k', v #) #) else (# (# #) | #)
                             InChild -> lookup' (nextShift s) (indexChild node bitpos)
 
 -- mylookup :: Int -> HashMapUU Int Int -> Maybe Int
 -- mylookup = lookup
 
-findCollisionIndex :: (Eq a, Array arr, Element arr a) => a -> arr a -> Maybe Int
-{-# INLINE findCollisionIndex #-}
-findCollisionIndex k keys = Contiguous.findIndex (\existingKey -> existingKey `ptrEq` k || existingKey == k) keys
+findCollisionIndex# :: (Eq a, Array arr, Element arr a) => a -> arr a -> (# (# #) | Int #)
+{-# INLINE findCollisionIndex# #-}
+findCollisionIndex# k keys = Array.findIndex# (\existingKey -> existingKey `ptrEq` k || existingKey == k) keys
 
 indexKey :: MapRepr keys vals k v => MapNode keys vals k v -> Bitmap -> k
 {-# INLINE indexKey #-}
@@ -690,10 +740,9 @@ indexChild node@(CompactNode _bitmap _keys _vals children) bitpos =
 
 member :: (MapRepr keys vals k v, Eq k, Hashable k) => k -> HashMap keys vals k v -> Bool
 {-# INLINE member #-}
-member k m = 
-  m
-  & lookupKV k
-  & Maybe.isJust
+member k m = case lookupKV# k m of 
+  (# (# #) | #) -> True
+  _ -> False
 
 instance (MapRepr keys vals k v, Eq v, Eq k) => Eq (HashMap keys vals k v) where
   {-# INLINE (==) #-}
@@ -1269,9 +1318,10 @@ intersection :: (Hashable k, MapRepr keys vals k v, MapRepr keys vals' k w) => H
 {-# INLINE intersection #-}
 intersection a b = foldlWithKey' go empty a
   where
-    go m k v = case lookupKV k b of
-                 Just (k', _) -> unsafeInsert k' v m
-                 _       -> m
+    go m k v = let h = hash k in 
+      case lookupKVKnownHash# h k b of
+        (# (# #) | #) -> m
+        (# | (# k', _ #) #) -> insert' Unsafe h k' v m
 
 -- | \(O(n \log m)\) Difference with a combining function. When two equal keys are
 -- encountered, the combining function is applied to the values of these keys.
@@ -1283,9 +1333,11 @@ intersection a b = foldlWithKey' go empty a
 differenceWith :: (Hashable k, MapRepr keys vals k v, MapRepr keys vals' k w) => (v -> w -> Maybe v) -> HashMap keys vals k v -> HashMap keys vals' k w -> HashMap keys vals k v
 differenceWith f a b = foldlWithKey' go empty a
   where
-    go m k v = case lookupKV k b of
-                 Nothing -> unsafeInsert k v m
-                 Just (k', w)  -> maybe m (\y -> unsafeInsert k' y m) (f v w)
+    go m k v = 
+      let h = hash k in 
+      case lookupKVKnownHash# h k b of
+                 (# (# #) | #) -> insert' Unsafe h k v m
+                 (# | (# k', w #) #)  -> maybe m (\y -> insert' Unsafe h k' y m) (f v w)
 {-# INLINABLE differenceWith #-}
 
 -- | \(O(n \log m)\) Intersection with a combining function
@@ -1308,9 +1360,11 @@ intersectionWith f = Exts.inline intersectionWithKey (const f)
 intersectionWithKey :: (Hashable k, MapRepr keys vals1 k v1, MapRepr keys vals2 k v2, MapRepr keys vals3 k v3) => (k -> v1 -> v2 -> v3) -> HashMap keys vals1 k v1 -> HashMap keys vals2 k v2 -> HashMap keys vals3 k v3
 intersectionWithKey f a b = foldlWithKey' go empty a
   where
-    go m k v = case lookupKV k b of
-                 Nothing -> m
-                 Just (k', w) -> unsafeInsert k' (f k' v w) m
+    go m k v = 
+      let h = hash k in
+      case lookupKVKnownHash# h k b of
+                 (# (# #) | #) -> m
+                 (# | (# k', w #) #) -> insert' Unsafe h k' (f k' v w) m
 {-# INLINABLE intersectionWithKey #-}
 
 -- | Relate the keys of one map to the values of
