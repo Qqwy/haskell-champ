@@ -561,7 +561,7 @@ delete k = delete' Safe (hash k) k
 
 unsafeDelete :: (Hashable k, MapRepr keys vals k v) => k -> HashMap keys vals k v -> HashMap keys vals k v
 {-# INLINE unsafeDelete #-}
-unsafeDelete k = delete' Safe (hash k) k
+unsafeDelete k = delete' Unsafe (hash k) k
 
 delete' :: (Hashable k, MapRepr keys vals k v) => Safety -> Hash -> k -> HashMap keys vals k v -> HashMap keys vals k v
 {-# INLINE delete' #-}
