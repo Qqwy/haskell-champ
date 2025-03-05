@@ -60,6 +60,7 @@ library
 
     -- Modules exported by the library.
     exposed-modules:  
+      Champ,
       Champ.HashMap,
       Champ.HashSet,
       Champ.Internal,
@@ -84,6 +85,7 @@ library
       deepseq,
       hashable,
       template-haskell,
+      text-short,
 
     build-tool-depends: cpphs:cpphs
 
