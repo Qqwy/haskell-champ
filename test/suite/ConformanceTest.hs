@@ -24,7 +24,8 @@ import Data.List (sort)
 test_fromListToList :: [TestTree]
 test_fromListToList = 
     [
-        testProperty "toList . fromList conforms (HashMapBB)" $ propFromListToListConforms @HashMapBB
+        --testProperty "toList . fromList conforms (HashMapBB)" $ propFromListToListConforms @HashMapBB
+        testProperty "lookup conforms (HashMapBB)" $ propLookupConforms @HashMapBB
     ]
 
 propFromListToListConforms :: forall champmap keys vals. (champmap ~ HashMap keys vals, MapRepr keys vals Int Int, IsList (champmap Int Int), Item (champmap Int Int) ~ (Int, Int)) => Property
@@ -39,7 +40,24 @@ propFromListToListConforms = property $ do
     annotateShow hs
     annotateShow cs
 
-    True === True
+    -- True === True
 
 
-    -- sort (Champ.HashMap.toList cs) === sort (Data.HashMap.Strict.toList hs)
+    sort (Data.HashMap.Strict.toList hs) === sort (Champ.HashMap.toList cs)
+
+propLookupConforms :: forall champmap keys vals. (champmap ~ HashMap keys vals, MapRepr keys vals Int Int, IsList (champmap Int Int), Item (champmap Int Int) ~ (Int, Int)) => Property
+propLookupConforms = property $ do
+    list <- forAll $ Gen.list (Range.linear 0 200) (Gen.int (Range.linear 0 20))
+    let kvs = [(x, x) | x <- list]
+    annotateShow kvs
+
+    key <- forAll (Gen.int (Range.linear 0 20))
+
+    let hs = fromList kvs
+    let cs = fromList kvs :: champmap Int Int
+
+    annotateShow hs
+    annotateShow cs
+
+    Data.HashMap.Strict.lookup key hs === Champ.HashMap.lookup key cs
+
