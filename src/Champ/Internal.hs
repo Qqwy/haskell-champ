@@ -399,7 +399,7 @@ insert' safety h !k v !m = case matchMap m of
       else
         let !(# size, node #) =
               Contiguous.empty
-                & MapNode (maskToBitpos (hashToMask 0 h)) (Array.singleton safety k') (Array.singleton safety v')
+                & MapNode (maskToBitpos (hashToMask 0 (hash k'))) (Array.singleton safety k') (Array.singleton safety v')
                 & insertInNode safety h k v 0
          in ManyMap (1 + Exts.W# size) node
   (# | | (# size, node0 #) #) ->

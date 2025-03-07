@@ -91,4 +91,3 @@ propLookupConforms = property $ do
 
     Data.HashMap.Strict.lookup key hs === Champ.HashMap.lookup key cs
     -- Champ.HashMap.lookup key cs === Champ.HashMap.lookup key cs
-
