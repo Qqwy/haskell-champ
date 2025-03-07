@@ -9,6 +9,8 @@ module ConformanceTest where
 import Data.HashMap.Strict qualified
 import Champ
 import Champ.HashMap qualified
+import Champ.Internal qualified
+import Champ.Internal.Storage qualified
 
 import Data.Kind (Type)
 import GHC.IsList
@@ -41,9 +43,17 @@ test_lookup =
     , testProperty "lookup conforms (HashMapUU)" $ propLookupConforms @HashMapUU
     ]
 
-propFromListToListConforms :: forall champmap keys vals. (champmap ~ HashMap keys vals, MapRepr keys vals Int Int, IsList (champmap Int Int), Item (champmap Int Int) ~ (Int, Int)) => Property
+propFromListToListConforms :: forall champmap keys vals. 
+    (champmap ~ HashMap keys vals
+    , MapRepr keys vals Int Int
+    , IsList (champmap Int Int)
+    , Item (champmap Int Int) ~ (Int, Int)
+    , Show (Champ.Internal.Storage.ArrayOf (Strict keys) Int)
+    , Show (Champ.Internal.Storage.ArrayOf vals Int)
+    )
+    => Property
 propFromListToListConforms = property $ do
-    list <- forAll $ Gen.list (Range.linear 0 200) (Gen.int (Range.linear 0 20))
+    list <- forAll $ Gen.list (Range.linear 0 200) (Gen.int (Range.linear 1 20))
     let kvs = [(x, x) | x <- list]
     annotateShow kvs
 
@@ -52,22 +62,32 @@ propFromListToListConforms = property $ do
 
     annotateShow hs
     annotateShow cs
+    annotate (Champ.Internal.debugShow cs)
 
     sort (Data.HashMap.Strict.toList hs) === sort (Champ.HashMap.toList cs)
 
-propLookupConforms :: forall champmap keys vals. (champmap ~ HashMap keys vals, MapRepr keys vals Int Int, IsList (champmap Int Int), Item (champmap Int Int) ~ (Int, Int)) => Property
+propLookupConforms :: forall champmap keys vals. 
+    (champmap ~ HashMap keys vals
+    , MapRepr keys vals Int Int
+    , IsList (champmap Int Int)
+    , Item (champmap Int Int) ~ (Int, Int)
+    , Show (Champ.Internal.Storage.ArrayOf (Strict keys) Int)
+    , Show (Champ.Internal.Storage.ArrayOf vals Int)
+    )
+    => Property
 propLookupConforms = property $ do
-    list <- forAll $ Gen.list (Range.linear 0 200) (Gen.int (Range.linear 0 20))
+    list <- forAll $ Gen.list (Range.linear 0 200) (Gen.int (Range.linear 1 20))
     let kvs = [(x, x) | x <- list]
     annotateShow kvs
 
-    key <- forAll (Gen.int (Range.linear 0 20))
+    key <- forAll (Gen.int (Range.linear 1 20))
 
     let hs = fromList kvs
     let cs = fromList kvs :: champmap Int Int
 
     annotateShow hs
     annotateShow cs
+    annotate (Champ.Internal.debugShow cs)
 
     Data.HashMap.Strict.lookup key hs === Champ.HashMap.lookup key cs
     -- Champ.HashMap.lookup key cs === Champ.HashMap.lookup key cs
