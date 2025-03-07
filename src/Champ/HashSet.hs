@@ -10,6 +10,7 @@ module Champ.HashSet (
     HashSet(..),
     Champ.Internal.Storage.Storage(Unexistent),
     Champ.Internal.Storage.StrictStorage(..),
+    SetRepr,
     -- * Construction
     empty,
     singleton,

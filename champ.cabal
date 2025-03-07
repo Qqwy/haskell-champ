@@ -136,15 +136,24 @@ test-suite champ-test
     type:             exitcode-stdio-1.0
 
     -- Directories containing source files.
-    hs-source-dirs:   test
-
+    hs-source-dirs:   test/suite
+    build-tool-depends:
+        tasty-discover:tasty-discover
     -- The entrypoint to the test suite.
-    main-is:          Main.hs
+    main-is:          Suite.hs
 
     -- Test dependencies.
     build-depends:
+        -- Library and datatypes to exercise during tests:
         base,
-        champ
+        unordered-containers,
+        champ,
+        -- Test framework:
+        tasty,
+        tasty-golden,
+        tasty-hedgehog,
+        tasty-hunit,
+        hedgehog,
 
 benchmark bench
     -- Import common warning flags.

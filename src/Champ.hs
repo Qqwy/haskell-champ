@@ -20,6 +20,8 @@ module Champ (
     Champ.HashMap.HashMap,
     Champ.HashSet.HashSet,
     Champ.Internal.Storage.Storage(..),
+    Champ.HashMap.MapRepr,
+    Champ.HashSet.SetRepr,
 ) where
 
 import Champ.HashMap qualified

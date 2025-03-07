@@ -16,6 +16,7 @@ module Champ.HashMap (
     -- * Generic type
     Champ.Internal.HashMap,
     Champ.Internal.Storage.Storage(..),
+    Champ.Internal.MapRepr,
     -- * Construction
     Champ.Internal.empty,
     Champ.Internal.singleton,
