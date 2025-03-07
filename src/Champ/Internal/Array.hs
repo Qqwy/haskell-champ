@@ -474,17 +474,22 @@ instance Array UnitArray where
 -- Trick copied from Data.Hashmap
 doubletonBranchless :: (Contiguous arr, Element arr a) => Safety -> Int -> a -> a -> arr a
 {-# INLINE doubletonBranchless #-}
-doubletonBranchless Safe idx0Or1 a b = run $ do
+doubletonBranchless _ idx0Or1 a b = run $ do
   arr <- new 2
   write arr (1 - idx0Or1) a
   write arr idx0Or1 b
   unsafeFreeze arr
+-- doubletonBranchless Safe idx0Or1 a b = run $ do
+--   arr <- new 2
+--   write arr (1 - idx0Or1) a
+--   write arr idx0Or1 b
+--   unsafeFreeze arr
 
-doubletonBranchless Unsafe idx0Or1 a b = run $ do
-  arr <- new 32
-  write arr (1 - idx0Or1) a
-  write arr idx0Or1 b
-  unsafeShrinkAndFreeze arr 2
+-- doubletonBranchless Unsafe idx0Or1 a b = run $ do
+--   arr <- new 32
+--   write arr (1 - idx0Or1) a
+--   write arr idx0Or1 b
+--   unsafeShrinkAndFreeze arr 2
 
 -- | Allow running certain operations
 -- in either a 'Safe' (copy-on-write)
@@ -504,7 +509,8 @@ insertAt Unsafe src i x =
   -- Debug.Trace.traceM $ "Using unsafe insertAt for " <> show (addrOf src)
   -- dst <- (\arr -> unsafeResizeMut arr (Contiguous.size src + 1) x) =<< unsafeThaw src
   dst <- unsafeThaw src
-  dst' <- Contiguous.resize dst (Contiguous.size src + 1)
+  sz <- Contiguous.sizeMut dst
+  dst' <- Contiguous.resize dst (sz + 1)
   newSize <- Contiguous.sizeMut dst'
   copyMut dst' (i + 1) (sliceMut dst' i (newSize - i))
   Contiguous.write dst' i x
@@ -533,10 +539,11 @@ deleteAt Unsafe src i = Contiguous.create $ do
   unsafeShrinkMut dst (len - 1)
 
 singleton :: (Array arr, Element arr a) => Safety -> a -> arr a
-singleton Safe a = Contiguous.singleton a
-singleton Unsafe a = Contiguous.create $ do
-  dst <- Contiguous.replicateMut 32 a
-  unsafeShrinkMut dst 1
+singleton _ a = Contiguous.singleton a
+-- singleton Safe a = Contiguous.singleton a
+-- singleton Unsafe a = Contiguous.create $ do
+--   dst <- Contiguous.replicateMut 32 a
+--   unsafeShrinkMut dst 1
 
 foldrZipWith' ::
   ( Contiguous arr1

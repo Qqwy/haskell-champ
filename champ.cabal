@@ -119,7 +119,7 @@ executable champ
     -- Base language which the package is written in.
     default-language: GHC2021
 
-test-suite champ-test
+test-suite test
     -- Import common warning flags.
     import:           warnings
 
@@ -156,6 +156,28 @@ test-suite champ-test
         hedgehog,
     other-modules:
         ConformanceTest
+
+test-suite doctest
+  type: exitcode-stdio-1.0
+  main-is: Doctest.hs
+  other-modules:
+      Paths_champ
+  autogen-modules:
+      Paths_champ
+  hs-source-dirs:
+      test/doctest
+  default-extensions:
+      BangPatterns
+      OverloadedStrings
+      DeriveAnyClass
+      TypeApplications
+      NamedFieldPuns
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , doctest-parallel
+    , champ
+  default-language: GHC2021
 
 benchmark bench
     -- Import common warning flags.
