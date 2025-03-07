@@ -154,6 +154,8 @@ test-suite champ-test
         tasty-hedgehog,
         tasty-hunit,
         hedgehog,
+    other-modules:
+        ConformanceTest
 
 benchmark bench
     -- Import common warning flags.

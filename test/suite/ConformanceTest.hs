@@ -23,9 +23,22 @@ import Data.List (sort)
 
 test_fromListToList :: [TestTree]
 test_fromListToList = 
-    [
-        --testProperty "toList . fromList conforms (HashMapBB)" $ propFromListToListConforms @HashMapBB
-        testProperty "lookup conforms (HashMapBB)" $ propLookupConforms @HashMapBB
+    [ testProperty "toList . fromList conforms (HashMapBL)" $ propFromListToListConforms @HashMapBL
+    , testProperty "toList . fromList conforms (HashMapBB)" $ propFromListToListConforms @HashMapBB
+    , testProperty "toList . fromList conforms (HashMapBU)" $ propFromListToListConforms @HashMapBU
+    , testProperty "toList . fromList conforms (HashMapUL)" $ propFromListToListConforms @HashMapUL
+    , testProperty "toList . fromList conforms (HashMapUB)" $ propFromListToListConforms @HashMapUB
+    , testProperty "toList . fromList conforms (HashMapUU)" $ propFromListToListConforms @HashMapUU
+    ]
+
+test_lookup :: [TestTree]
+test_lookup = 
+    [ testProperty "lookup conforms (HashMapBL)" $ propLookupConforms @HashMapBL
+    , testProperty "lookup conforms (HashMapBB)" $ propLookupConforms @HashMapBB
+    , testProperty "lookup conforms (HashMapBU)" $ propLookupConforms @HashMapBU
+    , testProperty "lookup conforms (HashMapUL)" $ propLookupConforms @HashMapUL
+    , testProperty "lookup conforms (HashMapUB)" $ propLookupConforms @HashMapUB
+    , testProperty "lookup conforms (HashMapUU)" $ propLookupConforms @HashMapUU
     ]
 
 propFromListToListConforms :: forall champmap keys vals. (champmap ~ HashMap keys vals, MapRepr keys vals Int Int, IsList (champmap Int Int), Item (champmap Int Int) ~ (Int, Int)) => Property
@@ -39,9 +52,6 @@ propFromListToListConforms = property $ do
 
     annotateShow hs
     annotateShow cs
-
-    -- True === True
-
 
     sort (Data.HashMap.Strict.toList hs) === sort (Champ.HashMap.toList cs)
 
@@ -60,4 +70,5 @@ propLookupConforms = property $ do
     annotateShow cs
 
     Data.HashMap.Strict.lookup key hs === Champ.HashMap.lookup key cs
+    -- Champ.HashMap.lookup key cs === Champ.HashMap.lookup key cs
 
