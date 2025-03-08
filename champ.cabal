@@ -51,6 +51,8 @@ extra-doc-files:    CHANGELOG.md
 -- Extra source files to be distributed with the package, such as examples, or a tutorial module.
 -- extra-source-files:
 
+tested-with: GHC == { 9.4.8, 9.6.5, 9.8.4, 9.10.1, 9.12.1 }
+
 common warnings
     ghc-options: -Wall -pgmPcpphs -optP--cpp
 
@@ -119,7 +121,7 @@ executable champ
     -- Base language which the package is written in.
     default-language: GHC2021
 
-test-suite champ-test
+test-suite test
     -- Import common warning flags.
     import:           warnings
 
@@ -156,6 +158,24 @@ test-suite champ-test
         hedgehog,
     other-modules:
         ConformanceTest
+
+test-suite doctest
+  type: exitcode-stdio-1.0
+  main-is: Doctest.hs
+  hs-source-dirs:
+      test/doctest
+  default-extensions:
+      BangPatterns
+      OverloadedStrings
+      DeriveAnyClass
+      TypeApplications
+      NamedFieldPuns
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , doctest-parallel
+    , champ
+  default-language: GHC2021
 
 benchmark bench
     -- Import common warning flags.
