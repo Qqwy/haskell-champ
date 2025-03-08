@@ -12,7 +12,6 @@ import Champ.HashMap qualified
 import Champ.Internal qualified
 import Champ.Internal.Storage qualified
 
-import Data.Kind (Type)
 import GHC.IsList
 
 -- Testing helpers:
@@ -22,6 +21,9 @@ import Hedgehog
 import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
 import Data.List (sort)
+
+tests :: TestLimit
+tests = 5000
 
 test_fromListToList :: [TestTree]
 test_fromListToList = 
@@ -52,7 +54,7 @@ propFromListToListConforms :: forall champmap keys vals.
     , Show (Champ.Internal.Storage.ArrayOf vals Int)
     )
     => Property
-propFromListToListConforms = property $ do
+propFromListToListConforms = withTests tests $ property $ do
     list <- forAll $ Gen.list (Range.linear 0 200) (Gen.int (Range.linear 1 20))
     let kvs = [(x, x) | x <- list]
     annotateShow kvs
@@ -75,7 +77,7 @@ propLookupConforms :: forall champmap keys vals.
     , Show (Champ.Internal.Storage.ArrayOf vals Int)
     )
     => Property
-propLookupConforms = property $ do
+propLookupConforms = withTests tests $ property $ do
     list <- forAll $ Gen.list (Range.linear 0 200) (Gen.int (Range.linear 1 20))
     let kvs = [(x, x) | x <- list]
     annotateShow kvs

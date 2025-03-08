@@ -52,6 +52,7 @@ module Champ.HashMap (
     Champ.Internal.mapWithKey,
     Champ.Internal.mapWithKey',
     Champ.Internal.mapKeys,
+    Champ.Internal.mapKeys',
     Champ.Internal.traverse,
     Champ.Internal.traverse',
     Champ.Internal.traverseWithKey,

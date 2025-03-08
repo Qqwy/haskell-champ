@@ -50,6 +50,30 @@ import Data.Coerce qualified
 import Unsafe.Coerce (unsafeCoerce)
 import Data.Type.Coercion (Coercion(Coercion))
 
+-- * Setup
+--
+-- $setup
+--
+-- It is recommended to import the types from the main `Champ` module
+-- and import `Champ.HashMap` and `Champ.HashSet` qualified,
+-- since they contain many functions that would conflict
+-- with hashmap-specific versions of same-named functions in the Prelude.
+-- 
+-- >>> import Champ
+-- >>> import Champ.HashMap qualified
+-- >>> import Champ.HashSet qualified
+--
+-- To reduce boilerplate, you can use `OverloadedLists`
+-- to build hashmaps directly from a list containing key-value pairs
+-- (which will automatically call `Champ.HashMap.toList`)
+-- >>> :set -XOverloadedLists
+--
+-- Some examples also use the following extensions:
+-- >>> :set -XOverloadedStrings
+--
+-- The following types from other libraries
+-- are used in some examples:
+-- >>> import Data.Text.Short (ShortText) -- from the text-short library
 
 #define BIT_PARTITION_SIZE 5
 #define HASH_CODE_LENGTH (1 `unsafeShiftL` BIT_PARTITION_SIZE)
@@ -367,15 +391,19 @@ alterF f = \ !k !m ->
 -- keys to the same new key. In this case there is no guarantee which of the
 -- associated values is chosen for the conflicting key.
 --
--- >>> mapKeys (+ 1) (fromList [(5,"a"), (3,"b")])
--- fromList [(4,"b"),(6,"a")]
--- >>> mapKeys (\ _ -> 1) (fromList [(1,"b"), (2,"a"), (3,"d"), (4,"c")])
--- fromList [(1,"c")]
--- >>> mapKeys (\ _ -> 3) (fromList [(1,"b"), (2,"a"), (3,"d"), (4,"c")])
--- fromList [(3,"c")]
-mapKeys :: (Eq k2, Hashable k2, MapRepr keys vals k1 v, MapRepr keys2 vals k2 v) => (k1 -> k2) -> HashMap keys vals k1 v -> HashMap keys2 vals k2 v
+-- >>> Champ.HashMap.mapKeys (+ 1) (Champ.HashMap.fromList [(5,"a"), (3,"b")] :: HashMapUUl Int ShortText)
+-- Champ.HashMap.fromList [(4,"b"),(6,"a")]
+-- >>> Champ.HashMap.mapKeys (\ _ -> 1.0) (Champ.HashMap.fromList [(1,"b"), (2,"a"), (3,"d"), (4,"c")] :: HashMapUUl Int ShortText)
+-- Champ.HashMap.fromList [(1.0,"c")]
+-- >>> Champ.HashMap.mapKeys (\ _ -> 3 :: Int) (Champ.HashMap.fromList [(1,"b"), (2,"a"), (3,"d"), (4,"c")] :: HashMapUUl Int ShortText)
+-- Champ.HashMap.fromList [(3,"c")]
+mapKeys :: (Eq k2, Hashable k2, MapRepr keys vals k1 v, MapRepr keys vals k2 v) => (k1 -> k2) -> HashMap keys vals k1 v -> HashMap keys vals k2 v
 {-# INLINE mapKeys #-}
-mapKeys f = Champ.Internal.fromList . Champ.Internal.foldrWithKey (\k x xs -> (f k, x) : xs) []
+mapKeys = mapKeys'
+
+mapKeys' :: (Eq k2, Hashable k2, MapRepr keys vals k1 v, MapRepr keys2 vals k2 v) => (k1 -> k2) -> HashMap keys vals k1 v -> HashMap keys2 vals k2 v
+{-# INLINE mapKeys' #-}
+mapKeys' f = Champ.Internal.fromList . Champ.Internal.foldrWithKey (\k x xs -> (f k, x) : xs) []
 
 
 -- | \(O(\log32 n)\) Associate the specified value with the specified
@@ -838,9 +866,9 @@ map = map'
 --
 -- Example:
 --
--- >>> mymap = fromList [(1, 10), (2, 20)] :: HashMapUU Int Int
--- >>> map' show mymap :: HashMapUB Int String 
--- fromList [(1, "10"), (2, "20")]
+-- >>> mymap = Champ.HashMap.fromList [(1, 10), (2, 20)] :: HashMapUU Int Int
+-- >>> Champ.HashMap.map' show mymap :: HashMapUB Int String 
+-- Champ.HashMap.fromList [(1,"10"),(2,"20")]
 map' :: (MapRepr keys as k a, MapRepr keys bs k b) => (a -> b) -> HashMap keys as k a -> HashMap keys bs k b
 {-# INLINE map' #-}
 map' !f = \case 
@@ -1373,12 +1401,10 @@ intersectionWithKey f a b = foldlWithKey' go empty a
 --
 -- Complexity: \( O (n * \log(m)) \), where \(m\) is the size of the first argument
 --
--- >>> compose (fromList [('a', "A"), ('b', "B")]) (fromList [(1,'a'),(2,'b'),(3,'z')])
--- fromList [(1,"A"),(2,"B")]
---
--- @
--- ('compose' bc ab '!?') = (bc '!?') <=< (ab '!?')
--- @
+-- >>> charToString = Champ.HashMap.fromList [('a', "A"), ('b', "B")] :: HashMapBB Char String
+-- >>> intToChar = Champ.HashMap.fromList [(1,'a'),(2,'b'),(3,'z')] :: HashMapUU Int Char
+-- >>> compose charToString intToChar
+-- Champ.HashMap.fromList [(1,"A"),(2,"B")]
 compose :: (Eq a, Hashable a, Eq b, Hashable b, MapRepr as bs a b, MapRepr bs' cs b c, MapRepr as cs a c) => HashMap bs' cs b c -> HashMap as bs a b -> HashMap as cs a c
 {-# INLINE compose #-}
 compose bc !ab
