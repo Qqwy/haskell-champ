@@ -160,10 +160,6 @@ test-suite test
 test-suite doctest
   type: exitcode-stdio-1.0
   main-is: Doctest.hs
-  other-modules:
-      Paths_champ
-  autogen-modules:
-      Paths_champ
   hs-source-dirs:
       test/doctest
   default-extensions:
