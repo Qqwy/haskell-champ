@@ -14,6 +14,8 @@ import Test.Tasty.Bench qualified as Bench
 import Data.Text.Short (ShortText)
 import Data.String (IsString(..))
 
+import GHC.Exts qualified as Exts
+
 main :: IO ()
 main =
   Bench.defaultMain
@@ -28,7 +30,7 @@ main =
     , foldl'SmallBench
     , foldl'Bench
     , toListSmallBench
-    , toListBench
+    -- , toListBench
     ]
 
 insertSmallBench :: Bench.Benchmark
@@ -197,16 +199,16 @@ toListSmallBench :: Bench.Benchmark
 toListSmallBench =
   Bench.bgroup "toList (small)" $
      mconcat
-          [ [ Bench.bench ("Data.HashMap.Lazy." <> show n) $ Bench.nf (Data.HashMap.Lazy.toList) (buildN @HashMap n),
-              Bench.bench ("Data.HashMap.Strict." <> show n) $ Bench.nf (Data.HashMap.Strict.toList) (buildN @HashMap n),
-              Bench.bench ("HashMapBL." <> show n) $ Bench.nf (Champ.HashMap.toList) (buildN @HashMapBL n),
-              Bench.bench ("HashMapBB." <> show n) $ Bench.nf (Champ.HashMap.toList) (buildN @HashMapBB n),
-              Bench.bench ("HashMapBU." <> show n) $ Bench.nf (Champ.HashMap.toList) (buildN @HashMapBU n),
-              Bench.bench ("HashMapUL." <> show n) $ Bench.nf (Champ.HashMap.toList) (buildN @HashMapUL n),
-              Bench.bench ("HashMapUB." <> show n) $ Bench.nf (Champ.HashMap.toList) (buildN @HashMapUB n),
-              Bench.bench ("HashMapUU." <> show n) $ Bench.nf (Champ.HashMap.toList) (buildN @HashMapUU n)
+          [ [ -- Bench.bench ("Data.HashMap.Lazy." <> show n) $ Bench.nf (Data.HashMap.Lazy.toList) (buildN @HashMap n),
+              Bench.bench ("Data.HashMap.Strict." <> show n) $ Bench.nf (dataHashMapToList) (buildN @HashMap n),
+              -- Bench.bench ("HashMapBL." <> show n) $ Bench.nf (Champ.HashMap.toList) (buildN @HashMapBL n),
+              Bench.bench ("HashMapBB." <> show n) $ Bench.nf (hashMapToList) (buildN @HashMapBB n)--,
+              -- Bench.bench ("HashMapBU." <> show n) $ Bench.nf (Champ.HashMap.toList) (buildN @HashMapBU n),
+              -- Bench.bench ("HashMapUL." <> show n) $ Bench.nf (Champ.HashMap.toList) (buildN @HashMapUL n),
+              -- Bench.bench ("HashMapUB." <> show n) $ Bench.nf (Champ.HashMap.toList) (buildN @HashMapUB n),
+              -- Bench.bench ("HashMapUU." <> show n) $ Bench.nf (Champ.HashMap.toList) (buildN @HashMapUU n)
             ]
-          | n <- [0..32]
+          | n <- powersOfTwo -- [0..32]
           ]
 
 
@@ -226,7 +228,13 @@ toListBench =
           | n <- ([0] <> powersOfTwo)
           ]
 
+dataHashMapToList :: HashMap Int Int -> [(Int, Int)]
+{-# NOINLINE dataHashMapToList #-}
+dataHashMapToList m = Exts.inline Data.HashMap.Strict.toList m
 
+hashMapToList :: HashMapBB Int Int -> [(Int, Int)]
+{-# NOINLINE hashMapToList #-}
+hashMapToList m = Exts.inline Champ.HashMap.toList m
 
 -- myinsert :: Int -> Int -> MyLib.MapBL Int Int -> MyLib.MapBL Int Int
 -- {-# NOINLINE myinsert #-}

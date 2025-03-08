@@ -29,6 +29,8 @@ module Champ.Internal.Array (
   foldrZipWith',
   foldlZipWith,
   findIndex#,
+  foldr,
+  ifoldr,
   -- * Arrays to store zero-size values
   UnitArray,
   IsUnit,
@@ -499,44 +501,48 @@ data Safety = Safe | Unsafe
 
 insertAt :: (Array arr, Element arr a) => Safety -> arr a -> Int -> a -> arr a
 {-# INLINE insertAt #-}
-insertAt Safe src i x = Contiguous.insertAt src i x
-insertAt Unsafe src i x = 
-  -- The following is probably faster for PrimArray
-  -- but is not (yet) for SmallArray
-  -- i.e. it won't currently re-use space in an earlier shrunk SmallArray
-  -- c.f. https://gitlab.haskell.org/ghc/ghc/-/issues/21266
-  Contiguous.create $ do
-  -- Debug.Trace.traceM $ "Using unsafe insertAt for " <> show (addrOf src)
-  -- dst <- (\arr -> unsafeResizeMut arr (Contiguous.size src + 1) x) =<< unsafeThaw src
-  dst <- unsafeThaw src
-  sz <- Contiguous.sizeMut dst
-  dst' <- Contiguous.resize dst (sz + 1)
-  newSize <- Contiguous.sizeMut dst'
-  copyMut dst' (i + 1) (sliceMut dst' i (newSize - i))
-  Contiguous.write dst' i x
-  pure dst'
+insertAt _ src i x = Contiguous.insertAt src i x
+-- insertAt Safe src i x = Contiguous.insertAt src i x
+-- insertAt Unsafe src i x = 
+--   -- The following is probably faster for PrimArray
+--   -- but is not (yet) for SmallArray
+--   -- i.e. it won't currently re-use space in an earlier shrunk SmallArray
+--   -- c.f. https://gitlab.haskell.org/ghc/ghc/-/issues/21266
+--   Contiguous.create $ do
+--   -- Debug.Trace.traceM $ "Using unsafe insertAt for " <> show (addrOf src)
+--   -- dst <- (\arr -> unsafeResizeMut arr (Contiguous.size src + 1) x) =<< unsafeThaw src
+--   dst <- unsafeThaw src
+--   sz <- Contiguous.sizeMut dst
+--   dst' <- Contiguous.resize dst (sz + 1)
+--   newSize <- Contiguous.sizeMut dst'
+--   copyMut dst' (i + 1) (sliceMut dst' i (newSize - i))
+--   Contiguous.write dst' i x
+--   pure dst'
 
 replaceAt :: (Array arr, Element arr a) => Safety -> arr a -> Int -> a -> arr a
 {-# INLINE replaceAt #-}
-replaceAt safety src i x =
+replaceAt _safety src i x =
   let (# oldX #) = (Contiguous.index# src i)
   in if x `ptrEq` oldX then src
-  else case safety of
-    Safe -> Contiguous.replaceAt src i x
-    Unsafe -> Contiguous.create $ do
-      dst <- unsafeThaw src
-      Contiguous.write dst i x
-      pure dst
+  else 
+  Contiguous.replaceAt src i x
+  --else case safety of
+    -- Safe -> Contiguous.replaceAt src i x
+    -- Unsafe -> Contiguous.create $ do
+    --   dst <- unsafeThaw src
+    --   Contiguous.write dst i x
+    --   pure dst
 
 deleteAt :: (Array arr, Element arr a) => Safety -> arr a -> Int -> arr a 
 {-# INLINE deleteAt #-}
-deleteAt Safe src i = Contiguous.deleteAt src i
-deleteAt Unsafe src i = Contiguous.create $ do
-  let !len = Contiguous.size src
-  let i' = i + 1
-  dst <- unsafeThaw src
-  copyMut dst i (sliceMut dst i' (len - i'))
-  unsafeShrinkMut dst (len - 1)
+deleteAt _ src i = Contiguous.deleteAt src i
+-- deleteAt Safe src i = Contiguous.deleteAt src i
+-- deleteAt Unsafe src i = Contiguous.create $ do
+--   let !len = Contiguous.size src
+--   let i' = i + 1
+--   dst <- unsafeThaw src
+--   copyMut dst i (sliceMut dst i' (len - i'))
+--   unsafeShrinkMut dst (len - 1)
 
 singleton :: (Array arr, Element arr a) => Safety -> a -> arr a
 singleton _ a = Contiguous.singleton a
@@ -635,3 +641,27 @@ findIndex# p xs = loop 0
     | i < size xs = if p (index xs i) then (# | i #) else loop (i + 1)
     | otherwise = (# (# #) | #)
 {-# INLINE findIndex# #-}
+
+
+foldr :: (Element arr t1, Contiguous arr) => (t1 -> t2 -> t2) -> t2 -> arr t1 -> t2
+{-# INLINE foldr #-}
+foldr f = \z !ary ->
+  let
+    !sz = Contiguous.size ary
+    go i
+      | i == sz = z
+      | (# x #) <- Contiguous.index# ary i
+      = f x (go (i + 1))
+  in go 0
+
+ifoldr :: (Element arr t1, Contiguous arr) => (Int -> t1 -> t2 -> t2) -> t2 -> arr t1 -> t2
+{-# INLINE ifoldr #-}
+ifoldr f = \z !ary ->
+  let
+    !sz = Contiguous.size ary
+    go i
+      | i == sz = z
+      | (# x #) <- Contiguous.index# ary i
+      = f i x (go (i + 1))
+  in go 0
+

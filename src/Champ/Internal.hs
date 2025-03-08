@@ -260,8 +260,8 @@ bitposLocation node@(MapNode bitmap _ _ _) bitpos
 -- NOTE: Since there is no unsafeInsert yet,
 -- the current implementation is slower than necessary.
 fromList :: (Hashable k, MapRepr keys vals k v) => [(k, v)] -> HashMap keys vals k v
-{-# INLINE fromList #-}
-fromList = Foldable.foldl' (\m (k, v) -> unsafeInsert k v m) empty
+{-# INLINABLE fromList #-}
+fromList = List.foldl' (\m (k, v) -> unsafeInsert k v m) empty
 
 -- | \(O(n \log n)\) Construct a map from a list of elements.  Uses
 -- the provided function @f@ to merge duplicate entries with
@@ -283,7 +283,16 @@ fromListWithKey f = List.foldl' (\m (k, v) -> unsafeInsertWithKey f k v m) empty
 -- The order of its elements is unspecified.
 toList :: (MapRepr keys vals k v) => HashMap keys vals k v -> [(k, v)]
 {-# INLINE toList #-}
-toList hashmap = Exts.build (\fusedCons fusedNil -> foldrWithKey (\k v xs -> (k, v) `fusedCons` xs) fusedNil hashmap)
+-- toList t = Exts.build (\ c z -> foldrWithKey (curry c) z hashmap) -- (\fusedCons fusedNil -> foldrWithKey (\k v xs -> (k, v) `fusedCons` xs) fusedNil hashmap)
+toList t = Exts.build (\c z -> foldrWithKey (curry c) z t)
+-- toList m = case matchMap m of
+--   (# (# #) | | #) -> []
+--   (# | (# k, v #) | #) -> [(k, v)]
+--   (# | | (# _size, node #) #) -> go node
+--     where
+--       go (MapNode _bitmap !keys !vals !children) = zip (Contiguous.toList keys) (Contiguous.toList vals) <> foldMap go children
+
+{-# SPECIALISE INLINE Champ.Internal.toList :: HashMapBB k v -> [(k, v)] #-}
 
 -- | \(O(\log n)\) Adjust the value tied to a given key in this map only
 -- if it is present. Otherwise, leave the map alone.
@@ -1118,17 +1127,17 @@ foldl' f !z0 m = case matchMap m of
         & flip (Contiguous.foldl' go) children
         & flip (Contiguous.foldl' f) vals
 
-{-# INLINE foldrWithKey #-}
 foldrWithKey :: (MapRepr keys vals k v) => (k -> v -> r -> r) -> r -> HashMap keys vals k v -> r
-foldrWithKey f z0 m = case matchMap m of
+{-# INLINE foldrWithKey #-}
+foldrWithKey f = \z0 m -> case matchMap m of
   (# (# #) | | #) -> z0
   (# | (# k, v #) | #) -> f k v z0
-  (# | | (# _size, node0 #) #) -> Exts.inline go node0 z0
+  (# | | (# _size, (MapNode _ k v c) #) #) -> go k v c z0
   where
-    go (MapNode _bitmap keys !vals !children) z =
+    go !keys !vals !children z =
       z
-        & (\acc -> (Contiguous.foldrZipWith f) acc keys vals)
-        & flip (Contiguous.foldr go) children
+        & (\acc -> Array.ifoldr (\i k -> case Contiguous.index# vals i of { (# v #) -> f k v }) acc keys)
+        & (\acc -> Array.foldr (\(MapNode _ k v c) -> go k v c) acc children)
 
 
 {-# INLINE foldrWithKey' #-}
@@ -1188,7 +1197,7 @@ foldMapWithKey f m = case matchMap m of
 -- The order of keys is unspecified.
 keys :: MapRepr keys vals k v => HashMap keys vals k v -> [k]
 {-# INLINE keys #-}
-keys = Prelude.map fst . Champ.Internal.toList
+keys = List.map fst . Champ.Internal.toList
 
 -- | \(O(n)\) Returns a list of the map's elements (or values).
 --
@@ -1196,7 +1205,7 @@ keys = Prelude.map fst . Champ.Internal.toList
 -- The order of elements is unspecified.
 elems :: MapRepr keys vals k v => HashMap keys vals k v -> [v]
 {-# INLINE elems #-}
-elems = Prelude.map snd . Champ.Internal.toList
+elems = List.map snd . Champ.Internal.toList
 
 instance (Show k, Show v, MapRepr keys vals k v) => Show (HashMap keys vals k v) where
     show m = "Champ.HashMap.fromList " <> show (Champ.Internal.toList m)
