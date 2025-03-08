@@ -136,8 +136,8 @@ lookup e set = fst <$> Champ.Internal.lookupKV e (coerce set)
 -- >>> Champ.HashSet.map show (Champ.HashSet.fromList [1,2,3] :: HashSetB Int)
 -- Champ.HashSet.fromList ["3","1","2"]
 --
--- >>> Champ.HashSet.map (`mod` 2) (Champ.HashSet.fromList [1,2,4,5] :: HashSetU Int)
--- Champ.HashSet.fromList [0,1]
+-- >>> Champ.HashSet.map (`mod` 3) (Champ.HashSet.fromList [1,2,4,5] :: HashSetU Int)
+-- Champ.HashSet.fromList [1,2]
 map :: (Hashable b, SetRepr elems a, SetRepr elems b) => (a -> b) -> HashSet elems a -> HashSet elems b
 {-# INLINE map #-}
 map = map'
