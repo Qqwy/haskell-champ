@@ -65,6 +65,14 @@ import Data.List qualified
 import Data.Coerce (coerce)
 import GHC.IsList (IsList (..))
 
+
+-- $setup
+-- >>> :set -XOverloadedStrings
+-- >>> :set -XOverloadedLists
+-- >>> import Champ
+-- >>> import Champ.HashMap
+-- >>> import Data.Text.Short (ShortText)
+
 newtype HashSet elems e = HashSet { asMap :: Champ.Internal.HashMap elems Unexistent e () }
 type role HashSet nominal nominal
 
@@ -125,11 +133,11 @@ lookup e set = fst <$> Champ.Internal.lookupKV e (coerce set)
 -- | \(O(n)\) Transform this set by applying a function to every value.
 -- The resulting set may be smaller than the source.
 --
--- >>> HashSet.map show (HashSet.fromList [1,2,3])
--- HashSet.fromList ["1","2","3"]
+-- >>> Champ.HashSet.map show (Champ.HashSet.fromList [1,2,3] :: HashSetB Int)
+-- Champ.HashSet.fromList ["3","1","2"]
 --
--- >>> HashSet.map (`mod` 2) (HashSet.fromList [1,2,4,5])
--- HashSet.fromList [0, 1]
+-- >>> Champ.HashSet.map (`mod` 2) (Champ.HashSet.fromList [1,2,4,5] :: HashSetU Int)
+-- Champ.HashSet.fromList [0,1]
 map :: (Hashable b, SetRepr elems a, SetRepr elems b) => (a -> b) -> HashSet elems a -> HashSet elems b
 {-# INLINE map #-}
 map = map'
@@ -204,7 +212,7 @@ convert = coerce Champ.Internal.convert
 
 -- | \(O(1)\) Convert to set to the equivalent 'HashMap' with @()@ values.
 --
--- >>> HashSet.toMap (HashSet.singleton 1)
+-- >>> Champ.HashSet.toMap (Champ.HashSet.singleton 1 :: HashSetB Int)
 -- Champ.HashMap.fromList [(1,())]
 toMap :: HashSet elems e -> Champ.Internal.HashMap elems Unexistent e ()
 {-# INLINE toMap #-}
@@ -212,14 +220,15 @@ toMap = asMap
 
 -- | \(O(1)\) Convert from the equivalent 'HashMap' with @()@ values.
 --
--- >>> HashSet.fromMap (HashMap.singleton 1 ())
+-- >>> Champ.HashSet.fromMap (Champ.HashMap.singleton 1 ()) :: HashSetU Int
+-- Champ.HashSet.fromList [1]
 fromMap :: Champ.Internal.HashMap elems Unexistent e () -> HashSet elems e
 {-# INLINE fromMap #-}
 fromMap = HashSet
 
 -- | \(O(n)\) Produce a `HashSet` of all the keys in the given `HashMap`.
 --
--- >>> HashSet.keysSet (HashMap.fromList [(1, "a"), (2, "b")]
+-- >>> Champ.HashSet.keysSet (Champ.HashMap.fromList [(1, "a"), (2, "b")] :: HashMapBB Int ShortText)
 -- Champ.HashSet.fromList [1,2]
 keysSet :: (Champ.Internal.MapRepr keys vals k v, SetRepr keys k) => Champ.Internal.HashMap keys vals k v -> HashSet keys k
 {-# INLINE keysSet #-}
