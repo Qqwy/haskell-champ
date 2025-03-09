@@ -22,7 +22,7 @@ jobs:
         with:
           cabal-file: champ.cabal
           ubuntu-version: "latest"
-          # macos-version: "latest"
+          macos-version: "latest"
           # windows-version: "latest"
           version: 0.1.7.0
   tests:
