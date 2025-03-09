@@ -499,23 +499,22 @@ data Safety = Safe | Unsafe
 
 insertAt :: (Array arr, Element arr a) => Safety -> arr a -> Int -> a -> arr a
 {-# INLINE insertAt #-}
-insertAt _ src i x = Contiguous.insertAt src i x
--- insertAt Safe src i x = Contiguous.insertAt src i x
--- insertAt Unsafe src i x = 
---   -- The following is probably faster for PrimArray
---   -- but is not (yet) for SmallArray
---   -- i.e. it won't currently re-use space in an earlier shrunk SmallArray
---   -- c.f. https://gitlab.haskell.org/ghc/ghc/-/issues/21266
---   Contiguous.create $ do
---   -- Debug.Trace.traceM $ "Using unsafe insertAt for " <> show (addrOf src)
---   -- dst <- (\arr -> unsafeResizeMut arr (Contiguous.size src + 1) x) =<< unsafeThaw src
---   dst <- unsafeThaw src
---   sz <- Contiguous.sizeMut dst
---   dst' <- Contiguous.resize dst (sz + 1)
---   newSize <- Contiguous.sizeMut dst'
---   copyMut dst' (i + 1) (sliceMut dst' i (newSize - i))
---   Contiguous.write dst' i x
---   pure dst'
+insertAt Safe src i x = Contiguous.insertAt src i x
+insertAt Unsafe src i x = 
+  -- The following is probably faster for PrimArray
+  -- but is not (yet) for SmallArray
+  -- i.e. it won't currently re-use space in an earlier shrunk SmallArray
+  -- c.f. https://gitlab.haskell.org/ghc/ghc/-/issues/21266
+  Contiguous.create $ do
+  -- Debug.Trace.traceM $ "Using unsafe insertAt for " <> show (addrOf src)
+  -- dst <- (\arr -> unsafeResizeMut arr (Contiguous.size src + 1) x) =<< unsafeThaw src
+  dst <- unsafeThaw src
+  let srcSize = Contiguous.size src
+  dst' <- Contiguous.resize dst (srcSize + 1)
+  newSize <- Contiguous.sizeMut dst'
+  copyMut dst' (i + 1) (sliceMut dst' i (newSize - (i + 1)))
+  Contiguous.write dst' i x
+  pure dst'
 
 replaceAt :: (Array arr, Element arr a) => Safety -> arr a -> Int -> a -> arr a
 {-# INLINE replaceAt #-}
