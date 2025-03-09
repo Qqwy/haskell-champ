@@ -1,13 +1,13 @@
 name: Haskell CI
 
-on:
-  workflow_dispatch:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+on: [push]
+#  workflow_dispatch:
+#   push:
+#     branches:
+#       - main
+#   pull_request:
+#     branches:
+#       - main
 
 jobs:
   generate-matrix:
@@ -22,7 +22,7 @@ jobs:
         with:
           cabal-file: champ.cabal
           ubuntu-version: "latest"
-          # macos-version: "latest"
+          macos-version: "latest"
           # windows-version: "latest"
           version: 0.1.7.0
   tests:

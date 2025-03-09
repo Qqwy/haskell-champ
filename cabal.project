@@ -5,13 +5,8 @@ write-ghc-environment-files: always
 
 source-repository-package
     type: git
-    location: git@github.com:Qqwy/haskell-primitive-unlifted.git
-    tag: 784fc78815a695db6db69c729a364663e4f0afe2
-
-source-repository-package
-    type: git
-    location: git@github.com:Qqwy/haskell-contiguous.git
-    tag: d5787ba4d44bf8ebb65de86e6536499f1ada6942
+    location: https://github.com/Qqwy/haskell-contiguous.git
+    tag: e6122c3a8b29dc4c4923f60c12c62a8470c1776c
 
 package *
   ghc-options: -msse4.2 -mavx -mbmi -mbmi2 -optc=-march=native -optc-mtune=native
