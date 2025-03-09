@@ -502,7 +502,7 @@ insertMergeWithInline safety bitpos k v h shift node@(MapNode bitmap keys vals c
               -- if we're in `Unsafe` mode about to delete `existingVal` from the values array;
               -- then when we are too lazy in the _fetching_ of `existingVal`,
               -- we'd fetch off-by-one!
-              !child = pairNode safety existingKey existingVal (hash existingKey) k v h (nextShift shift)
+              !child = existingVal `seq` pairNode safety existingKey existingVal (hash existingKey) k v h (nextShift shift)
               keys' = Array.deleteAt safety keys idx
               vals' = Array.deleteAt safety vals idx
               !children' = Array.insertAt safety children newIdx child
