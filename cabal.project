@@ -3,5 +3,10 @@ tests: True
 
 write-ghc-environment-files: always
 
+source-repository-package
+    type: git
+    location: git@github.com:Qqwy/haskell-contiguous.git
+    tag: e6122c3a8b29dc4c4923f60c12c62a8470c1776c
+
 package *
   ghc-options: -msse4.2 -mavx -mbmi -mbmi2 -optc=-march=native -optc-mtune=native
