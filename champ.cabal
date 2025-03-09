@@ -125,6 +125,7 @@ test-suite champ-test
 
     -- Base language which the package is written in.
     default-language: GHC2021
+    ghc-options: -threaded "-with-rtsopts=-N4"
 
     -- Modules included in this executable, other than Main.
     -- other-modules:
@@ -144,7 +145,12 @@ test-suite champ-test
     -- Test dependencies.
     build-depends:
         base,
-        champ
+        champ,
+        hashable,
+        hedgehog,
+        tasty,
+        tasty-hedgehog,
+        unordered-containers,
 
 benchmark bench
     -- Import common warning flags.
