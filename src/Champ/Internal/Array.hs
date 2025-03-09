@@ -504,9 +504,10 @@ insertAt Unsafe src i x =
   -- Debug.Trace.traceM $ "Using unsafe insertAt for " <> show (addrOf src)
   -- dst <- (\arr -> unsafeResizeMut arr (Contiguous.size src + 1) x) =<< unsafeThaw src
   dst <- unsafeThaw src
-  dst' <- Contiguous.resize dst (Contiguous.size src + 1)
+  let srcSize = Contiguous.size src
+  dst' <- Contiguous.resize dst (srcSize + 1)
   newSize <- Contiguous.sizeMut dst'
-  copyMut dst' (i + 1) (sliceMut dst' i (newSize - i))
+  copyMut dst' (i + 1) (sliceMut dst' i (newSize - (i + 1)))
   Contiguous.write dst' i x
   pure dst'
 
