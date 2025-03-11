@@ -307,7 +307,8 @@ fromListWithKey f = List.foldl' (\m (k, v) -> unsafeInsertWithKey f k v m) empty
 -- The order of its elements is unspecified.
 toList :: (MapRepr keys vals k v) => HashMap keys vals k v -> [(k, v)]
 {-# INLINE toList #-}
-toList hashmap = Exts.build (\fusedCons fusedNil -> foldrWithKey (\k v xs -> (k, v) `fusedCons` xs) fusedNil hashmap)
+toList t = Exts.build (\ c z -> foldrWithKey (curry c) z t)
+-- toList hashmap = Exts.build (\fusedCons fusedNil -> foldrWithKey (\k v xs -> (k, v) `fusedCons` xs) fusedNil hashmap)
 
 -- | \(O(\log n)\) Adjust the value tied to a given key in this map only
 -- if it is present. Otherwise, leave the map alone.
@@ -1106,7 +1107,7 @@ foldr f z0 m = case matchMap m of
   where
     go (MapNode _bitmap _keys !vals !children) z =
       z
-        & flip (Contiguous.foldr f) vals
+        & flip (Array.foldr'LazyAcc f) vals
         & flip (Contiguous.foldr go) children
 
 {-# INLINE foldl #-}
@@ -1151,12 +1152,23 @@ foldrWithKey :: (MapRepr keys vals k v) => (k -> v -> r -> r) -> r -> HashMap ke
 foldrWithKey f z0 m = case matchMap m of
   (# (# #) | | #) -> z0
   (# | (# k, v #) | #) -> f k v z0
-  (# | | (# _size, node0 #) #) -> Exts.inline go node0 z0
-  where
-    go (MapNode _bitmap keys !vals !children) z =
-      z
-        & (\acc -> (Contiguous.foldrZipWith f) acc keys vals)
-        & flip (Contiguous.foldr go) children
+  (# | | (# _size, node0 #) #) -> Exts.inline foldrNodeWithKey f node0 z0
+
+foldrNodeWithKey :: (MapRepr keys vals k v) => (k -> v -> b -> b) -> MapNode keys vals k v -> b -> b
+{-# INLINE foldrNodeWithKey #-}
+foldrNodeWithKey f (MapNode _bitmap keys vals children) z =
+    z
+      -- & (\acc -> go (Contiguous.size keys - 1) acc)
+      & (\acc -> Array.foldrZipWith'LazyAcc f acc keys vals)
+      & (\acc -> Contiguous.foldr (foldrNodeWithKey f) acc children)
+      -- where
+      --     go !i z
+      --       | i < 0 = z
+      --       | otherwise =
+      --         case Contiguous.index# keys i of
+      --           (# k #) -> case Contiguous.index# vals i of
+      --             (# v #) -> f k v (go (i - 1) z)
+
 
 
 {-# INLINE foldrWithKey' #-}

@@ -13,6 +13,8 @@ import Champ.HashSet qualified
 import Test.Tasty.Bench qualified as Bench
 import Data.Text.Short (ShortText)
 import Data.String (IsString(..))
+import Data.Vector qualified as Vector
+import Control.Exception (evaluate)
 
 main :: IO ()
 main =
@@ -29,6 +31,7 @@ main =
     , foldl'Bench
     , toListSmallBench
     , toListBench
+    , toVectorSmallBench
     ]
 
 insertSmallBench :: Bench.Benchmark
@@ -197,14 +200,30 @@ toListSmallBench :: Bench.Benchmark
 toListSmallBench =
   Bench.bgroup "toList (small)" $
      mconcat
-          [ [ Bench.bench ("Data.HashMap.Lazy." <> show n) $ Bench.nf (Data.HashMap.Lazy.toList) (buildN @HashMap n),
-              Bench.bench ("Data.HashMap.Strict." <> show n) $ Bench.nf (Data.HashMap.Strict.toList) (buildN @HashMap n),
-              Bench.bench ("HashMapBL." <> show n) $ Bench.nf (Champ.HashMap.toList) (buildN @HashMapBL n),
-              Bench.bench ("HashMapBB." <> show n) $ Bench.nf (Champ.HashMap.toList) (buildN @HashMapBB n),
-              Bench.bench ("HashMapBU." <> show n) $ Bench.nf (Champ.HashMap.toList) (buildN @HashMapBU n),
-              Bench.bench ("HashMapUL." <> show n) $ Bench.nf (Champ.HashMap.toList) (buildN @HashMapUL n),
-              Bench.bench ("HashMapUB." <> show n) $ Bench.nf (Champ.HashMap.toList) (buildN @HashMapUB n),
-              Bench.bench ("HashMapUU." <> show n) $ Bench.nf (Champ.HashMap.toList) (buildN @HashMapUU n)
+          [ [ Bench.env (evaluate $ buildN @HashMap n) $ \hm -> Bench.bench ("Data.HashMap.Lazy." <> show n) $ Bench.nf (\m -> Data.HashMap.Lazy.toList m) hm,
+              -- Bench.bench ("Data.HashMap.Strict." <> show n) $ Bench.nf (\m -> Data.HashMap.Strict.toList m) (buildN @HashMap n),
+              Bench.env (evaluate $ buildN @HashMapBL n) $ \hm -> Bench.bench ("HashMapBL." <> show n) $ Bench.nf (\m -> Champ.HashMap.toList m) hm --,
+              -- Bench.bench ("HashMapBB." <> show n) $ Bench.nf (\m -> Champ.HashMap.toList m) (buildN @HashMapBB n),
+              -- Bench.bench ("HashMapBU." <> show n) $ Bench.nf (Champ.HashMap.toList) (buildN @HashMapBU n),
+              -- Bench.bench ("HashMapUL." <> show n) $ Bench.nf (Champ.HashMap.toList) (buildN @HashMapUL n),
+              -- Bench.bench ("HashMapUB." <> show n) $ Bench.nf (Champ.HashMap.toList) (buildN @HashMapUB n),
+              -- Bench.bench ("HashMapUU." <> show n) $ Bench.nf (Champ.HashMap.toList) (buildN @HashMapUU n)
+            ]
+          | n <- [2..32]
+          ]
+
+toVectorSmallBench :: Bench.Benchmark
+toVectorSmallBench =
+  Bench.bgroup "toVector (small)" $
+     mconcat
+          [ [ -- Bench.bench ("Data.HashMap.Lazy." <> show n) $ Bench.nf (Vector.fromList . Data.HashMap.Lazy.toList) (buildN @HashMap n),
+              Bench.bench ("Data.HashMap.Strict." <> show n) $ Bench.nf (\m -> Vector.fromList . Data.HashMap.Strict.toList $ m) (buildN @HashMap n),
+              -- Bench.bench ("HashMapBL." <> show n) $ Bench.nf (Vector.fromList . Champ.HashMap.toList) (buildN @HashMapBL n),
+              Bench.bench ("HashMapBB." <> show n) $ Bench.nf (\m -> Vector.fromList . Champ.HashMap.toList $ m) (buildN @HashMapBB n)--,
+              -- Bench.bench ("HashMapBU." <> show n) $ Bench.nf (Vector.fromList . Champ.HashMap.toList) (buildN @HashMapBU n),
+              -- Bench.bench ("HashMapUL." <> show n) $ Bench.nf (Vector.fromList . Champ.HashMap.toList) (buildN @HashMapUL n),
+              -- Bench.bench ("HashMapUB." <> show n) $ Bench.nf (Vector.fromList . Champ.HashMap.toList) (buildN @HashMapUB n),
+              -- Bench.bench ("HashMapUU." <> show n) $ Bench.nf (Vector.fromList . Champ.HashMap.toList) (buildN @HashMapUU n)
             ]
           | n <- [0..32]
           ]

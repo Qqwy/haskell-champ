@@ -27,6 +27,8 @@ module Champ.Internal.Array (
   -- * Array helper functions:
   doubletonBranchless, 
   foldrZipWith',
+  foldr'LazyAcc,
+  foldrZipWith'LazyAcc,
   foldlZipWith,
   findIndex#,
   -- * Arrays to store zero-size values
@@ -580,6 +582,55 @@ ifoldrZipWith' f !z !arr1 !arr2 = go (sz - 1) z
         (# x #) -> case Contiguous.index# arr2 ix of
           (# y #) -> go (ix - 1) (f ix x y acc)
 {-# INLINE ifoldrZipWith' #-}
+
+
+foldrZipWith'LazyAcc ::
+  ( Contiguous arr1
+  , Contiguous arr2
+  , Element arr1 a
+  , Element arr2 b
+  ) =>
+  (a -> b -> c -> c) ->
+  c ->
+  arr1 a ->
+  arr2 b ->
+  c
+{-# INLINE foldrZipWith'LazyAcc #-}
+foldrZipWith'LazyAcc f = ifoldrZipWith'LazyAcc (\_ x y c -> f x y c)
+
+-- like foldr' but without forcing the `acc` on every iteration.
+ifoldrZipWith'LazyAcc ::
+  ( Contiguous arr1
+  , Contiguous arr2
+  , Element arr1 a
+  , Element arr2 b
+  ) =>
+  (Int -> a -> b -> c -> c) ->
+  c ->
+  arr1 a ->
+  arr2 b ->
+  c
+ifoldrZipWith'LazyAcc f z !arr1 !arr2 = go (sz - 1) z
+  where
+  !sz = min (Contiguous.size arr1) (Contiguous.size arr2)
+  go !ix acc =
+    if ix == -1
+      then acc
+      else case Contiguous.index# arr1 ix of
+        (# x #) -> case Contiguous.index# arr2 ix of
+          (# y #) -> go (ix - 1) (f ix x y acc)
+{-# INLINE ifoldrZipWith'LazyAcc #-}
+
+foldr'LazyAcc :: (Element arr b, Contiguous arr) => (b -> t -> t) -> t -> arr b -> t
+foldr'LazyAcc f z !arr = go (sz - 1) z
+  where
+    !sz = Contiguous.size arr
+    go !ix acc =
+      if ix == -1
+        then acc
+        else case Contiguous.index# arr ix of
+          (# x #) -> go (ix - 1) (f x acc)
+
 
 foldlZipWith ::
   ( Contiguous arr1

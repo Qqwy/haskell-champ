@@ -195,4 +195,5 @@ benchmark bench
         unordered-containers,
         deepseq,
         text-short,
+        vector,
         champ
