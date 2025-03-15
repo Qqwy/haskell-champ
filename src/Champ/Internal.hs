@@ -26,7 +26,7 @@ module Champ.Internal where
 import Champ.Internal.Array (Array, StrictSmallArray, IsUnit, PrimUnlifted, Safety(..))
 import Champ.Internal.Array qualified as Array
 import Champ.Internal.Collision qualified as Collision
-import Champ.Internal.Storage (ArrayOf, Storage (..), StrictStorage (..))
+import Champ.Internal.Storage (ArrayOf, Storage (..), StrictStorage (..), Soloist(..))
 import Champ.Internal.Util (ptrEq)
 import Control.DeepSeq (NFData (..))
 import Control.Monad qualified
@@ -49,7 +49,6 @@ import Data.Coerce (Coercible)
 import Data.Coerce qualified
 import Unsafe.Coerce (unsafeCoerce)
 import Data.Type.Coercion (Coercion(Coercion))
-import Data.Tuple (Solo(..))
 import GHC.Exts (Any)
 
 -- * Setup
@@ -204,7 +203,7 @@ class (Array (ArrayOf (Strict keyStorage)), Array (ArrayOf (valStorage)), Elemen
      {-# UNPACK #-} !(StrictSmallArray (MapNode (keystorage) (valstorage) k v))
 
 #define map_repr_instance(name, keystorage, valstorage, constraints)                                                     \
-instance constraints => MapRepr (keystorage) (valstorage) k v where                                                      \
+instance (constraints, Soloist (valstorage)) => MapRepr (keystorage) (valstorage) k v where                                                      \
 { {-# INLINE unpackNode #-}                                                                                              \
 ; unpackNode (MAP_NODE_NAME(name) b keys vals children) = (# b, keys, vals, children #)                                  \
 ; {-# INLINE packNode #-}                                                                                                \
@@ -212,13 +211,13 @@ instance constraints => MapRepr (keystorage) (valstorage) k v where             
 ; {-# INLINE emptyMap #-}                                                                                                \
 ; emptyMap = ManyMap_/**/name 0 0 (unsafeCoerce (mempty :: ArrayOf (Strict keystorage) k)) (unsafeCoerce (mempty :: ArrayOf (valstorage) v)) mempty                                                                                          \
 ; {-# INLINE singletonMap #-}                                                                                            \
-; singletonMap !k v = ManyMap_/**/name 1 0 (unsafeCoerce k) (unsafeCoerce (MkSolo v)) mempty                                                                         \
+; singletonMap !k v = ManyMap_/**/name 1 0 (unsafeCoerce k) (unsafeCoerce (solo @(valstorage) v)) mempty                                                                         \
 ; {-# INLINE manyMap #-}                                                                                                 \
 ; manyMap mapsize (MAP_NODE_NAME(name) b keys vals children) = ManyMap_/**/name mapsize b (unsafeCoerce keys) (unsafeCoerce vals) children             \
 ; {-# INLINE matchMap #-}                                                                                                \
 ; matchMap = \case {                                                                                                     \
 ; ManyMap_/**/name 0 _ _ _ _ -> (# (# #) | | #)                                                                          \
-; ManyMap_/**/name 1 _ (unsafeCoerce -> k) (unsafeCoerce -> MkSolo v) _ -> (#  | (# k, v #) | #)                                            \
+; ManyMap_/**/name 1 _ (unsafeCoerce -> k) (unsafeCoerce -> soloV) _ -> (#  | (# k, unSolo @(valstorage) soloV #) | #)                                            \
 ; ManyMap_/**/name mapsize b keys vals children -> (# | | (# mapsize, MAP_NODE_NAME(name) b (unsafeCoerce keys) (unsafeCoerce vals) children #) #) }   \
 ; data MapNode (keystorage) (valstorage) k v = MAP_NODE_NAME(name) MAP_NODE_FIELDS(keystorage, valstorage)               \
 ; data HashMap (keystorage) (valstorage) k v                                                                             \
