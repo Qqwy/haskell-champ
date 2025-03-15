@@ -1,0 +1,361 @@
+Name,Mean (ps),2*Stdev (ps),Allocated,Copied,Peak Memory
+All.toList (small).Data_HashMap_Lazy.0,6972,434,31,0,39845888
+All.toList (small).Data_HashMap_Strict.0,7102,566,31,0,39845888
+All.toList (small).HashMapBL.0,6729,262,31,0,39845888
+All.toList (small).HashMapBB.0,6725,506,31,0,39845888
+All.toList (small).HashMapBU.0,6766,488,31,0,39845888
+All.toList (small).HashMapUL.0,6711,446,31,0,39845888
+All.toList (small).HashMapUB.0,6689,484,31,0,39845888
+All.toList (small).HashMapUU.0,6615,432,31,0,39845888
+All.toList (small).Data_HashMap_Lazy.1,8247,446,79,0,39845888
+All.toList (small).Data_HashMap_Strict.1,8227,726,79,0,39845888
+All.toList (small).HashMapBL.1,8642,744,79,0,39845888
+All.toList (small).HashMapBB.1,8659,428,79,0,39845888
+All.toList (small).HashMapBU.1,8437,410,79,0,39845888
+All.toList (small).HashMapUL.1,8509,606,79,0,39845888
+All.toList (small).HashMapUB.1,8467,478,79,0,39845888
+All.toList (small).HashMapUU.1,8420,832,79,0,39845888
+All.toList (small).Data_HashMap_Lazy.2,23898,1946,223,0,39845888
+All.toList (small).Data_HashMap_Strict.2,23847,1246,223,0,39845888
+All.toList (small).HashMapBL.2,30664,2270,351,0,39845888
+All.toList (small).HashMapBB.2,37878,3202,415,0,39845888
+All.toList (small).HashMapBU.2,37672,2034,447,0,39845888
+All.toList (small).HashMapUL.2,31239,2154,383,0,39845888
+All.toList (small).HashMapUB.2,39374,2004,447,0,39845888
+All.toList (small).HashMapUU.2,39366,1820,479,0,39845888
+All.toList (small).Data_HashMap_Lazy.3,29524,1760,319,0,39845888
+All.toList (small).Data_HashMap_Strict.3,30116,2918,319,0,39845888
+All.toList (small).HashMapBL.3,39146,2740,463,0,39845888
+All.toList (small).HashMapBB.3,49945,4508,559,0,39845888
+All.toList (small).HashMapBU.3,50104,4604,607,0,39845888
+All.toList (small).HashMapUL.3,38714,3490,511,0,39845888
+All.toList (small).HashMapUB.3,50559,2116,607,0,39845888
+All.toList (small).HashMapUU.3,52177,4266,655,0,39845888
+All.toList (small).Data_HashMap_Lazy.4,35530,3482,415,0,39845888
+All.toList (small).Data_HashMap_Strict.4,35602,2272,415,0,39845888
+All.toList (small).HashMapBL.4,46326,4318,575,0,39845888
+All.toList (small).HashMapBB.4,61772,3860,703,0,39845888
+All.toList (small).HashMapBU.4,62494,3638,767,0,39845888
+All.toList (small).HashMapUL.4,47673,2412,639,0,39845888
+All.toList (small).HashMapUB.4,62659,3980,767,0,39845888
+All.toList (small).HashMapUU.4,64522,4216,831,0,39845888
+All.toList (small).Data_HashMap_Lazy.5,42450,3388,511,0,39845888
+All.toList (small).Data_HashMap_Strict.5,42523,2642,511,0,39845888
+All.toList (small).HashMapBL.5,55286,3684,687,0,39845888
+All.toList (small).HashMapBB.5,74054,3198,847,0,39845888
+All.toList (small).HashMapBU.5,74428,3464,927,0,39845888
+All.toList (small).HashMapUL.5,56043,3992,767,0,39845888
+All.toList (small).HashMapUB.5,75003,6572,927,0,39845888
+All.toList (small).HashMapUU.5,76787,6804,1007,0,39845888
+All.toList (small).Data_HashMap_Lazy.6,49088,4166,607,0,39845888
+All.toList (small).Data_HashMap_Strict.6,49599,4180,607,0,39845888
+All.toList (small).HashMapBL.6,63377,4328,799,0,39845888
+All.toList (small).HashMapBB.6,85661,6890,991,0,39845888
+All.toList (small).HashMapBU.6,88040,3648,1087,0,39845888
+All.toList (small).HashMapUL.6,64381,3532,895,0,39845888
+All.toList (small).HashMapUB.6,88031,7014,1087,0,39845888
+All.toList (small).HashMapUU.6,91642,7086,1183,0,39845888
+All.toList (small).Data_HashMap_Lazy.7,55779,5084,703,0,39845888
+All.toList (small).Data_HashMap_Strict.7,56081,3604,703,0,39845888
+All.toList (small).HashMapBL.7,70928,3386,911,0,39845888
+All.toList (small).HashMapBB.7,102672,6134,1135,0,39845888
+All.toList (small).HashMapBU.7,105383,7106,1246,0,39845888
+All.toList (small).HashMapUL.7,72450,6702,1023,0,39845888
+All.toList (small).HashMapUB.7,105653,8080,1246,0,39845888
+All.toList (small).HashMapUU.7,105583,10434,1358,0,39845888
+All.toList (small).Data_HashMap_Lazy.8,63099,3730,799,0,39845888
+All.toList (small).Data_HashMap_Strict.8,63493,3420,799,0,39845888
+All.toList (small).HashMapBL.8,78106,6762,1023,0,39845888
+All.toList (small).HashMapBB.8,114570,7302,1278,0,39845888
+All.toList (small).HashMapBU.8,116368,8998,1406,0,39845888
+All.toList (small).HashMapUL.8,92454,5020,1151,0,39845888
+All.toList (small).HashMapUB.8,116658,6768,1406,0,39845888
+All.toList (small).HashMapUU.8,116360,8198,1534,0,39845888
+All.toList (small).Data_HashMap_Lazy.9,79778,6604,895,0,39845888
+All.toList (small).Data_HashMap_Strict.9,79887,3632,895,0,39845888
+All.toList (small).HashMapBL.9,96982,8882,1135,0,39845888
+All.toList (small).HashMapBB.9,127090,8242,1422,0,39845888
+All.toList (small).HashMapBU.9,127707,9316,1566,0,39845888
+All.toList (small).HashMapUL.9,98810,4556,1278,0,39845888
+All.toList (small).HashMapUB.9,128949,8388,1566,0,39845888
+All.toList (small).HashMapUU.9,131586,6488,1710,0,39845888
+All.toList (small).Data_HashMap_Lazy.10,85189,6650,991,0,39845888
+All.toList (small).Data_HashMap_Strict.10,85387,2678,991,0,39845888
+All.toList (small).HashMapBL.10,103565,7350,1246,0,39845888
+All.toList (small).HashMapBB.10,138965,6982,1566,0,39845888
+All.toList (small).HashMapBU.10,141570,11090,1726,0,39845888
+All.toList (small).HashMapUL.10,107865,8020,1406,0,39845888
+All.toList (small).HashMapUB.10,140443,12118,1726,0,39845888
+All.toList (small).HashMapUU.10,146650,14136,1886,0,39845888
+All.toList (small).Data_HashMap_Lazy.11,92122,7950,1087,0,39845888
+All.toList (small).Data_HashMap_Strict.11,92057,6930,1087,0,39845888
+All.toList (small).HashMapBL.11,108979,6756,1358,0,39845888
+All.toList (small).HashMapBB.11,151979,11560,1710,0,39845888
+All.toList (small).HashMapBU.11,151125,14702,1886,0,39845888
+All.toList (small).HashMapUL.11,115396,7858,1534,0,39845888
+All.toList (small).HashMapUB.11,151703,12872,1886,0,39845888
+All.toList (small).HashMapUU.11,157305,14956,2062,0,39845888
+All.toList (small).Data_HashMap_Lazy.12,98726,7884,1183,0,39845888
+All.toList (small).Data_HashMap_Strict.12,99509,7576,1183,0,39845888
+All.toList (small).HashMapBL.12,120967,10984,1470,0,39845888
+All.toList (small).HashMapBB.12,161661,13444,1854,0,39845888
+All.toList (small).HashMapBU.12,165372,13528,2046,0,39845888
+All.toList (small).HashMapUL.12,123208,10740,1662,0,39845888
+All.toList (small).HashMapUB.12,165559,15710,2046,0,39845888
+All.toList (small).HashMapUU.12,170229,16034,2238,0,39845888
+All.toList (small).Data_HashMap_Lazy.13,104701,8142,1278,0,39845888
+All.toList (small).Data_HashMap_Strict.13,105185,6816,1278,0,39845888
+All.toList (small).HashMapBL.13,128063,11238,1582,0,39845888
+All.toList (small).HashMapBB.13,173657,14070,1998,0,39845888
+All.toList (small).HashMapBU.13,177001,13558,2206,0,39845888
+All.toList (small).HashMapUL.13,132178,7924,1790,0,39845888
+All.toList (small).HashMapUB.13,175522,13174,2206,0,39845888
+All.toList (small).HashMapUU.13,180684,7024,2413,0,39845888
+All.toList (small).Data_HashMap_Lazy.14,113193,7094,1374,0,39845888
+All.toList (small).Data_HashMap_Strict.14,112510,7136,1374,0,39845888
+All.toList (small).HashMapBL.14,135365,6888,1694,0,39845888
+All.toList (small).HashMapBB.14,186186,14450,2142,0,39845888
+All.toList (small).HashMapBU.14,189563,16210,2366,0,39845888
+All.toList (small).HashMapUL.14,140847,7506,1918,0,39845888
+All.toList (small).HashMapUB.14,189741,13546,2366,0,39845888
+All.toList (small).HashMapUU.14,197296,15640,2589,0,39845888
+All.toList (small).Data_HashMap_Lazy.15,119225,7288,1470,0,39845888
+All.toList (small).Data_HashMap_Strict.15,119212,7128,1470,0,39845888
+All.toList (small).HashMapBL.15,143988,7486,1806,0,39845888
+All.toList (small).HashMapBB.15,197341,13906,2286,0,39845888
+All.toList (small).HashMapBU.15,202458,16248,2525,0,39845888
+All.toList (small).HashMapUL.15,149672,14854,2046,0,39845888
+All.toList (small).HashMapUB.15,201155,16030,2525,0,39845888
+All.toList (small).HashMapUU.15,207324,13284,2765,0,39845888
+All.toList (small).Data_HashMap_Lazy.16,125936,8426,1566,0,39845888
+All.toList (small).Data_HashMap_Strict.16,124489,6466,1566,0,39845888
+All.toList (small).HashMapBL.16,151514,13328,1918,0,39845888
+All.toList (small).HashMapBB.16,209343,6772,2429,0,39845888
+All.toList (small).HashMapBU.16,217298,20320,2685,0,39845888
+All.toList (small).HashMapUL.16,159050,9314,2174,0,39845888
+All.toList (small).HashMapUB.16,213972,8136,2685,0,39845888
+All.toList (small).HashMapUU.16,219397,16846,2941,0,39845888
+All.toList (small).Data_HashMap_Lazy.17,134342,12204,1662,0,39845888
+All.toList (small).Data_HashMap_Strict.17,132761,9272,1662,0,39845888
+All.toList (small).HashMapBL.17,160313,9174,2030,0,39845888
+All.toList (small).HashMapBB.17,223019,12854,2573,0,39845888
+All.toList (small).HashMapBU.17,226807,19590,2845,0,39845888
+All.toList (small).HashMapUL.17,167073,9810,2302,0,39845888
+All.toList (small).HashMapUB.17,227848,17540,2845,0,39845888
+All.toList (small).HashMapUU.17,233821,18070,3117,0,39845888
+All.toList (small).Data_HashMap_Lazy.18,139973,8146,1758,0,39845888
+All.toList (small).Data_HashMap_Strict.18,139028,6784,1758,0,39845888
+All.toList (small).HashMapBL.18,169142,10932,2142,0,39845888
+All.toList (small).HashMapBB.18,234269,13622,2717,0,39845888
+All.toList (small).HashMapBU.18,240333,13462,3005,0,39845888
+All.toList (small).HashMapUL.18,176015,10494,2429,0,39845888
+All.toList (small).HashMapUB.18,237149,15114,3005,0,39845888
+All.toList (small).HashMapUU.18,249037,19626,3293,0,39845888
+All.toList (small).Data_HashMap_Lazy.19,145914,10680,1854,0,39845888
+All.toList (small).Data_HashMap_Strict.19,146056,8092,1854,0,39845888
+All.toList (small).HashMapBL.19,178097,16522,2254,0,39845888
+All.toList (small).HashMapBB.19,247165,18380,2861,0,39845888
+All.toList (small).HashMapBU.19,250252,16920,3165,0,39845888
+All.toList (small).HashMapUL.19,184170,13784,2557,0,39845888
+All.toList (small).HashMapUB.19,248463,19986,3165,0,39845888
+All.toList (small).HashMapUU.19,257530,14916,3469,0,39845888
+All.toList (small).Data_HashMap_Lazy.20,153193,15214,1950,0,39845888
+All.toList (small).Data_HashMap_Strict.20,152981,6652,1950,0,39845888
+All.toList (small).HashMapBL.20,185014,8946,2365,0,39845888
+All.toList (small).HashMapBB.20,260877,15162,3005,0,39845888
+All.toList (small).HashMapBU.20,262194,14072,3325,0,39845888
+All.toList (small).HashMapUL.20,192350,17360,2685,0,39845888
+All.toList (small).HashMapUB.20,261929,14262,3325,0,39845888
+All.toList (small).HashMapUU.20,274510,19668,3644,0,39845888
+All.toList (small).Data_HashMap_Lazy.21,160647,13246,2046,0,39845888
+All.toList (small).Data_HashMap_Strict.21,160399,15256,2046,0,39845888
+All.toList (small).HashMapBL.21,195804,17280,2477,0,39845888
+All.toList (small).HashMapBB.21,272123,12796,3149,0,39845888
+All.toList (small).HashMapBU.21,276397,17276,3485,0,39845888
+All.toList (small).HashMapUL.21,201733,14784,2813,0,39845888
+All.toList (small).HashMapUB.21,275573,14618,3485,0,39845888
+All.toList (small).HashMapUU.21,283919,13504,3820,0,39845888
+All.toList (small).Data_HashMap_Lazy.22,166111,15650,2142,0,39845888
+All.toList (small).Data_HashMap_Strict.22,165747,7512,2142,0,39845888
+All.toList (small).HashMapBL.22,202737,13850,2589,0,39845888
+All.toList (small).HashMapBB.22,283652,25710,3293,0,39845888
+All.toList (small).HashMapBU.22,285192,13100,3644,0,39845888
+All.toList (small).HashMapUL.22,210155,15994,2941,0,39845888
+All.toList (small).HashMapUB.22,286524,28348,3644,0,39845888
+All.toList (small).HashMapUU.22,297744,25908,3996,0,39845888
+All.toList (small).Data_HashMap_Lazy.23,173061,15134,2238,0,39845888
+All.toList (small).Data_HashMap_Strict.23,173400,16824,2238,0,39845888
+All.toList (small).HashMapBL.23,212410,17166,2701,0,39845888
+All.toList (small).HashMapBB.23,295321,17122,3437,0,39845888
+All.toList (small).HashMapBU.23,299083,28756,3804,0,39845888
+All.toList (small).HashMapUL.23,218677,17528,3069,0,39845888
+All.toList (small).HashMapUB.23,297554,14112,3804,0,39845888
+All.toList (small).HashMapUU.23,305358,29194,4172,0,39845888
+All.toList (small).Data_HashMap_Lazy.24,179873,14126,2334,0,39845888
+All.toList (small).Data_HashMap_Strict.24,179836,14278,2334,0,39845888
+All.toList (small).HashMapBL.24,218643,12804,2813,0,39845888
+All.toList (small).HashMapBB.24,306560,21438,3580,0,39845888
+All.toList (small).HashMapBU.24,309065,13744,3964,0,39845888
+All.toList (small).HashMapUL.24,228520,18248,3197,0,39845888
+All.toList (small).HashMapUB.24,310544,14520,3964,0,39845888
+All.toList (small).HashMapUU.24,322444,32074,4348,0,39845888
+All.toList (small).Data_HashMap_Lazy.25,188912,6580,2429,0,39845888
+All.toList (small).Data_HashMap_Strict.25,188273,16262,2429,0,39845888
+All.toList (small).HashMapBL.25,225825,14666,2925,0,39845888
+All.toList (small).HashMapBB.25,319322,14612,3724,0,39845888
+All.toList (small).HashMapBU.25,323807,17720,4124,0,39845888
+All.toList (small).HashMapUL.25,235869,19384,3325,0,39845888
+All.toList (small).HashMapUB.25,323213,32252,4124,0,39845888
+All.toList (small).HashMapUU.25,329953,31694,4524,0,39845888
+All.toList (small).Data_HashMap_Lazy.26,186835,14642,2525,0,39845888
+All.toList (small).Data_HashMap_Strict.26,189394,14122,2525,0,39845888
+All.toList (small).HashMapBL.26,238275,14914,3037,0,39845888
+All.toList (small).HashMapBB.26,331303,27172,3868,0,39845888
+All.toList (small).HashMapBU.26,335355,30502,4284,0,39845888
+All.toList (small).HashMapUL.26,242726,16082,3453,0,39845888
+All.toList (small).HashMapUB.26,335356,30450,4284,0,39845888
+All.toList (small).HashMapUU.26,348160,30584,4700,0,39845888
+All.toList (small).Data_HashMap_Lazy.27,199166,13846,2621,0,39845888
+All.toList (small).Data_HashMap_Strict.27,200535,18640,2621,0,39845888
+All.toList (small).HashMapBL.27,242810,20648,3149,0,39845888
+All.toList (small).HashMapBB.27,342133,32850,4012,0,39845888
+All.toList (small).HashMapBU.27,347977,25604,4444,0,39845888
+All.toList (small).HashMapUL.27,252487,12848,3580,0,39845888
+All.toList (small).HashMapUB.27,345042,29266,4444,0,39845888
+All.toList (small).HashMapUU.27,361457,21388,4875,0,39845888
+All.toList (small).Data_HashMap_Lazy.28,207865,16108,2717,0,39845888
+All.toList (small).Data_HashMap_Strict.28,205284,16056,2717,0,39845888
+All.toList (small).HashMapBL.28,253114,16282,3261,0,39845888
+All.toList (small).HashMapBB.28,357363,31434,4156,0,39845888
+All.toList (small).HashMapBU.28,360452,26802,4604,0,39845888
+All.toList (small).HashMapUL.28,260360,25610,3708,0,39845888
+All.toList (small).HashMapUB.28,358206,19778,4604,0,39845888
+All.toList (small).HashMapUU.28,373123,29060,5051,0,39845888
+All.toList (small).Data_HashMap_Lazy.29,213540,12986,2813,0,39845888
+All.toList (small).Data_HashMap_Strict.29,215239,16730,2813,0,39845888
+All.toList (small).HashMapBL.29,262176,17594,3373,0,39845888
+All.toList (small).HashMapBB.29,370148,26438,4300,0,39845888
+All.toList (small).HashMapBU.29,378032,25042,4763,0,39845888
+All.toList (small).HashMapUL.29,273634,17660,3836,0,39845888
+All.toList (small).HashMapUB.29,371257,30738,4763,0,39845888
+All.toList (small).HashMapUU.29,384046,35902,5227,0,39845888
+All.toList (small).Data_HashMap_Lazy.30,220542,13914,2909,0,39845888
+All.toList (small).Data_HashMap_Strict.30,220652,15922,2909,0,39845888
+All.toList (small).HashMapBL.30,268588,14984,3485,0,39845888
+All.toList (small).HashMapBB.30,380223,18026,4444,0,39845888
+All.toList (small).HashMapBU.30,384556,30096,4923,0,39845888
+All.toList (small).HashMapUL.30,282856,26398,3964,0,39845888
+All.toList (small).HashMapUB.30,388832,30272,4923,0,39845888
+All.toList (small).HashMapUU.30,398880,34180,5403,0,39845888
+All.toList (small).Data_HashMap_Lazy.31,228748,20574,3005,0,39845888
+All.toList (small).Data_HashMap_Strict.31,231038,17156,3005,0,39845888
+All.toList (small).HashMapBL.31,278706,15304,3596,0,39845888
+All.toList (small).HashMapBB.31,401401,32142,4588,0,39845888
+All.toList (small).HashMapBU.31,397370,34858,5083,0,39845888
+All.toList (small).HashMapUL.31,289104,13346,4092,0,39845888
+All.toList (small).HashMapUB.31,400641,37520,5083,0,39845888
+All.toList (small).HashMapUU.31,410617,29480,5579,0,39845888
+All.toList (small).Data_HashMap_Lazy.32,231738,15910,3101,0,39845888
+All.toList (small).Data_HashMap_Strict.32,234259,9270,3101,0,40894464
+All.toList (small).HashMapBL.32,288936,23908,3708,0,40894464
+All.toList (small).HashMapBB.32,413902,26730,4732,0,40894464
+All.toList (small).HashMapBU.32,415560,39810,5243,0,40894464
+All.toList (small).HashMapUL.32,303416,19436,4220,0,40894464
+All.toList (small).HashMapUB.32,408483,26388,5243,0,40894464
+All.toList (small).HashMapUU.32,425368,26316,5755,0,40894464
+All.toList (powers of two).Data_HashMap_Lazy.0,7009,452,31,0,40894464
+All.toList (powers of two).Data_HashMap_Strict.0,7027,546,31,0,40894464
+All.toList (powers of two).HashMapBL.0,6639,404,31,0,40894464
+All.toList (powers of two).HashMapBB.0,6763,546,31,0,40894464
+All.toList (powers of two).HashMapBU.0,6619,496,31,0,40894464
+All.toList (powers of two).HashMapUL.0,6533,484,31,0,40894464
+All.toList (powers of two).HashMapUB.0,6672,432,31,0,40894464
+All.toList (powers of two).HashMapUU.0,6646,412,31,0,40894464
+All.toList (powers of two).Data_HashMap_Lazy.1,8251,822,79,0,40894464
+All.toList (powers of two).Data_HashMap_Strict.1,8404,482,79,0,40894464
+All.toList (powers of two).HashMapBL.1,8583,636,79,0,40894464
+All.toList (powers of two).HashMapBB.1,8689,836,79,0,40894464
+All.toList (powers of two).HashMapBU.1,8611,506,79,0,40894464
+All.toList (powers of two).HashMapUL.1,8543,504,79,0,40894464
+All.toList (powers of two).HashMapUB.1,8598,542,79,0,40894464
+All.toList (powers of two).HashMapUU.1,8633,462,79,0,40894464
+All.toList (powers of two).Data_HashMap_Lazy.2,24311,2322,223,0,40894464
+All.toList (powers of two).Data_HashMap_Strict.2,24360,2184,223,0,40894464
+All.toList (powers of two).HashMapBL.2,31571,2002,351,0,40894464
+All.toList (powers of two).HashMapBB.2,38749,2048,415,0,40894464
+All.toList (powers of two).HashMapBU.2,39715,3804,447,0,40894464
+All.toList (powers of two).HashMapUL.2,32575,2416,383,0,40894464
+All.toList (powers of two).HashMapUB.2,39218,3490,447,0,40894464
+All.toList (powers of two).HashMapUU.2,39736,3224,479,0,40894464
+All.toList (powers of two).Data_HashMap_Lazy.4,36723,3482,415,0,40894464
+All.toList (powers of two).Data_HashMap_Strict.4,36582,2226,415,0,40894464
+All.toList (powers of two).HashMapBL.4,48561,3814,575,0,40894464
+All.toList (powers of two).HashMapBB.4,63027,4030,703,0,40894464
+All.toList (powers of two).HashMapBU.4,63547,3712,767,0,40894464
+All.toList (powers of two).HashMapUL.4,48946,4470,639,0,40894464
+All.toList (powers of two).HashMapUB.4,63681,3278,767,0,40894464
+All.toList (powers of two).HashMapUU.4,64354,3996,831,0,40894464
+All.toList (powers of two).Data_HashMap_Lazy.8,63924,3248,799,0,40894464
+All.toList (powers of two).Data_HashMap_Strict.8,64549,5548,799,0,40894464
+All.toList (powers of two).HashMapBL.8,79789,7546,1023,0,40894464
+All.toList (powers of two).HashMapBB.8,115839,6952,1278,0,40894464
+All.toList (powers of two).HashMapBU.8,117812,7858,1406,0,40894464
+All.toList (powers of two).HashMapUL.8,94245,7752,1151,0,40894464
+All.toList (powers of two).HashMapUB.8,117500,8606,1406,0,40894464
+All.toList (powers of two).HashMapUU.8,118001,7424,1534,0,40894464
+All.toList (powers of two).Data_HashMap_Lazy.16,126476,6956,1566,0,40894464
+All.toList (powers of two).Data_HashMap_Strict.16,125648,8150,1566,0,40894464
+All.toList (powers of two).HashMapBL.16,153040,14764,1918,0,40894464
+All.toList (powers of two).HashMapBB.16,212118,13194,2429,0,40894464
+All.toList (powers of two).HashMapBU.16,217070,14384,2685,0,40894464
+All.toList (powers of two).HashMapUL.16,161337,8988,2174,0,40894464
+All.toList (powers of two).HashMapUB.16,216566,14262,2685,0,40894464
+All.toList (powers of two).HashMapUU.16,219937,19040,2941,0,40894464
+All.toList (powers of two).Data_HashMap_Lazy.32,234002,17556,3101,0,40894464
+All.toList (powers of two).Data_HashMap_Strict.32,234462,14462,3101,0,40894464
+All.toList (powers of two).HashMapBL.32,287854,17534,3708,0,40894464
+All.toList (powers of two).HashMapBB.32,404834,14360,4731,0,40894464
+All.toList (powers of two).HashMapBU.32,408140,34794,5243,0,40894464
+All.toList (powers of two).HashMapUL.32,299850,27376,4220,0,40894464
+All.toList (powers of two).HashMapUB.32,408898,27662,5243,0,40894464
+All.toList (powers of two).HashMapUU.32,414990,36684,5755,0,40894464
+All.toList (powers of two).Data_HashMap_Lazy.64,651532,52366,7705,0,40894464
+All.toList (powers of two).Data_HashMap_Strict.64,655659,52672,7705,0,40894464
+All.toList (powers of two).HashMapBL.64,968362,53676,11893,1,40894464
+All.toList (powers of two).HashMapBB.64,1161799,114686,13940,1,40894464
+All.toList (powers of two).HashMapBU.64,1186974,108902,14963,1,40894464
+All.toList (powers of two).HashMapUL.64,969613,66932,12917,1,40894464
+All.toList (powers of two).HashMapUB.64,1194209,56708,14963,1,40894464
+All.toList (powers of two).HashMapUU.64,1189687,71182,15986,1,40894464
+All.toList (powers of two).Data_HashMap_Lazy.128,1049132,63788,13844,1,40894464
+All.toList (powers of two).Data_HashMap_Strict.128,1053175,68056,13844,1,40894464
+All.toList (powers of two).HashMapBL.128,1510305,116078,19055,2,40894464
+All.toList (powers of two).HashMapBB.128,1937939,141398,23148,2,40894464
+All.toList (powers of two).HashMapBU.128,1975032,55920,25194,2,40894464
+All.toList (powers of two).HashMapUL.128,1526821,56908,21102,2,40894464
+All.toList (powers of two).HashMapUB.128,1972370,102904,25194,2,40894464
+All.toList (powers of two).HashMapUU.128,1992024,128242,27240,2,40894464
+All.toList (powers of two).Data_HashMap_Lazy.256,1967769,126106,26121,2,40894464
+All.toList (powers of two).Data_HashMap_Strict.256,1983175,141456,26121,2,40894464
+All.toList (powers of two).HashMapBL.256,2696456,120374,33379,3,40894464
+All.toList (powers of two).HashMapBB.256,3669328,206648,41564,4,40894464
+All.toList (powers of two).HashMapBU.256,3780955,153310,45657,4,40894464
+All.toList (powers of two).HashMapUL.256,2997648,274062,37472,4,40894464
+All.toList (powers of two).HashMapUB.256,3744949,242044,45657,4,40894464
+All.toList (powers of two).HashMapUU.256,3799110,249550,49749,5,40894464
+All.toList (powers of two).Data_HashMap_Lazy.512,3961241,347016,50677,5,40894464
+All.toList (powers of two).Data_HashMap_Strict.512,3943865,235158,50677,5,40894464
+All.toList (powers of two).HashMapBL.512,4968620,275106,62027,6,40894464
+All.toList (powers of two).HashMapBB.512,6706387,536114,78397,8,40894464
+All.toList (powers of two).HashMapBU.512,6833779,590146,86583,9,40894464
+All.toList (powers of two).HashMapUL.512,5146313,252252,70212,7,40894464
+All.toList (powers of two).HashMapUB.512,6806616,414294,86582,9,40894464
+All.toList (powers of two).HashMapUU.512,6997000,440470,94767,9,40894464
+All.toList (powers of two).Data_HashMap_Lazy.1024,7635687,511986,99787,10,41943040
+All.toList (powers of two).Data_HashMap_Strict.1024,7570074,620486,99787,9,41943040
+All.toList (powers of two).HashMapBL.1024,9317486,854384,119323,12,41943040
+All.toList (powers of two).HashMapBB.1024,13009851,1061176,152063,15,41943040
+All.toList (powers of two).HashMapBU.1024,13133020,969080,168433,17,41943040
+All.toList (powers of two).HashMapUL.1024,9687878,410144,135692,13,41943040
+All.toList (powers of two).HashMapUB.1024,13143701,462238,168433,17,41943040
+All.toList (powers of two).HashMapUU.1024,13445117,1102366,184803,18,41943040
