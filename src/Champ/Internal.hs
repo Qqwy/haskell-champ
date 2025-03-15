@@ -184,7 +184,7 @@ isNonZeroBitmap b = (# | b #)
 --  This means GHC will skip any thunk-forcing code whenever reading/recursing
 -- - We actually don't have `EmptyMap` and `SingletonMap` as separate variants of the outer map type.
 --   They are distinguishable by reading the size field. 
---   In the case of `EmptyMap`, only the size is filled in (`0`).
+--   In the case of `EmptyMap`, only the size is filled in (`0`). We mark it as NOINLINE so all empty maps of a particular type share a single allocation
 --   In the case of `SingletonMap`: 
 --   - the hash of the single key is stored in place of the `Bitmap`.
 --   - the single key is stored in place of the keys array
@@ -216,7 +216,7 @@ instance (constraints, Soloist (valstorage)) => MapRepr (keystorage) (valstorage
 ; unpackNode (MAP_NODE_NAME(name) b keys vals children) = (# b, keys, vals, children #)                                                               \
 ; {-# INLINE packNode #-}                                                                                                                             \
 ; packNode (# b, keys, vals, children #) = (MAP_NODE_NAME(name) b keys vals children)                                                                 \
-; {-# INLINE emptyMap #-}                                                                                                                             \
+; {-# NOINLINE emptyMap #-}                                                                                                                           \
 ; emptyMap = Map_/**/name 0 0 (unsafeCoerce (mempty :: ArrayOf (Strict keystorage) k)) (unsafeCoerce (mempty :: ArrayOf (valstorage) v)) mempty       \
 ; {-# INLINE singletonMap #-}                                                                                                                         \
 ; singletonMap !h !k v = Map_/**/name 1 (unsafeCoerce $ h) (unsafeCoerce k) (unsafeCoerce (solo @(valstorage) v)) mempty                              \
