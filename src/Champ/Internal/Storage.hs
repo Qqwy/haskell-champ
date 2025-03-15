@@ -63,12 +63,11 @@ type family ArrayOf (s :: Storage) = (r :: Type -> Type) | r -> s where
   ArrayOf (Strict Unboxed) = Array.PrimArray
   ArrayOf Unexistent = Array.UnitArray
 
--- type family Soloist (s :: Storage) = (r :: Type -> Type) where
---   Soloist Lazy = Solo
---   Soloist _ = Identity
-
--- pattern Soloist x = 
-
+-- | Internal class, used to wrap a single value stored in a hashmap that is lazy in its values,
+-- behind a `Data.Tuple.Solo`.
+--
+-- For any other kind of hashmap, this indirection is not required, 
+-- so there the `Identity` newtype is used instead.
 class Soloist (s :: Storage) where
   type SoloType s :: Type -> Type
   unSolo :: SoloType s a -> a
