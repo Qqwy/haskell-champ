@@ -217,19 +217,19 @@ instance (constraints, Soloist (valstorage)) => MapRepr (keystorage) (valstorage
 ; {-# INLINE packNode #-}                                                                                                                             \
 ; packNode (# b, keys, vals, children #) = (MAP_NODE_NAME(name) b keys vals children)                                                                 \
 ; {-# INLINE emptyMap #-}                                                                                                                             \
-; emptyMap = ManyMap_/**/name 0 0 (unsafeCoerce (mempty :: ArrayOf (Strict keystorage) k)) (unsafeCoerce (mempty :: ArrayOf (valstorage) v)) mempty   \
+; emptyMap = Map_/**/name 0 0 (unsafeCoerce (mempty :: ArrayOf (Strict keystorage) k)) (unsafeCoerce (mempty :: ArrayOf (valstorage) v)) mempty       \
 ; {-# INLINE singletonMap #-}                                                                                                                         \
-; singletonMap !h !k v = ManyMap_/**/name 1 (unsafeCoerce $ h) (unsafeCoerce k) (unsafeCoerce (solo @(valstorage) v)) mempty                          \
+; singletonMap !h !k v = Map_/**/name 1 (unsafeCoerce $ h) (unsafeCoerce k) (unsafeCoerce (solo @(valstorage) v)) mempty                              \
 ; {-# INLINE manyMap #-}                                                                                                                              \
-; manyMap mapsize (MAP_NODE_NAME(name) b keys vals children) = ManyMap_/**/name mapsize b (unsafeCoerce keys) (unsafeCoerce vals) children            \
+; manyMap mapsize (MAP_NODE_NAME(name) b keys vals children) = Map_/**/name mapsize b (unsafeCoerce keys) (unsafeCoerce vals) children                \
 ; {-# INLINE matchMap #-}                                                                                                                             \
 ; matchMap = \case {                                                                                                                                  \
-; ManyMap_/**/name 0 _ _ _ _ -> (# (# #) | | #)                                                                                                       \
-; ManyMap_/**/name 1 (unsafeCoerce -> h) (unsafeCoerce -> k) (unsafeCoerce -> soloV) _ -> (#  | (# h, k, unSolo @(valstorage) soloV #) | #)           \
-; ManyMap_/**/name mapsize b keys vals children -> (# | | (# mapsize, MAP_NODE_NAME(name) b (unsafeCoerce keys) (unsafeCoerce vals) children #) #) }  \
+; Map_/**/name 0 _ _ _ _ -> (# (# #) | | #)                                                                                                           \
+; Map_/**/name 1 (unsafeCoerce -> h) (unsafeCoerce -> k) (unsafeCoerce -> soloV) _ -> (#  | (# h, k, unSolo @(valstorage) soloV #) | #)               \
+; Map_/**/name mapsize b keys vals children -> (# | | (# mapsize, MAP_NODE_NAME(name) b (unsafeCoerce keys) (unsafeCoerce vals) children #) #) }      \
 ; data MapNode (keystorage) (valstorage) k v = MAP_NODE_NAME(name) MAP_NODE_FIELDS(keystorage, valstorage)                                            \
 ; data HashMap (keystorage) (valstorage) k v                                                                                                          \
-  = ManyMap_/**/name !Word !Bitmap !Any !Any !(StrictSmallArray (MapNode (keystorage) (valstorage) k v))                                              \
+  = Map_/**/name !Word !Bitmap !Any !Any !(StrictSmallArray (MapNode (keystorage) (valstorage) k v))                                                  \
 }
 
 -- HashMap variants:
