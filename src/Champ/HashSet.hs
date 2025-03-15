@@ -118,7 +118,7 @@ size :: (SetRepr elems e) => HashSet elems e -> Int
 {-# INLINE size #-}
 size = coerce Champ.Internal.size
 
-singleton :: (SetRepr elems e) => e -> HashSet elems e
+singleton :: (Hashable e, SetRepr elems e) => e -> HashSet elems e
 {-# INLINE singleton #-}
 singleton e = coerce Champ.Internal.singleton e ()
 

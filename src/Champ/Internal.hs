@@ -26,7 +26,7 @@ module Champ.Internal where
 import Champ.Internal.Array (Array, StrictSmallArray, IsUnit, PrimUnlifted, Safety(..))
 import Champ.Internal.Array qualified as Array
 import Champ.Internal.Collision qualified as Collision
-import Champ.Internal.Storage (ArrayOf, Storage (..), StrictStorage (..))
+import Champ.Internal.Storage (ArrayOf, Storage (..), StrictStorage (..), Soloist(..))
 import Champ.Internal.Util (ptrEq)
 import Control.DeepSeq (NFData (..))
 import Control.Monad qualified
@@ -49,6 +49,7 @@ import Data.Coerce (Coercible)
 import Data.Coerce qualified
 import Unsafe.Coerce (unsafeCoerce)
 import Data.Type.Coercion (Coercion(Coercion))
+import GHC.Exts (Any)
 
 -- * Setup
 --
@@ -109,9 +110,9 @@ pattern EmptyMap <- (matchMap -> (# (# #) | | #))
 pattern SingletonMap ::
   forall (keyStorage :: StrictStorage) (valStorage :: Storage) k v.
   (MapRepr keyStorage valStorage k v) =>
-  k -> v -> HashMap keyStorage valStorage k v
+  Hash -> k -> v -> HashMap keyStorage valStorage k v
 {-# INLINE SingletonMap #-}
-pattern SingletonMap k v <- (matchMap -> (# | (# k, v #) | #))
+pattern SingletonMap h k v <- (matchMap -> (# | (# h, k, v #) | #))
   where
     SingletonMap = singletonMap
 
@@ -163,7 +164,7 @@ isNonZeroBitmap b = (# | b #)
 -- Conceptually, you can think of it as:
 --
 -- ```
--- data Map (keys :: StrictStorage) (vals :: Storage) k v = EmptyMap | SingletonMap !k v | ManyMap (MapNode k v)
+-- data Map (keys :: StrictStorage) (vals :: Storage) k v = EmptyMap | SingletonMap !k v | ManyMap {size :: !Word, contents :: (MapNode k v)}
 --
 -- data MapNode keys vals k v
 --    = CollisionNode !(ArrayOf (Strict keys)) !(ArrayOf vals)
@@ -178,9 +179,17 @@ isNonZeroBitmap b = (# | b #)
 -- - As mentioned above, we make sure that GHC unpacks the intermediate array boxes,
 --  so we store the `SmallArray#` resp `ByteArray#` pointers directly.
 --  This results in one word saved for the outer map and three more words saved per map node.
--- - Finally, we make sure that internal map nodes are stored as `UnliftedType` (AKA `TYPE 'BoxedRep 'Unlifted`)
+-- - We make sure that internal map nodes are stored as `UnliftedType` (AKA `TYPE 'BoxedRep 'Unlifted`)
 --  inside their array, as we're always strict in the tree-spine of the CHAMP map.
 --  This means GHC will skip any thunk-forcing code whenever reading/recursing
+-- - We actually don't have `EmptyMap` and `SingletonMap` as separate variants of the outer map type.
+--   They are distinguishable by reading the size field. 
+--   In the case of `EmptyMap`, only the size is filled in (`0`). We mark it as NOINLINE so all empty maps of a particular type share a single allocation
+--   In the case of `SingletonMap`: 
+--   - the hash of the single key is stored in place of the `Bitmap`.
+--   - the single key is stored in place of the keys array
+--   - the single value are stored in place of the values array. Iff the map is lazy in its values, it is wrapped in an extra `Solo` (c.f. `Soloist`).
+--   Doing this simplifies some code, and allows us to support UNPACKing maps (they cost 5 inline words).
 class (Array (ArrayOf (Strict keyStorage)), Array (ArrayOf (valStorage)), Element (ArrayOf (Strict keyStorage)) k, Element (ArrayOf valStorage) v) => MapRepr (keyStorage :: StrictStorage) (valStorage :: Storage) k v where
   data HashMap keyStorage valStorage k v
 
@@ -190,8 +199,8 @@ class (Array (ArrayOf (Strict keyStorage)), Array (ArrayOf (valStorage)), Elemen
   unpackNode :: MapNode keyStorage valStorage k v -> (# Bitmap, ArrayOf (Strict keyStorage) k, (ArrayOf valStorage) v, StrictSmallArray (MapNode keyStorage valStorage k v) #)
   manyMap :: Word -> MapNode keyStorage valStorage k v -> HashMap keyStorage valStorage k v
   emptyMap :: HashMap keyStorage valStorage k v
-  singletonMap :: k -> v -> HashMap keyStorage valStorage k v
-  matchMap :: HashMap keyStorage valStorage k v -> (# (# #) | (# k, v #) | (# Word, MapNode keyStorage valStorage k v #) #)
+  singletonMap :: Hash -> k -> v -> HashMap keyStorage valStorage k v
+  matchMap :: HashMap keyStorage valStorage k v -> (# (# #) | (# Hash, k, v #) | (# Word, MapNode keyStorage valStorage k v #) #)
 
 #define MAP_NODE_NAME(name) MapNode/**/_/**/name
 
@@ -201,28 +210,26 @@ class (Array (ArrayOf (Strict keyStorage)), Array (ArrayOf (valStorage)), Elemen
      {-# UNPACK #-} !((ArrayOf (valstorage)) v) \
      {-# UNPACK #-} !(StrictSmallArray (MapNode (keystorage) (valstorage) k v))
 
-#define map_repr_instance(name, keystorage, valstorage, constraints)                                                     \
-instance constraints => MapRepr (keystorage) (valstorage) k v where                                                      \
-{ {-# INLINE unpackNode #-}                                                                                              \
-; unpackNode (MAP_NODE_NAME(name) b keys vals children) = (# b, keys, vals, children #)                                  \
-; {-# INLINE packNode #-}                                                                                                \
-; packNode (# b, keys, vals, children #) = (MAP_NODE_NAME(name) b keys vals children)                                    \
-; {-# INLINE emptyMap #-}                                                                                                \
-; emptyMap = EmptyMap_/**/name                                                                                           \
-; {-# INLINE singletonMap #-}                                                                                            \
-; singletonMap !k v = SingletonMap_/**/name k v                                                                          \
-; {-# INLINE manyMap #-}                                                                                                 \
-; manyMap mapsize (MAP_NODE_NAME(name) b keys vals children) = ManyMap_/**/name mapsize b keys vals children             \
-; {-# INLINE matchMap #-}                                                                                                \
-; matchMap = \case {                                                                                                     \
-; EmptyMap_/**/name -> (# (# #) | | #)                                                                                   \
-; SingletonMap_/**/name k v -> (#  | (# k, v #) | #)                                                                     \
-; ManyMap_/**/name mapsize b keys vals children -> (# | | (# mapsize, MAP_NODE_NAME(name) b keys vals children #) #) }   \
-; data MapNode (keystorage) (valstorage) k v = MAP_NODE_NAME(name) MAP_NODE_FIELDS(keystorage, valstorage)               \
-; data HashMap (keystorage) (valstorage) k v                                                                                 \
-  = EmptyMap_/**/name                                                                                                    \
-  | SingletonMap_/**/name !k v                                                                                           \
-  | ManyMap_/**/name !Word MAP_NODE_FIELDS(keystorage, valstorage)                                                       \
+#define map_repr_instance(name, keystorage, valstorage, constraints)                                                                                  \
+instance (constraints, Soloist (valstorage)) => MapRepr (keystorage) (valstorage) k v where                                                           \
+{ {-# INLINE unpackNode #-}                                                                                                                           \
+; unpackNode (MAP_NODE_NAME(name) b keys vals children) = (# b, keys, vals, children #)                                                               \
+; {-# INLINE packNode #-}                                                                                                                             \
+; packNode (# b, keys, vals, children #) = (MAP_NODE_NAME(name) b keys vals children)                                                                 \
+; {-# NOINLINE emptyMap #-}                                                                                                                           \
+; emptyMap = Map_/**/name 0 0 (unsafeCoerce (mempty :: ArrayOf (Strict keystorage) k)) (unsafeCoerce (mempty :: ArrayOf (valstorage) v)) mempty       \
+; {-# INLINE singletonMap #-}                                                                                                                         \
+; singletonMap !h !k v = Map_/**/name 1 (unsafeCoerce $ h) (unsafeCoerce k) (unsafeCoerce (solo @(valstorage) v)) mempty                              \
+; {-# INLINE manyMap #-}                                                                                                                              \
+; manyMap mapsize (MAP_NODE_NAME(name) b keys vals children) = Map_/**/name mapsize b (unsafeCoerce keys) (unsafeCoerce vals) children                \
+; {-# INLINE matchMap #-}                                                                                                                             \
+; matchMap = \case {                                                                                                                                  \
+; Map_/**/name 0 _ _ _ _ -> (# (# #) | | #)                                                                                                           \
+; Map_/**/name 1 (unsafeCoerce -> h) (unsafeCoerce -> k) (unsafeCoerce -> soloV) _ -> (#  | (# h, k, unSolo @(valstorage) soloV #) | #)               \
+; Map_/**/name mapsize b keys vals children -> (# | | (# mapsize, MAP_NODE_NAME(name) b (unsafeCoerce keys) (unsafeCoerce vals) children #) #) }      \
+; data MapNode (keystorage) (valstorage) k v = MAP_NODE_NAME(name) MAP_NODE_FIELDS(keystorage, valstorage)                                            \
+; data HashMap (keystorage) (valstorage) k v                                                                                                          \
+  = Map_/**/name !Word !Bitmap !Any !Any !(StrictSmallArray (MapNode (keystorage) (valstorage) k v))                                                  \
 }
 
 -- HashMap variants:
@@ -257,16 +264,19 @@ null _ = False
 size :: (MapRepr keys vals k v) => HashMap keys vals k v -> Int
 {-# INLINE size #-}
 size EmptyMap = 0
-size (SingletonMap _k _v) = 1
+size (SingletonMap _h _k _v) = 1
 size (ManyMap s _) = fromIntegral s
 
 empty :: (MapRepr keys vals k v) => HashMap keys vals k v
 {-# INLINE empty #-}
 empty = EmptyMap
 
-singleton :: (MapRepr keys vals k v) => k -> v -> HashMap keys vals k v
+singleton :: (Hashable k, MapRepr keys vals k v) => k -> v -> HashMap keys vals k v
 {-# INLINE singleton #-}
-singleton !k v = SingletonMap k v
+singleton !k v = singleton' (hash k) k v
+
+singleton' :: (MapRepr keys vals k v) => Hash -> k -> v -> HashMap keys vals k v
+singleton' !h !k v = SingletonMap h k v
 
 data Location = Inline | InChild | Nowhere
 
@@ -421,9 +431,9 @@ insert' :: (Hashable k, MapRepr keys vals k v) => Safety -> Hash -> k -> v -> Ha
 {-# INLINE insert' #-}
 insert' safety h !k v !m = case matchMap m of
   (# (# #) | | #) -> singleton k v
-  (# | (# k', v' #) | #) ->
-    if k == k'
-      then singleton k' v
+  (# | (# h', k', v' #) | #) ->
+    if h == h' && k == k'
+      then singleton' h k' v
       else
         let !(# size, node #) =
               Contiguous.empty
@@ -595,12 +605,12 @@ delete' :: (Hashable k, MapRepr keys vals k v) => Safety -> Hash -> k -> HashMap
 {-# INLINE delete' #-}
 delete' safety h !k !m = case matchMap m of
   (# (# #) | | #) -> EmptyMap
-  (# | (# k', v #) | #) 
+  (# | (# h', k', v #) | #) 
     | k == k' -> EmptyMap
-    | otherwise -> SingletonMap k' v
+    | otherwise -> SingletonMap h' k' v
   (# | | (# size, node0 #) #) ->
     case deleteFromNode safety h k 0 node0 of
-      (# (# k', v #) | #) -> SingletonMap k' v
+      (# (# k', v #) | #) -> singleton k' v
       (# | (# didIShrink, node #) #) -> ManyMap (size - Exts.W# didIShrink) node
 
 deleteFromNode :: (MapRepr keyStorage valStorage a1 a2, Eq a1) =>
@@ -712,7 +722,7 @@ lookupKVKnownHash# :: (MapRepr keys vals k v, Eq k, Hashable k) => Hash -> k -> 
 {-# INLINE lookupKVKnownHash# #-}
 lookupKVKnownHash# h !k m = case matchMap m of
   (# (# #) | | #) -> (# (# #) | #)
-  (# | (# k', v #) | #) -> if k == k' then (# | (# k', v #) #) else (# (# #) | #)
+  (# | (# h', k', v #) | #) -> if h == h' && k == k' then (# | (# k', v #) #) else (# (# #) | #)
   (# | | (# _size, node0 #) #) ->
     -- NOTE: Manually inlining the first iteration of lookup'
     -- (which will _never_ be in a collision node)
@@ -779,7 +789,7 @@ instance (MapRepr keys vals k v, Eq v, Eq k) => Eq (HashMap keys vals k v) where
     else 
       case (a, b) of
         (EmptyMap, EmptyMap) -> True
-        ((SingletonMap k v), (SingletonMap k' v')) -> (k == k') && (v == v')
+        ((SingletonMap h k v), (SingletonMap h' k' v')) -> (h == h') && (k == k') && (v == v')
         ((ManyMap sz node), (ManyMap sz' node')) -> 
           sz == sz' && node == node'
         (_, _) -> False
@@ -810,7 +820,7 @@ instance (Hashable k, Eq k, MapRepr keys vals k v) => IsList (HashMap keys vals 
 instance (NFData v, NFData k, (MapRepr keys vals k v), NFData (MapNode keys vals k v)) => NFData (HashMap keys vals k v) where
   {-# INLINE rnf #-}
   rnf EmptyMap = ()
-  rnf (SingletonMap k v) = rnf k `seq` rnf v
+  rnf (SingletonMap _h k v) = rnf k `seq` rnf v
   rnf (ManyMap _size node) = rnf node
 
 instance {-# OVERLAPPABLE #-} (NFData k, NFData v, MapRepr keys vals k v) => NFData (MapNode keys vals k v) where
@@ -873,7 +883,7 @@ map' :: (MapRepr keys as k a, MapRepr keys bs k b) => (a -> b) -> HashMap keys a
 {-# INLINE map' #-}
 map' !f = \case 
   EmptyMap -> EmptyMap
-  (SingletonMap k v) -> SingletonMap k (f v)
+  (SingletonMap h k v) -> SingletonMap h k (f v)
   (ManyMap sz node) -> ManyMap sz (mapNode node)
     where
       mapNode (CollisionNode keys vals) = (CollisionNode keys (Contiguous.map f vals))
@@ -906,9 +916,9 @@ traverseWithKey' :: (Applicative f, MapRepr keys as k a, MapRepr keys bs k b) =>
 {-# INLINE traverseWithKey' #-}
 traverseWithKey' !f = \case
   EmptyMap -> pure EmptyMap
-  (SingletonMap k v) -> do
+  (SingletonMap h k v) -> do
     v' <- f k v
-    pure (SingletonMap k v')
+    pure (SingletonMap h k v')
   ManyMap sz node -> do
     node' <- traverseNodeWithKey f node
     pure (ManyMap sz node')
@@ -948,7 +958,7 @@ mapWithKey' :: (MapRepr keys as k a, MapRepr keys bs k b) => (k -> a -> b) -> Ha
 {-# INLINE mapWithKey' #-}
 mapWithKey' !f = \case 
   EmptyMap -> EmptyMap
-  (SingletonMap k v) -> SingletonMap k (f k v)
+  (SingletonMap h k v) -> SingletonMap h k (f k v)
   (ManyMap sz node) -> ManyMap sz (mapNodeWithKey node)
     where
       mapNodeWithKey (CollisionNode keys vals) = (CollisionNode keys (Contiguous.zipWith f keys vals))
@@ -1101,7 +1111,7 @@ instance (Prim k) => Foldable (HashMapUB k) where
 foldr :: (MapRepr keys vals k v) => (v -> r -> r) -> r -> HashMap keys vals k v -> r
 foldr f z0 m = case matchMap m of
   (# (# #) | | #) -> z0
-  (# | (# _k, v #) | #) -> f v z0
+  (# | (# _h, _k, v #) | #) -> f v z0
   (# | | (# _size, node0 #) #) -> Exts.inline go node0 z0
   where
     go (MapNode _bitmap _keys !vals !children) z =
@@ -1113,7 +1123,7 @@ foldr f z0 m = case matchMap m of
 foldl :: (MapRepr keys vals k v) => (r -> v -> r) -> r -> HashMap keys vals k v -> r
 foldl f z0 m = case matchMap m of
   (# (# #) | | #) -> z0
-  (# | (# _k, v #) | #) -> f z0 v
+  (# | (# _h, _k, v #) | #) -> f z0 v
   (# | | (# _size, node0 #) #) -> Exts.inline go z0 node0
   where
     go z (MapNode _bitmap _keys !vals !children) =
@@ -1126,7 +1136,7 @@ foldl f z0 m = case matchMap m of
 foldr' :: (MapRepr keys vals k v) => (v -> r -> r) -> r -> HashMap keys vals k v -> r
 foldr' f !z0 m = case matchMap m of
   (# (# #) | | #) -> z0
-  (# | (# _k, v #) | #) -> f v z0
+  (# | (# _h, _k, v #) | #) -> f v z0
   (# | | (# _size, node0 #) #) -> Exts.inline go node0 z0
   where
     go (MapNode _bitmap _keys !vals !children) !z =
@@ -1138,7 +1148,7 @@ foldr' f !z0 m = case matchMap m of
 foldl' :: (MapRepr keys vals k v) => (r -> v -> r) -> r -> HashMap keys vals k v -> r
 foldl' f !z0 m = case matchMap m of
   (# (# #) | | #) -> z0
-  (# | (# _k, v #) | #) -> f z0 v
+  (# | (# _h, _k, v #) | #) -> f z0 v
   (# | | (# _size, node0 #) #) -> Exts.inline go z0 node0
   where
     go !z (MapNode _bitmap _keys !vals !children) =
@@ -1150,7 +1160,7 @@ foldl' f !z0 m = case matchMap m of
 foldrWithKey :: (MapRepr keys vals k v) => (k -> v -> r -> r) -> r -> HashMap keys vals k v -> r
 foldrWithKey f z0 m = case matchMap m of
   (# (# #) | | #) -> z0
-  (# | (# k, v #) | #) -> f k v z0
+  (# | (# _h, k, v #) | #) -> f k v z0
   (# | | (# _size, node0 #) #) -> Exts.inline go node0 z0
   where
     go (MapNode _bitmap keys !vals !children) z =
@@ -1163,7 +1173,7 @@ foldrWithKey f z0 m = case matchMap m of
 foldrWithKey' :: (MapRepr keys vals k v) => (k -> v -> r -> r) -> r -> HashMap keys vals k v -> r
 foldrWithKey' f !z0 m = case matchMap m of
   (# (# #) | | #) -> z0
-  (# | (# k, v #) | #) -> f k v z0
+  (# | (# _h, k, v #) | #) -> f k v z0
   (# | | (# _size, node0 #) #) -> Exts.inline go node0 z0
   where
     go (MapNode _bitmap !keys !vals !children) !z =
@@ -1175,7 +1185,7 @@ foldrWithKey' f !z0 m = case matchMap m of
 foldlWithKey :: (MapRepr keys vals k v) => (r -> k -> v -> r) -> r -> HashMap keys vals k v -> r
 foldlWithKey f z0 m = case matchMap m of
   (# (# #) | | #) -> z0
-  (# | (# k, v #) | #) -> f z0 k v
+  (# | (# _h, k, v #) | #) -> f z0 k v
   (# | | (# _size, node0 #) #) -> Exts.inline go z0 node0
   where
     go !z (MapNode _bitmap keys !vals !children) =
@@ -1187,7 +1197,7 @@ foldlWithKey f z0 m = case matchMap m of
 foldlWithKey' :: (MapRepr keys vals k v) => (r -> k -> v -> r) -> r -> HashMap keys vals k v -> r
 foldlWithKey' f !z0 m = case matchMap m of
   (# (# #) | | #) -> z0
-  (# | (# k, v #) | #) -> f z0 k v
+  (# | (# _h, k, v #) | #) -> f z0 k v
   (# | | (# _size, node0 #) #) -> Exts.inline go z0 node0
   where
     go !z (MapNode _bitmap keys !vals !children) =
@@ -1202,7 +1212,7 @@ foldlWithKey' f !z0 m = case matchMap m of
 foldMapWithKey :: (MapRepr keys vals k v, Monoid m) => (k -> v -> m) -> HashMap keys vals k v -> m
 foldMapWithKey f m = case matchMap m of
   (# (# #) | | #) -> mempty
-  (# | (# k, v #) | #) -> f k v
+  (# | (# _h, k, v #) | #) -> f k v
   (# | | (# _size, node0 #) #) -> Exts.inline go node0
   where
     go (MapNode _bitmap keys vals !children) = 
@@ -1241,7 +1251,7 @@ convert :: forall h1 h2 {ks} {ks'} {vs} {vs'} {k} {v}. (h1 ~ HashMap ks vs, h2 ~
 {-# INLINE [2] convert #-}
 convert m = case matchMap m of
   (# (# #) | | #) -> EmptyMap
-  (# | (# k, v #) | #) -> SingletonMap k v
+  (# | (# h, k, v #) | #) -> SingletonMap h k v
   (# | | (# size, node #) #) -> ManyMap size (convert' node)
   where
     convert' :: MapNode ks vs k v -> MapNode ks' vs' k v
@@ -1256,7 +1266,7 @@ convertDropVals :: forall h1 h2 {ks} {ks'} {vs} {k} {v}. (h1 ~ HashMap ks vs, h2
 {-# INLINE [2] convertDropVals #-}
 convertDropVals m = case matchMap m of
   (# (# #) | | #) -> EmptyMap
-  (# | (# k, _v #) | #) -> SingletonMap k ()
+  (# | (# h, k, _v #) | #) -> SingletonMap h k ()
   (# | | (# size, node #) #) -> ManyMap size (convert' node)
   where
     convert' :: MapNode ks vs k v -> MapNode ks' Unexistent k ()
@@ -1269,7 +1279,7 @@ convertDropVals m = case matchMap m of
 -- Not intended for wider usage.
 debugShow :: (Show (ArrayOf (Strict keys) k), Show (ArrayOf vals v), Show k, Show v, MapRepr keys vals k v) => HashMap keys vals k v -> String
 debugShow EmptyMap = "EmptyMap"
-debugShow (SingletonMap k v) = "(SingletonMap " <> show k <> " " <> show v <> ")"
+debugShow (SingletonMap _h k v) = "(SingletonMap " <> show k <> " " <> show v <> ")"
 debugShow (ManyMap _size node) = "(ManyMap " <> debugShowNode node <> ")"
 
 debugShowNode :: (Show (ArrayOf (Strict keys) k), Show (ArrayOf vals v), Show k, Show v, MapRepr keys vals k v) => MapNode keys vals k v -> String
@@ -1428,7 +1438,7 @@ instance Show Bitmap where
 newtype Mask = Mask Word
   deriving (Eq, Ord, Show)
 
-newtype Hash = Hash Word
+newtype Hash = Hash Word64
   deriving (Eq, Ord, Show)
 
 hash :: (Hashable a) => a -> Hash

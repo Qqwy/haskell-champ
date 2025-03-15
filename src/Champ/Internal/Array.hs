@@ -209,6 +209,7 @@ instance (Eq a) => Eq (StrictSmallArray a) where
 -- in type families (which we need for `ArrayOf`)
 -- as it has an extra free-floating `unlifted_a` type parameter.
 newtype SmallUnliftedArray' a = SmallUnliftedArray' (SmallUnliftedArray_ (Unlifted.Unlifted a) a)
+  deriving (Semigroup, Monoid)
 newtype MutableSmallUnliftedArray' s a = MutableSmallUnliftedArray' (SmallMutableUnliftedArray_ (Unlifted.Unlifted a) s a)
 
 newtype SmallUnliftedArray'# a = SmallUnliftedArray'# (SmallUnliftedArray# (Unlifted.Unlifted a))
@@ -326,6 +327,12 @@ data UnitArray (a :: Type) where
 data MutableUnitArray s (a :: Type) where 
   MutableUnitArray :: {-# UNPACK #-} !Int -> MutableUnitArray s a
   deriving Show
+
+instance Semigroup (UnitArray a) where
+  UnitArray l <> UnitArray r = UnitArray (l + r)
+
+instance Monoid (UnitArray a) where
+  mempty = UnitArray 0
 
 data UnitArray# (a :: Type) :: UnliftedType where 
   UnitArray# :: {-# UNPACK #-} !Int -> UnitArray# a
