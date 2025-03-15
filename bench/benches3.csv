@@ -1,0 +1,2143 @@
+Name,Mean (ps),2*Stdev (ps),Allocated,Copied,Peak Memory
+All.insert (small).Data_HashMap_Lazy.0,12717,4348,63,0,49283072
+All.insert (small).Data_HashMap_Strict.0,12785,4424,63,0,49283072
+All.insert (small).HashMapBL.0,13881,3964,79,0,49283072
+All.insert (small).HashMapBB.0,13872,4824,79,0,49283072
+All.insert (small).HashMapBU.0,13746,3584,79,0,49283072
+All.insert (small).HashMapUL.0,13889,4042,79,0,49283072
+All.insert (small).HashMapUB.0,13589,4226,79,0,49283072
+All.insert (small).HashMapUU.0,13220,3270,79,0,49283072
+All.insert (small).Data_HashMap_Lazy.1,25541,8264,119,0,49283072
+All.insert (small).Data_HashMap_Strict.1,25072,7854,119,0,49283072
+All.insert (small).HashMapBL.1,82186,14220,447,0,49283072
+All.insert (small).HashMapBB.1,78200,16452,423,0,49283072
+All.insert (small).HashMapBU.1,69835,13060,423,0,49283072
+All.insert (small).HashMapUL.1,72770,23110,447,0,49283072
+All.insert (small).HashMapUB.1,64963,19340,423,0,49283072
+All.insert (small).HashMapUU.1,60349,13362,383,0,49283072
+All.insert (small).Data_HashMap_Lazy.2,44062,10152,128,0,49283072
+All.insert (small).Data_HashMap_Strict.2,44124,6728,128,0,49283072
+All.insert (small).HashMapBL.2,72364,18970,391,0,49283072
+All.insert (small).HashMapBB.2,71938,14400,391,0,49283072
+All.insert (small).HashMapBU.2,62889,18058,391,0,49283072
+All.insert (small).HashMapUL.2,63413,14004,391,0,49283072
+All.insert (small).HashMapUB.2,62648,14642,391,0,49283072
+All.insert (small).HashMapUU.2,53929,19362,352,0,49283072
+All.insert (small).Data_HashMap_Lazy.3,53354,14428,136,0,49283072
+All.insert (small).Data_HashMap_Strict.3,53413,14084,136,0,49283072
+All.insert (small).HashMapBL.3,76991,21272,407,0,49283072
+All.insert (small).HashMapBB.3,75525,17510,407,0,49283072
+All.insert (small).HashMapBU.3,67561,15542,407,0,49283072
+All.insert (small).HashMapUL.3,67043,17576,407,0,49283072
+All.insert (small).HashMapUB.3,64525,12866,407,0,49283072
+All.insert (small).HashMapUU.3,57096,16948,367,0,49283072
+All.insert (small).Data_HashMap_Lazy.4,59382,18576,144,0,49283072
+All.insert (small).Data_HashMap_Strict.4,60076,19446,144,0,49283072
+All.insert (small).HashMapBL.4,79363,19646,423,0,49283072
+All.insert (small).HashMapBB.4,76633,13066,423,0,49283072
+All.insert (small).HashMapBU.4,67748,17812,423,0,49283072
+All.insert (small).HashMapUL.4,67325,19778,423,0,49283072
+All.insert (small).HashMapUB.4,64446,19052,423,0,49283072
+All.insert (small).HashMapUU.4,58892,15410,383,0,49283072
+All.insert (small).Data_HashMap_Lazy.5,67308,15410,152,0,49283072
+All.insert (small).Data_HashMap_Strict.5,64436,16958,152,0,49283072
+All.insert (small).HashMapBL.5,82855,13170,439,0,49283072
+All.insert (small).HashMapBB.5,80881,17154,440,0,49283072
+All.insert (small).HashMapBU.5,75045,19064,439,0,49283072
+All.insert (small).HashMapUL.5,72779,26276,439,0,49283072
+All.insert (small).HashMapUB.5,69311,12910,439,0,49283072
+All.insert (small).HashMapUU.5,57324,19188,400,0,49283072
+All.insert (small).Data_HashMap_Lazy.6,71782,19516,160,0,49283072
+All.insert (small).Data_HashMap_Strict.6,74286,14638,160,0,49283072
+All.insert (small).HashMapBL.6,85414,13308,456,0,49283072
+All.insert (small).HashMapBB.6,80047,13312,456,0,49283072
+All.insert (small).HashMapBU.6,71261,14764,456,0,49283072
+All.insert (small).HashMapUL.6,74985,17338,456,0,49283072
+All.insert (small).HashMapUB.6,69117,14684,456,0,49283072
+All.insert (small).HashMapUU.6,61565,15088,415,0,49283072
+All.insert (small).Data_HashMap_Lazy.7,79513,15870,168,0,49283072
+All.insert (small).Data_HashMap_Strict.7,80138,12930,168,0,49283072
+All.insert (small).HashMapBL.7,86961,26258,472,0,49283072
+All.insert (small).HashMapBB.7,82825,14796,472,0,49283072
+All.insert (small).HashMapBU.7,71184,20544,472,0,49283072
+All.insert (small).HashMapUL.7,75724,19916,472,0,49283072
+All.insert (small).HashMapUB.7,70273,16878,472,0,49283072
+All.insert (small).HashMapUU.7,58855,13484,431,0,49283072
+All.insert (small).Data_HashMap_Lazy.8,87548,14720,176,0,49283072
+All.insert (small).Data_HashMap_Strict.8,86664,15134,176,0,49283072
+All.insert (small).HashMapBL.8,88416,14754,488,0,49283072
+All.insert (small).HashMapBB.8,78743,13002,488,0,49283072
+All.insert (small).HashMapBU.8,67510,24874,488,0,49283072
+All.insert (small).HashMapUL.8,74260,29050,488,0,49283072
+All.insert (small).HashMapUB.8,66082,17186,488,0,49283072
+All.insert (small).HashMapUU.8,59759,14012,447,0,49283072
+All.insert (small).Data_HashMap_Lazy.9,92614,17724,184,0,49283072
+All.insert (small).Data_HashMap_Strict.9,92064,15798,184,0,49283072
+All.insert (small).HashMapBL.9,88604,14572,503,0,49283072
+All.insert (small).HashMapBB.9,86243,20878,503,0,49283072
+All.insert (small).HashMapBU.9,70579,15784,503,0,49283072
+All.insert (small).HashMapUL.9,76925,24642,503,0,49283072
+All.insert (small).HashMapUB.9,67280,16794,503,0,49283072
+All.insert (small).HashMapUU.9,58960,23376,463,0,49283072
+All.insert (small).Data_HashMap_Lazy.10,103755,26980,192,0,49283072
+All.insert (small).Data_HashMap_Strict.10,100790,34168,192,0,49283072
+All.insert (small).HashMapBL.10,92121,12930,519,0,49283072
+All.insert (small).HashMapBB.10,86179,13992,519,0,49283072
+All.insert (small).HashMapBU.10,70499,22968,519,0,49283072
+All.insert (small).HashMapUL.10,79746,19308,519,0,49283072
+All.insert (small).HashMapUB.10,76530,20018,519,0,49283072
+All.insert (small).HashMapUU.10,61388,15466,479,0,49283072
+All.insert (small).Data_HashMap_Lazy.11,110780,32588,200,0,49283072
+All.insert (small).Data_HashMap_Strict.11,110251,29266,200,0,49283072
+All.insert (small).HashMapBL.11,95964,31260,535,0,49283072
+All.insert (small).HashMapBB.11,86589,14624,535,0,49283072
+All.insert (small).HashMapBU.11,72537,19160,535,0,49283072
+All.insert (small).HashMapUL.11,79527,18106,535,0,49283072
+All.insert (small).HashMapUB.11,78131,17250,535,0,49283072
+All.insert (small).HashMapUU.11,65038,13834,495,0,49283072
+All.insert (small).Data_HashMap_Lazy.12,113968,32194,208,0,49283072
+All.insert (small).Data_HashMap_Strict.12,114503,35184,208,0,49283072
+All.insert (small).HashMapBL.12,100696,32932,552,0,49283072
+All.insert (small).HashMapBB.12,87834,19700,551,0,49283072
+All.insert (small).HashMapBU.12,76732,20980,551,0,49283072
+All.insert (small).HashMapUL.12,89605,16162,551,0,49283072
+All.insert (small).HashMapUB.12,74718,31198,551,0,49283072
+All.insert (small).HashMapUU.12,60037,13310,512,0,49283072
+All.insert (small).Data_HashMap_Lazy.13,120527,28384,216,0,49283072
+All.insert (small).Data_HashMap_Strict.13,118698,31840,216,0,49283072
+All.insert (small).HashMapBL.13,101741,39760,568,0,49283072
+All.insert (small).HashMapBB.13,86761,14536,567,0,49283072
+All.insert (small).HashMapBU.13,73587,13148,567,0,49283072
+All.insert (small).HashMapUL.13,82421,17746,567,0,49283072
+All.insert (small).HashMapUB.13,74850,21178,567,0,49283072
+All.insert (small).HashMapUU.13,61914,17944,527,0,49283072
+All.insert (small).Data_HashMap_Lazy.14,125995,36762,224,0,49283072
+All.insert (small).Data_HashMap_Strict.14,129259,30004,224,0,50331648
+All.insert (small).HashMapBL.14,109721,36288,583,0,50331648
+All.insert (small).HashMapBB.14,96108,28582,583,0,50331648
+All.insert (small).HashMapBU.14,86853,16092,583,0,50331648
+All.insert (small).HashMapUL.14,98471,30664,583,0,50331648
+All.insert (small).HashMapUB.14,77628,22704,583,0,50331648
+All.insert (small).HashMapUU.14,59895,16870,544,0,50331648
+All.insert (small).Data_HashMap_Lazy.15,134843,26906,232,0,50331648
+All.insert (small).Data_HashMap_Strict.15,134854,37744,232,0,50331648
+All.insert (small).HashMapBL.15,106741,29794,600,0,50331648
+All.insert (small).HashMapBB.15,94577,18268,600,0,50331648
+All.insert (small).HashMapBU.15,74506,20226,600,0,50331648
+All.insert (small).HashMapUL.15,97164,27332,600,0,50331648
+All.insert (small).HashMapUB.15,75557,20134,600,0,50331648
+All.insert (small).HashMapUU.15,63982,16074,559,0,50331648
+All.insert (small).Data_HashMap_Lazy.16,141629,27292,240,0,50331648
+All.insert (small).Data_HashMap_Strict.16,141001,33600,240,0,50331648
+All.insert (small).HashMapBL.16,113412,34948,616,0,50331648
+All.insert (small).HashMapBB.16,108538,39910,616,0,50331648
+All.insert (small).HashMapBU.16,83432,21242,616,0,50331648
+All.insert (small).HashMapUL.16,99177,34174,616,0,50331648
+All.insert (small).HashMapUB.16,80491,18744,616,0,50331648
+All.insert (small).HashMapUU.16,62871,17620,575,0,50331648
+All.insert (small).Data_HashMap_Lazy.17,143312,47124,248,0,50331648
+All.insert (small).Data_HashMap_Strict.17,145785,27034,248,0,50331648
+All.insert (small).HashMapBL.17,114200,31932,632,0,50331648
+All.insert (small).HashMapBB.17,101487,25856,632,0,50331648
+All.insert (small).HashMapBU.17,80762,13084,632,0,50331648
+All.insert (small).HashMapUL.17,98222,35424,632,0,50331648
+All.insert (small).HashMapUB.17,82292,15564,632,0,50331648
+All.insert (small).HashMapUU.17,66418,17668,591,0,50331648
+All.insert (small).Data_HashMap_Lazy.18,152563,31164,256,0,50331648
+All.insert (small).Data_HashMap_Strict.18,153321,31668,256,0,50331648
+All.insert (small).HashMapBL.18,120297,29760,647,0,50331648
+All.insert (small).HashMapBB.18,103026,32254,647,0,50331648
+All.insert (small).HashMapBU.18,86003,13602,647,0,50331648
+All.insert (small).HashMapUL.18,101506,32472,647,0,50331648
+All.insert (small).HashMapUB.18,81828,16694,647,0,50331648
+All.insert (small).HashMapUU.18,70660,16768,607,0,50331648
+All.insert (small).Data_HashMap_Lazy.19,161476,28408,264,0,50331648
+All.insert (small).Data_HashMap_Strict.19,159788,29422,264,0,50331648
+All.insert (small).HashMapBL.19,123913,29258,663,0,50331648
+All.insert (small).HashMapBB.19,103271,34296,663,0,50331648
+All.insert (small).HashMapBU.19,87406,21746,663,0,50331648
+All.insert (small).HashMapUL.19,110630,27654,663,0,50331648
+All.insert (small).HashMapUB.19,82700,24714,663,0,50331648
+All.insert (small).HashMapUU.19,70142,14058,623,0,50331648
+All.insert (small).Data_HashMap_Lazy.20,166239,28332,272,0,50331648
+All.insert (small).Data_HashMap_Strict.20,164662,36306,272,0,50331648
+All.insert (small).HashMapBL.20,129290,34476,679,0,50331648
+All.insert (small).HashMapBB.20,105285,43980,679,0,50331648
+All.insert (small).HashMapBU.20,79520,17730,679,0,50331648
+All.insert (small).HashMapUL.20,105514,29040,679,0,50331648
+All.insert (small).HashMapUB.20,82094,18884,679,0,50331648
+All.insert (small).HashMapUU.20,61129,18250,639,0,50331648
+All.insert (small).Data_HashMap_Lazy.21,164852,34294,280,0,50331648
+All.insert (small).Data_HashMap_Strict.21,171981,38278,280,0,50331648
+All.insert (small).HashMapBL.21,127078,41046,695,0,50331648
+All.insert (small).HashMapBB.21,107377,42818,695,0,50331648
+All.insert (small).HashMapBU.21,90182,17484,695,0,50331648
+All.insert (small).HashMapUL.21,112828,31128,695,0,50331648
+All.insert (small).HashMapUB.21,83739,19434,695,0,50331648
+All.insert (small).HashMapUU.21,70258,16806,655,0,50331648
+All.insert (small).Data_HashMap_Lazy.22,179395,29944,288,0,50331648
+All.insert (small).Data_HashMap_Strict.22,180423,26306,288,0,50331648
+All.insert (small).HashMapBL.22,135157,33552,711,0,50331648
+All.insert (small).HashMapBB.22,117293,26386,711,0,50331648
+All.insert (small).HashMapBU.22,95559,30934,711,0,50331648
+All.insert (small).HashMapUL.22,121819,37220,711,0,50331648
+All.insert (small).HashMapUB.22,91720,14146,711,0,50331648
+All.insert (small).HashMapUU.22,71622,19066,671,0,50331648
+All.insert (small).Data_HashMap_Lazy.23,190756,64466,296,0,50331648
+All.insert (small).Data_HashMap_Strict.23,186885,29810,296,0,50331648
+All.insert (small).HashMapBL.23,138146,33412,727,0,50331648
+All.insert (small).HashMapBB.23,113954,36958,727,0,50331648
+All.insert (small).HashMapBU.23,101614,33144,727,0,50331648
+All.insert (small).HashMapUL.23,125197,32652,727,0,50331648
+All.insert (small).HashMapUB.23,96933,25718,727,0,50331648
+All.insert (small).HashMapUU.23,69511,16660,687,0,50331648
+All.insert (small).Data_HashMap_Lazy.24,193523,67860,304,0,50331648
+All.insert (small).Data_HashMap_Strict.24,191851,61510,304,0,50331648
+All.insert (small).HashMapBL.24,144635,26998,744,0,51380224
+All.insert (small).HashMapBB.24,119343,30002,744,0,51380224
+All.insert (small).HashMapBU.24,94457,15380,744,0,51380224
+All.insert (small).HashMapUL.24,126377,35724,744,0,51380224
+All.insert (small).HashMapUB.24,93837,13272,744,0,51380224
+All.insert (small).HashMapUU.24,76655,15642,703,0,51380224
+All.insert (small).Data_HashMap_Lazy.25,201025,69976,312,0,51380224
+All.insert (small).Data_HashMap_Strict.25,198350,66682,312,0,51380224
+All.insert (small).HashMapBL.25,142237,33432,760,0,51380224
+All.insert (small).HashMapBB.25,117343,27978,760,0,51380224
+All.insert (small).HashMapBU.25,104250,46718,760,0,51380224
+All.insert (small).HashMapUL.25,125357,27740,760,0,51380224
+All.insert (small).HashMapUB.25,100195,30000,760,0,51380224
+All.insert (small).HashMapUU.25,77196,12834,719,0,51380224
+All.insert (small).Data_HashMap_Lazy.26,206142,64618,320,0,51380224
+All.insert (small).Data_HashMap_Strict.26,206690,74174,320,0,51380224
+All.insert (small).HashMapBL.26,155434,41472,776,0,51380224
+All.insert (small).HashMapBB.26,118400,26570,776,0,51380224
+All.insert (small).HashMapBU.26,102184,28752,776,0,51380224
+All.insert (small).HashMapUL.26,134679,34812,776,0,51380224
+All.insert (small).HashMapUB.26,98007,39088,776,0,51380224
+All.insert (small).HashMapUU.26,77127,18524,735,0,51380224
+All.insert (small).Data_HashMap_Lazy.27,222622,59880,328,0,51380224
+All.insert (small).Data_HashMap_Strict.27,217984,64740,328,0,51380224
+All.insert (small).HashMapBL.27,153699,28302,792,0,51380224
+All.insert (small).HashMapBB.27,122519,31664,792,0,51380224
+All.insert (small).HashMapBU.27,101006,31028,792,0,51380224
+All.insert (small).HashMapUL.27,133108,37120,792,0,51380224
+All.insert (small).HashMapUB.27,97150,48892,792,0,51380224
+All.insert (small).HashMapUU.27,75722,16322,751,0,51380224
+All.insert (small).Data_HashMap_Lazy.28,217797,65720,336,0,51380224
+All.insert (small).Data_HashMap_Strict.28,224153,61016,336,0,51380224
+All.insert (small).HashMapBL.28,158777,27294,807,0,51380224
+All.insert (small).HashMapBB.28,134219,40562,807,0,51380224
+All.insert (small).HashMapBU.28,107873,33938,807,0,51380224
+All.insert (small).HashMapUL.28,137725,35110,807,0,51380224
+All.insert (small).HashMapUB.28,99262,37988,807,0,51380224
+All.insert (small).HashMapUU.28,78613,18192,767,0,51380224
+All.insert (small).Data_HashMap_Lazy.29,222689,65032,344,0,51380224
+All.insert (small).Data_HashMap_Strict.29,230786,64922,344,0,51380224
+All.insert (small).HashMapBL.29,157199,36542,823,0,51380224
+All.insert (small).HashMapBB.29,124281,44236,823,0,51380224
+All.insert (small).HashMapBU.29,103977,30942,823,0,51380224
+All.insert (small).HashMapUL.29,133894,39354,823,0,51380224
+All.insert (small).HashMapUB.29,101692,37876,823,0,51380224
+All.insert (small).HashMapUU.29,82714,22456,783,0,51380224
+All.insert (small).Data_HashMap_Lazy.30,234467,62496,352,0,51380224
+All.insert (small).Data_HashMap_Strict.30,234973,74064,352,0,51380224
+All.insert (small).HashMapBL.30,168276,44318,839,0,51380224
+All.insert (small).HashMapBB.30,126694,28970,839,0,51380224
+All.insert (small).HashMapBU.30,107504,32608,839,0,51380224
+All.insert (small).HashMapUL.30,144980,30076,839,0,51380224
+All.insert (small).HashMapUB.30,106118,35382,839,0,51380224
+All.insert (small).HashMapUU.30,81358,13704,799,0,51380224
+All.insert (small).Data_HashMap_Lazy.31,230447,63952,352,0,51380224
+All.insert (small).Data_HashMap_Strict.31,233021,71380,352,0,51380224
+All.insert (small).HashMapBL.31,170964,26676,855,0,51380224
+All.insert (small).HashMapBB.31,128046,33272,855,0,51380224
+All.insert (small).HashMapBU.31,107009,30210,855,0,51380224
+All.insert (small).HashMapUL.31,152442,27812,855,0,51380224
+All.insert (small).HashMapUB.31,99235,41156,855,0,51380224
+All.insert (small).HashMapUU.31,76706,17154,815,0,51380224
+All.insert (small).Data_HashMap_Lazy.32,240667,56502,408,0,51380224
+All.insert (small).Data_HashMap_Strict.32,236220,64680,408,0,51380224
+All.insert (small).HashMapBL.32,196472,60300,960,1,51380224
+All.insert (small).HashMapBB.32,153582,35554,959,1,51380224
+All.insert (small).HashMapBU.32,128505,38546,959,1,51380224
+All.insert (small).HashMapUL.32,208870,55226,960,1,51380224
+All.insert (small).HashMapUB.32,131511,47990,959,1,51380224
+All.insert (small).HashMapUU.32,108405,29800,919,0,51380224
+All.insert (powers of two).Data_HashMap_Lazy.0,14738,4406,63,0,51380224
+All.insert (powers of two).Data_HashMap_Strict.0,15266,3560,63,0,51380224
+All.insert (powers of two).HashMapBL.0,17057,3886,79,0,51380224
+All.insert (powers of two).HashMapBB.0,17278,3652,79,0,51380224
+All.insert (powers of two).HashMapBU.0,16924,3372,79,0,51380224
+All.insert (powers of two).HashMapUL.0,17023,3954,79,0,51380224
+All.insert (powers of two).HashMapUB.0,16296,5134,79,0,51380224
+All.insert (powers of two).HashMapUU.0,16467,3992,79,0,51380224
+All.insert (powers of two).Data_HashMap_Lazy.1,29252,6726,119,0,51380224
+All.insert (powers of two).Data_HashMap_Strict.1,29919,7466,119,0,51380224
+All.insert (powers of two).HashMapBL.1,80568,15918,447,0,51380224
+All.insert (powers of two).HashMapBB.1,77828,22604,423,0,51380224
+All.insert (powers of two).HashMapBU.1,71713,15968,423,0,51380224
+All.insert (powers of two).HashMapUL.1,73361,13266,447,0,51380224
+All.insert (powers of two).HashMapUB.1,67802,19016,423,0,51380224
+All.insert (powers of two).HashMapUU.1,57603,15052,383,0,51380224
+All.insert (powers of two).Data_HashMap_Lazy.2,44893,7704,128,0,51380224
+All.insert (powers of two).Data_HashMap_Strict.2,44152,7400,128,0,51380224
+All.insert (powers of two).HashMapBL.2,72231,13754,391,0,51380224
+All.insert (powers of two).HashMapBB.2,72981,22592,391,0,51380224
+All.insert (powers of two).HashMapBU.2,66095,13792,391,0,51380224
+All.insert (powers of two).HashMapUL.2,63897,18244,391,0,51380224
+All.insert (powers of two).HashMapUB.2,67831,21768,391,0,51380224
+All.insert (powers of two).HashMapUU.2,58088,13748,352,0,51380224
+All.insert (powers of two).Data_HashMap_Lazy.4,59208,15756,144,0,51380224
+All.insert (powers of two).Data_HashMap_Strict.4,60529,12812,144,0,51380224
+All.insert (powers of two).HashMapBL.4,79523,18272,423,0,51380224
+All.insert (powers of two).HashMapBB.4,76096,13756,423,0,51380224
+All.insert (powers of two).HashMapBU.4,70590,15564,423,0,51380224
+All.insert (powers of two).HashMapUL.4,71317,18874,423,0,51380224
+All.insert (powers of two).HashMapUB.4,73261,21674,423,0,51380224
+All.insert (powers of two).HashMapUU.4,59049,16550,383,0,51380224
+All.insert (powers of two).Data_HashMap_Lazy.8,88066,16408,176,0,51380224
+All.insert (powers of two).Data_HashMap_Strict.8,87073,17742,176,0,51380224
+All.insert (powers of two).HashMapBL.8,85922,20374,488,0,51380224
+All.insert (powers of two).HashMapBB.8,77688,18404,488,0,51380224
+All.insert (powers of two).HashMapBU.8,71780,15376,488,0,51380224
+All.insert (powers of two).HashMapUL.8,75595,13828,488,0,51380224
+All.insert (powers of two).HashMapUB.8,63430,19254,488,0,51380224
+All.insert (powers of two).HashMapUU.8,61709,13574,447,0,51380224
+All.insert (powers of two).Data_HashMap_Lazy.16,142963,33654,240,0,51380224
+All.insert (powers of two).Data_HashMap_Strict.16,140304,32974,240,0,51380224
+All.insert (powers of two).HashMapBL.16,119207,25756,616,0,51380224
+All.insert (powers of two).HashMapBB.16,103987,31234,616,0,51380224
+All.insert (powers of two).HashMapBU.16,84659,19260,616,0,51380224
+All.insert (powers of two).HashMapUL.16,99601,25608,616,0,51380224
+All.insert (powers of two).HashMapUB.16,83837,19384,616,0,51380224
+All.insert (powers of two).HashMapUU.16,65634,16452,575,0,51380224
+All.insert (powers of two).Data_HashMap_Lazy.32,238570,63364,408,0,51380224
+All.insert (powers of two).Data_HashMap_Strict.32,239033,69340,408,0,52428800
+All.insert (powers of two).HashMapBL.32,198254,53288,960,1,52428800
+All.insert (powers of two).HashMapBB.32,157752,31014,959,1,52428800
+All.insert (powers of two).HashMapBU.32,142241,42344,959,1,52428800
+All.insert (powers of two).HashMapUL.32,192694,67450,960,1,52428800
+All.insert (powers of two).HashMapUB.32,139080,38520,959,1,52428800
+All.insert (powers of two).HashMapUU.32,118440,30612,919,0,52428800
+All.insert (powers of two).Data_HashMap_Lazy.64,566352,119946,417,0,52428800
+All.insert (powers of two).Data_HashMap_Strict.64,560601,132202,417,0,52428800
+All.insert (powers of two).HashMapBL.64,330538,73478,816,0,52428800
+All.insert (powers of two).HashMapBB.64,278227,67286,816,0,52428800
+All.insert (powers of two).HashMapBU.64,216903,57342,816,0,52428800
+All.insert (powers of two).HashMapUL.64,266599,57030,816,0,52428800
+All.insert (powers of two).HashMapUB.64,218462,61976,816,0,52428800
+All.insert (powers of two).HashMapUU.64,102274,31150,775,0,52428800
+All.insert (powers of two).Data_HashMap_Lazy.128,984019,254968,434,0,52428800
+All.insert (powers of two).Data_HashMap_Strict.128,1007923,207236,434,0,52428800
+All.insert (powers of two).HashMapBL.128,455641,115036,848,0,52428800
+All.insert (powers of two).HashMapBB.128,327442,61534,847,0,52428800
+All.insert (powers of two).HashMapBU.128,248697,55852,847,0,52428800
+All.insert (powers of two).HashMapUL.128,367047,77134,847,0,52428800
+All.insert (powers of two).HashMapUB.128,241160,65240,847,0,52428800
+All.insert (powers of two).HashMapUU.128,108891,26606,807,0,52428800
+All.insert (powers of two).Data_HashMap_Lazy.256,1744497,475886,468,0,52428800
+All.insert (powers of two).Data_HashMap_Strict.256,1747534,495198,468,0,52428800
+All.insert (powers of two).HashMapBL.256,624438,102488,912,0,52428800
+All.insert (powers of two).HashMapBB.256,413716,145594,912,0,52428800
+All.insert (powers of two).HashMapBU.256,286016,64900,912,0,52428800
+All.insert (powers of two).HashMapUL.256,554966,117582,912,0,52428800
+All.insert (powers of two).HashMapUB.256,278578,65018,912,0,52428800
+All.insert (powers of two).HashMapUU.256,110749,30728,871,0,52428800
+All.insert (powers of two).Data_HashMap_Lazy.512,3351074,1101246,537,1,52428800
+All.insert (powers of two).Data_HashMap_Strict.512,3459777,860088,537,1,52428800
+All.insert (powers of two).HashMapBL.512,1075654,265260,1041,1,52428800
+All.insert (powers of two).HashMapBB.512,586869,133004,1040,1,52428800
+All.insert (powers of two).HashMapBU.512,398179,113562,1040,1,52428800
+All.insert (powers of two).HashMapUL.512,1004696,281016,1041,1,52428800
+All.insert (powers of two).HashMapUB.512,378483,56884,1040,1,52428800
+All.insert (powers of two).HashMapUU.512,120248,45570,1000,1,52428800
+All.insert (powers of two).Data_HashMap_Lazy.1024,6084454,820128,705,1,52428800
+All.insert (powers of two).Data_HashMap_Strict.1024,6172363,1878220,715,1,52428800
+All.insert (powers of two).HashMapBL.1024,2247567,511780,1388,1,53477376
+All.insert (powers of two).HashMapBB.1024,997035,246576,1385,1,53477376
+All.insert (powers of two).HashMapBU.1024,600617,124458,1384,1,53477376
+All.insert (powers of two).HashMapUL.1024,2006375,471028,1388,1,53477376
+All.insert (powers of two).HashMapUB.1024,592285,154800,1384,1,53477376
+All.insert (powers of two).HashMapUU.1024,163889,29220,1343,1,53477376
+All.Lookup (small).Data_HashMap_Lazy.0,8428,1606,31,0,53477376
+All.Lookup (small).Data_HashMap_Strict.0,8184,2086,31,0,53477376
+All.Lookup (small).HashMapBL.0,7454,1786,31,0,53477376
+All.Lookup (small).HashMapBB.0,7906,2228,31,0,53477376
+All.Lookup (small).HashMapBU.0,7760,2694,31,0,53477376
+All.Lookup (small).HashMapUL.0,7105,2418,31,0,53477376
+All.Lookup (small).HashMapUB.0,7309,2666,31,0,53477376
+All.Lookup (small).HashMapUU.0,7543,1982,31,0,53477376
+All.Lookup (small).Data_HashMap_Lazy.1,7760,2320,31,0,53477376
+All.Lookup (small).Data_HashMap_Strict.1,8391,1644,31,0,53477376
+All.Lookup (small).HashMapBL.1,7642,2706,31,0,53477376
+All.Lookup (small).HashMapBB.1,7773,1774,31,0,53477376
+All.Lookup (small).HashMapBU.1,8021,1774,31,0,53477376
+All.Lookup (small).HashMapUL.1,7606,1738,31,0,53477376
+All.Lookup (small).HashMapUB.1,7716,1822,31,0,53477376
+All.Lookup (small).HashMapUU.1,7745,2008,31,0,53477376
+All.Lookup (small).Data_HashMap_Lazy.2,8112,2440,31,0,53477376
+All.Lookup (small).Data_HashMap_Strict.2,8079,2202,31,0,53477376
+All.Lookup (small).HashMapBL.2,8003,1776,31,0,53477376
+All.Lookup (small).HashMapBB.2,8279,2614,31,0,53477376
+All.Lookup (small).HashMapBU.2,8380,2738,31,0,53477376
+All.Lookup (small).HashMapUL.2,8211,1622,31,0,53477376
+All.Lookup (small).HashMapUB.2,8077,2354,31,0,53477376
+All.Lookup (small).HashMapUU.2,7895,2148,31,0,53477376
+All.Lookup (small).Data_HashMap_Lazy.3,8195,1652,31,0,53477376
+All.Lookup (small).Data_HashMap_Strict.3,8299,1606,31,0,53477376
+All.Lookup (small).HashMapBL.3,7734,2126,31,0,53477376
+All.Lookup (small).HashMapBB.3,8059,1770,31,0,53477376
+All.Lookup (small).HashMapBU.3,8479,1982,31,0,53477376
+All.Lookup (small).HashMapUL.3,7873,2232,31,0,53477376
+All.Lookup (small).HashMapUB.3,7946,1970,31,0,53477376
+All.Lookup (small).HashMapUU.3,8057,1664,31,0,53477376
+All.Lookup (small).Data_HashMap_Lazy.4,8250,2470,31,0,53477376
+All.Lookup (small).Data_HashMap_Strict.4,8184,1982,31,0,53477376
+All.Lookup (small).HashMapBL.4,7860,1706,31,0,53477376
+All.Lookup (small).HashMapBB.4,8125,1788,31,0,53477376
+All.Lookup (small).HashMapBU.4,8149,1684,31,0,53477376
+All.Lookup (small).HashMapUL.4,8018,2072,31,0,53477376
+All.Lookup (small).HashMapUB.4,7874,2062,31,0,53477376
+All.Lookup (small).HashMapUU.4,7860,2394,31,0,53477376
+All.Lookup (small).Data_HashMap_Lazy.5,8085,2326,31,0,53477376
+All.Lookup (small).Data_HashMap_Strict.5,8073,2394,31,0,53477376
+All.Lookup (small).HashMapBL.5,7995,1706,31,0,53477376
+All.Lookup (small).HashMapBB.5,8119,2400,31,0,53477376
+All.Lookup (small).HashMapBU.5,8164,1614,31,0,53477376
+All.Lookup (small).HashMapUL.5,8158,2472,31,0,53477376
+All.Lookup (small).HashMapUB.5,7921,2118,31,0,53477376
+All.Lookup (small).HashMapUU.5,8405,1742,31,0,53477376
+All.Lookup (small).Data_HashMap_Lazy.6,8728,2318,31,0,53477376
+All.Lookup (small).Data_HashMap_Strict.6,8598,1942,31,0,53477376
+All.Lookup (small).HashMapBL.6,8204,1656,31,0,53477376
+All.Lookup (small).HashMapBB.6,8375,1880,31,0,53477376
+All.Lookup (small).HashMapBU.6,8613,2776,31,0,53477376
+All.Lookup (small).HashMapUL.6,8175,2384,31,0,53477376
+All.Lookup (small).HashMapUB.6,8478,2110,31,0,53477376
+All.Lookup (small).HashMapUU.6,8773,2762,31,0,53477376
+All.Lookup (small).Data_HashMap_Lazy.7,8751,2348,31,0,53477376
+All.Lookup (small).Data_HashMap_Strict.7,9006,1926,31,0,53477376
+All.Lookup (small).HashMapBL.7,8252,1770,31,0,53477376
+All.Lookup (small).HashMapBB.7,8354,1986,31,0,53477376
+All.Lookup (small).HashMapBU.7,8342,2198,31,0,53477376
+All.Lookup (small).HashMapUL.7,8200,1604,31,0,53477376
+All.Lookup (small).HashMapUB.7,8268,1848,31,0,53477376
+All.Lookup (small).HashMapUU.7,8412,2486,31,0,53477376
+All.Lookup (small).Data_HashMap_Lazy.8,8778,1816,31,0,54525952
+All.Lookup (small).Data_HashMap_Strict.8,8379,2980,31,0,54525952
+All.Lookup (small).HashMapBL.8,8355,2438,31,0,54525952
+All.Lookup (small).HashMapBB.8,8164,1606,31,0,54525952
+All.Lookup (small).HashMapBU.8,8289,1886,31,0,54525952
+All.Lookup (small).HashMapUL.8,7657,1754,31,0,54525952
+All.Lookup (small).HashMapUB.8,8182,1632,31,0,54525952
+All.Lookup (small).HashMapUU.8,8559,2130,31,0,54525952
+All.Lookup (small).Data_HashMap_Lazy.9,8366,2004,31,0,54525952
+All.Lookup (small).Data_HashMap_Strict.9,8524,1602,31,0,54525952
+All.Lookup (small).HashMapBL.9,8229,1952,31,0,54525952
+All.Lookup (small).HashMapBB.9,8355,1914,31,0,54525952
+All.Lookup (small).HashMapBU.9,8713,1844,31,0,54525952
+All.Lookup (small).HashMapUL.9,8140,1780,31,0,54525952
+All.Lookup (small).HashMapUB.9,8550,1760,31,0,54525952
+All.Lookup (small).HashMapUU.9,7958,2352,31,0,54525952
+All.Lookup (small).Data_HashMap_Lazy.10,8266,1602,31,0,54525952
+All.Lookup (small).Data_HashMap_Strict.10,8306,2090,31,0,54525952
+All.Lookup (small).HashMapBL.10,8012,1788,31,0,54525952
+All.Lookup (small).HashMapBB.10,8214,2060,31,0,54525952
+All.Lookup (small).HashMapBU.10,8178,1828,31,0,54525952
+All.Lookup (small).HashMapUL.10,7910,1930,31,0,54525952
+All.Lookup (small).HashMapUB.10,7857,1924,31,0,54525952
+All.Lookup (small).HashMapUU.10,7986,2054,31,0,54525952
+All.Lookup (small).Data_HashMap_Lazy.11,8356,2394,31,0,54525952
+All.Lookup (small).Data_HashMap_Strict.11,8355,2034,31,0,54525952
+All.Lookup (small).HashMapBL.11,7921,1638,31,0,54525952
+All.Lookup (small).HashMapBB.11,8410,1796,31,0,54525952
+All.Lookup (small).HashMapBU.11,8381,1996,31,0,54525952
+All.Lookup (small).HashMapUL.11,8092,1992,31,0,54525952
+All.Lookup (small).HashMapUB.11,8181,1892,31,0,54525952
+All.Lookup (small).HashMapUU.11,8065,2194,31,0,54525952
+All.Lookup (small).Data_HashMap_Lazy.12,8288,1764,31,0,54525952
+All.Lookup (small).Data_HashMap_Strict.12,8778,2908,31,0,54525952
+All.Lookup (small).HashMapBL.12,8069,2602,31,0,54525952
+All.Lookup (small).HashMapBB.12,8484,1644,31,0,54525952
+All.Lookup (small).HashMapBU.12,8429,2206,31,0,54525952
+All.Lookup (small).HashMapUL.12,8110,1736,31,0,54525952
+All.Lookup (small).HashMapUB.12,7966,1910,31,0,54525952
+All.Lookup (small).HashMapUU.12,8168,1690,31,0,54525952
+All.Lookup (small).Data_HashMap_Lazy.13,8184,2042,31,0,54525952
+All.Lookup (small).Data_HashMap_Strict.13,8408,1672,31,0,54525952
+All.Lookup (small).HashMapBL.13,8017,2134,31,0,54525952
+All.Lookup (small).HashMapBB.13,8293,2244,31,0,54525952
+All.Lookup (small).HashMapBU.13,8310,1654,31,0,54525952
+All.Lookup (small).HashMapUL.13,8205,1846,31,0,54525952
+All.Lookup (small).HashMapUB.13,8162,1606,31,0,54525952
+All.Lookup (small).HashMapUU.13,8001,2260,31,0,54525952
+All.Lookup (small).Data_HashMap_Lazy.14,8391,1998,31,0,54525952
+All.Lookup (small).Data_HashMap_Strict.14,8452,1614,31,0,54525952
+All.Lookup (small).HashMapBL.14,8226,1690,31,0,54525952
+All.Lookup (small).HashMapBB.14,8662,1676,31,0,54525952
+All.Lookup (small).HashMapBU.14,8351,2344,31,0,54525952
+All.Lookup (small).HashMapUL.14,8005,2464,31,0,54525952
+All.Lookup (small).HashMapUB.14,8269,2176,31,0,54525952
+All.Lookup (small).HashMapUU.14,8004,2412,31,0,54525952
+All.Lookup (small).Data_HashMap_Lazy.15,8219,1780,31,0,54525952
+All.Lookup (small).Data_HashMap_Strict.15,8309,2526,31,0,54525952
+All.Lookup (small).HashMapBL.15,8061,2052,31,0,54525952
+All.Lookup (small).HashMapBB.15,8323,1936,31,0,54525952
+All.Lookup (small).HashMapBU.15,8428,1890,31,0,54525952
+All.Lookup (small).HashMapUL.15,7871,2344,31,0,54525952
+All.Lookup (small).HashMapUB.15,7922,1922,31,0,54525952
+All.Lookup (small).HashMapUU.15,8061,2256,31,0,54525952
+All.Lookup (small).Data_HashMap_Lazy.16,8158,2372,31,0,54525952
+All.Lookup (small).Data_HashMap_Strict.16,8253,1930,31,0,54525952
+All.Lookup (small).HashMapBL.16,7928,1980,31,0,54525952
+All.Lookup (small).HashMapBB.16,8028,1738,31,0,54525952
+All.Lookup (small).HashMapBU.16,8168,2144,31,0,54525952
+All.Lookup (small).HashMapUL.16,7981,1892,31,0,54525952
+All.Lookup (small).HashMapUB.16,7861,2014,31,0,54525952
+All.Lookup (small).HashMapUU.16,8120,1674,31,0,54525952
+All.Lookup (small).Data_HashMap_Lazy.17,8195,1868,31,0,54525952
+All.Lookup (small).Data_HashMap_Strict.17,7994,2030,31,0,54525952
+All.Lookup (small).HashMapBL.17,8084,1728,31,0,54525952
+All.Lookup (small).HashMapBB.17,8160,2054,31,0,54525952
+All.Lookup (small).HashMapBU.17,8252,1980,31,0,54525952
+All.Lookup (small).HashMapUL.17,8051,1904,31,0,54525952
+All.Lookup (small).HashMapUB.17,7957,1922,31,0,54525952
+All.Lookup (small).HashMapUU.17,7948,1962,31,0,54525952
+All.Lookup (small).Data_HashMap_Lazy.18,8128,2326,31,0,54525952
+All.Lookup (small).Data_HashMap_Strict.18,8164,1738,31,0,54525952
+All.Lookup (small).HashMapBL.18,7967,1680,31,0,54525952
+All.Lookup (small).HashMapBB.18,8235,1854,31,0,54525952
+All.Lookup (small).HashMapBU.18,8264,2102,31,0,54525952
+All.Lookup (small).HashMapUL.18,8084,1854,31,0,54525952
+All.Lookup (small).HashMapUB.18,8271,2004,31,0,54525952
+All.Lookup (small).HashMapUU.18,8109,1978,31,0,54525952
+All.Lookup (small).Data_HashMap_Lazy.19,8391,2472,31,0,54525952
+All.Lookup (small).Data_HashMap_Strict.19,8145,2690,31,0,54525952
+All.Lookup (small).HashMapBL.19,7804,2174,31,0,54525952
+All.Lookup (small).HashMapBB.19,8310,2020,31,0,54525952
+All.Lookup (small).HashMapBU.19,8103,1710,31,0,54525952
+All.Lookup (small).HashMapUL.19,7783,2454,31,0,54525952
+All.Lookup (small).HashMapUB.19,8047,2142,31,0,54525952
+All.Lookup (small).HashMapUU.19,7949,1846,31,0,54525952
+All.Lookup (small).Data_HashMap_Lazy.20,8394,1960,31,0,54525952
+All.Lookup (small).Data_HashMap_Strict.20,8200,2324,31,0,54525952
+All.Lookup (small).HashMapBL.20,7966,1756,31,0,54525952
+All.Lookup (small).HashMapBB.20,8136,1668,31,0,54525952
+All.Lookup (small).HashMapBU.20,8341,1948,31,0,54525952
+All.Lookup (small).HashMapUL.20,8349,1744,31,0,54525952
+All.Lookup (small).HashMapUB.20,7977,2338,31,0,54525952
+All.Lookup (small).HashMapUU.20,8155,1982,31,0,54525952
+All.Lookup (small).Data_HashMap_Lazy.21,8129,2178,31,0,54525952
+All.Lookup (small).Data_HashMap_Strict.21,8179,2128,31,0,54525952
+All.Lookup (small).HashMapBL.21,7872,2116,31,0,54525952
+All.Lookup (small).HashMapBB.21,8013,1988,31,0,54525952
+All.Lookup (small).HashMapBU.21,8228,1718,31,0,54525952
+All.Lookup (small).HashMapUL.21,8069,1698,31,0,54525952
+All.Lookup (small).HashMapUB.21,7900,1940,31,0,54525952
+All.Lookup (small).HashMapUU.21,8044,2100,31,0,54525952
+All.Lookup (small).Data_HashMap_Lazy.22,7984,2304,31,0,54525952
+All.Lookup (small).Data_HashMap_Strict.22,7973,1936,31,0,54525952
+All.Lookup (small).HashMapBL.22,7573,2218,31,0,54525952
+All.Lookup (small).HashMapBB.22,7896,1750,31,0,54525952
+All.Lookup (small).HashMapBU.22,7988,1870,31,0,54525952
+All.Lookup (small).HashMapUL.22,8095,1616,31,0,54525952
+All.Lookup (small).HashMapUB.22,8020,1734,31,0,54525952
+All.Lookup (small).HashMapUU.22,7598,2482,31,0,54525952
+All.Lookup (small).Data_HashMap_Lazy.23,8266,1996,31,0,54525952
+All.Lookup (small).Data_HashMap_Strict.23,8092,2034,31,0,54525952
+All.Lookup (small).HashMapBL.23,7879,1776,31,0,54525952
+All.Lookup (small).HashMapBB.23,7987,2406,31,0,54525952
+All.Lookup (small).HashMapBU.23,7981,2202,31,0,54525952
+All.Lookup (small).HashMapUL.23,7756,1656,31,0,54525952
+All.Lookup (small).HashMapUB.23,7584,1914,31,0,54525952
+All.Lookup (small).HashMapUU.23,7910,2052,31,0,54525952
+All.Lookup (small).Data_HashMap_Lazy.24,7946,2430,31,0,54525952
+All.Lookup (small).Data_HashMap_Strict.24,8352,1666,31,0,54525952
+All.Lookup (small).HashMapBL.24,8244,1998,31,0,54525952
+All.Lookup (small).HashMapBB.24,8022,2940,31,0,54525952
+All.Lookup (small).HashMapBU.24,8188,2136,31,0,54525952
+All.Lookup (small).HashMapUL.24,7640,2264,31,0,54525952
+All.Lookup (small).HashMapUB.24,7867,2240,31,0,54525952
+All.Lookup (small).HashMapUU.24,7679,1634,31,0,55574528
+All.Lookup (small).Data_HashMap_Lazy.25,7908,1618,31,0,55574528
+All.Lookup (small).Data_HashMap_Strict.25,8088,1924,31,0,55574528
+All.Lookup (small).HashMapBL.25,7869,1824,31,0,55574528
+All.Lookup (small).HashMapBB.25,8106,1750,31,0,55574528
+All.Lookup (small).HashMapBU.25,8134,2178,31,0,55574528
+All.Lookup (small).HashMapUL.25,7703,1896,31,0,55574528
+All.Lookup (small).HashMapUB.25,7796,1740,31,0,55574528
+All.Lookup (small).HashMapUU.25,7582,1908,31,0,55574528
+All.Lookup (small).Data_HashMap_Lazy.26,8383,1944,31,0,55574528
+All.Lookup (small).Data_HashMap_Strict.26,8137,1654,31,0,55574528
+All.Lookup (small).HashMapBL.26,7804,1990,31,0,55574528
+All.Lookup (small).HashMapBB.26,7980,1906,31,0,55574528
+All.Lookup (small).HashMapBU.26,7879,1804,31,0,55574528
+All.Lookup (small).HashMapUL.26,7672,2042,31,0,55574528
+All.Lookup (small).HashMapUB.26,7793,1688,31,0,55574528
+All.Lookup (small).HashMapUU.26,8109,1662,31,0,55574528
+All.Lookup (small).Data_HashMap_Lazy.27,8050,1812,31,0,55574528
+All.Lookup (small).Data_HashMap_Strict.27,8240,2310,31,0,55574528
+All.Lookup (small).HashMapBL.27,7821,1810,31,0,55574528
+All.Lookup (small).HashMapBB.27,8189,2022,31,0,55574528
+All.Lookup (small).HashMapBU.27,8133,2688,31,0,55574528
+All.Lookup (small).HashMapUL.27,7760,1650,31,0,55574528
+All.Lookup (small).HashMapUB.27,7855,2106,31,0,55574528
+All.Lookup (small).HashMapUU.27,7917,2576,31,0,55574528
+All.Lookup (small).Data_HashMap_Lazy.28,8200,1800,31,0,55574528
+All.Lookup (small).Data_HashMap_Strict.28,8196,2152,31,0,55574528
+All.Lookup (small).HashMapBL.28,7866,2028,31,0,55574528
+All.Lookup (small).HashMapBB.28,8094,2278,31,0,55574528
+All.Lookup (small).HashMapBU.28,8129,1598,31,0,55574528
+All.Lookup (small).HashMapUL.28,8314,1816,31,0,55574528
+All.Lookup (small).HashMapUB.28,7769,2150,31,0,55574528
+All.Lookup (small).HashMapUU.28,7758,1988,31,0,55574528
+All.Lookup (small).Data_HashMap_Lazy.29,8329,1860,31,0,55574528
+All.Lookup (small).Data_HashMap_Strict.29,8295,1978,31,0,55574528
+All.Lookup (small).HashMapBL.29,8022,1688,31,0,55574528
+All.Lookup (small).HashMapBB.29,8292,1678,31,0,55574528
+All.Lookup (small).HashMapBU.29,8233,1718,31,0,55574528
+All.Lookup (small).HashMapUL.29,7871,1686,31,0,55574528
+All.Lookup (small).HashMapUB.29,8012,2254,31,0,55574528
+All.Lookup (small).HashMapUU.29,7928,2314,31,0,55574528
+All.Lookup (small).Data_HashMap_Lazy.30,7998,1640,31,0,55574528
+All.Lookup (small).Data_HashMap_Strict.30,8087,1696,31,0,55574528
+All.Lookup (small).HashMapBL.30,7864,2088,31,0,55574528
+All.Lookup (small).HashMapBB.30,8477,5540,31,0,55574528
+All.Lookup (small).HashMapBU.30,8099,1974,31,0,55574528
+All.Lookup (small).HashMapUL.30,8192,2098,31,0,55574528
+All.Lookup (small).HashMapUB.30,8129,2440,31,0,55574528
+All.Lookup (small).HashMapUU.30,8026,1826,31,0,55574528
+All.Lookup (small).Data_HashMap_Lazy.31,8070,2002,31,0,55574528
+All.Lookup (small).Data_HashMap_Strict.31,8232,1848,31,0,55574528
+All.Lookup (small).HashMapBL.31,7766,2202,31,0,55574528
+All.Lookup (small).HashMapBB.31,8263,1758,31,0,55574528
+All.Lookup (small).HashMapBU.31,8212,1974,31,0,55574528
+All.Lookup (small).HashMapUL.31,7573,1762,31,0,55574528
+All.Lookup (small).HashMapUB.31,7974,2104,31,0,55574528
+All.Lookup (small).HashMapUU.31,7665,1892,31,0,55574528
+All.Lookup (small).Data_HashMap_Lazy.32,8945,1706,31,0,55574528
+All.Lookup (small).Data_HashMap_Strict.32,8711,1794,31,0,55574528
+All.Lookup (small).HashMapBL.32,9981,2132,31,0,55574528
+All.Lookup (small).HashMapBB.32,10269,1988,31,0,55574528
+All.Lookup (small).HashMapBU.32,10183,1968,31,0,55574528
+All.Lookup (small).HashMapUL.32,9895,1680,31,0,55574528
+All.Lookup (small).HashMapUB.32,10177,1874,31,0,55574528
+All.Lookup (small).HashMapUU.32,10117,2148,31,0,55574528
+All.Lookup (powers of two).Data_HashMap_Lazy.1,8438,1684,31,0,55574528
+All.Lookup (powers of two).Data_HashMap_Strict.1,8152,1784,31,0,55574528
+All.Lookup (powers of two).HashMapBL.1,7803,1856,31,0,55574528
+All.Lookup (powers of two).HashMapBB.1,7629,2222,31,0,55574528
+All.Lookup (powers of two).HashMapBU.1,7696,1882,31,0,55574528
+All.Lookup (powers of two).HashMapUL.1,7587,2046,31,0,55574528
+All.Lookup (powers of two).HashMapUB.1,7609,1620,31,0,55574528
+All.Lookup (powers of two).HashMapUU.1,7214,2092,31,0,55574528
+All.Lookup (powers of two).Data_HashMap_Lazy.2,8353,2054,31,0,55574528
+All.Lookup (powers of two).Data_HashMap_Strict.2,8335,2038,31,0,55574528
+All.Lookup (powers of two).HashMapBL.2,8037,1710,31,0,55574528
+All.Lookup (powers of two).HashMapBB.2,7944,1870,31,0,55574528
+All.Lookup (powers of two).HashMapBU.2,8207,1616,31,0,55574528
+All.Lookup (powers of two).HashMapUL.2,7925,2362,31,0,55574528
+All.Lookup (powers of two).HashMapUB.2,7926,2098,31,0,55574528
+All.Lookup (powers of two).HashMapUU.2,8224,1674,31,0,55574528
+All.Lookup (powers of two).Data_HashMap_Lazy.4,8649,2252,31,0,55574528
+All.Lookup (powers of two).Data_HashMap_Strict.4,8539,1960,31,0,55574528
+All.Lookup (powers of two).HashMapBL.4,7999,2416,31,0,55574528
+All.Lookup (powers of two).HashMapBB.4,8133,1996,31,0,55574528
+All.Lookup (powers of two).HashMapBU.4,8157,1802,31,0,55574528
+All.Lookup (powers of two).HashMapUL.4,8164,2090,31,0,55574528
+All.Lookup (powers of two).HashMapUB.4,7931,2442,31,0,55574528
+All.Lookup (powers of two).HashMapUU.4,8722,2400,31,0,55574528
+All.Lookup (powers of two).Data_HashMap_Lazy.8,8765,1642,31,0,55574528
+All.Lookup (powers of two).Data_HashMap_Strict.8,8336,1742,31,0,55574528
+All.Lookup (powers of two).HashMapBL.8,8028,1994,31,0,55574528
+All.Lookup (powers of two).HashMapBB.8,8290,1724,31,0,55574528
+All.Lookup (powers of two).HashMapBU.8,8407,1932,31,0,55574528
+All.Lookup (powers of two).HashMapUL.8,7952,1608,31,0,55574528
+All.Lookup (powers of two).HashMapUB.8,8261,2118,31,0,55574528
+All.Lookup (powers of two).HashMapUU.8,8352,2574,31,0,55574528
+All.Lookup (powers of two).Data_HashMap_Lazy.16,8620,1764,31,0,55574528
+All.Lookup (powers of two).Data_HashMap_Strict.16,8574,1736,31,0,55574528
+All.Lookup (powers of two).HashMapBL.16,8283,1986,31,0,55574528
+All.Lookup (powers of two).HashMapBB.16,8081,1814,31,0,55574528
+All.Lookup (powers of two).HashMapBU.16,8299,1928,31,0,56623104
+All.Lookup (powers of two).HashMapUL.16,8165,1598,31,0,56623104
+All.Lookup (powers of two).HashMapUB.16,8069,2232,31,0,56623104
+All.Lookup (powers of two).HashMapUU.16,8258,2254,31,0,56623104
+All.Lookup (powers of two).Data_HashMap_Lazy.32,9194,1784,31,0,56623104
+All.Lookup (powers of two).Data_HashMap_Strict.32,9096,1742,31,0,56623104
+All.Lookup (powers of two).HashMapBL.32,11058,1874,31,0,56623104
+All.Lookup (powers of two).HashMapBB.32,10540,2006,31,0,56623104
+All.Lookup (powers of two).HashMapBU.32,10766,1826,31,0,56623104
+All.Lookup (powers of two).HashMapUL.32,10420,1860,31,0,56623104
+All.Lookup (powers of two).HashMapUB.32,10325,1922,31,0,56623104
+All.Lookup (powers of two).HashMapUU.32,10763,2138,31,0,56623104
+All.Lookup (powers of two).Data_HashMap_Lazy.64,9622,1644,31,0,56623104
+All.Lookup (powers of two).Data_HashMap_Strict.64,9483,1780,31,0,56623104
+All.Lookup (powers of two).HashMapBL.64,10796,1742,31,0,56623104
+All.Lookup (powers of two).HashMapBB.64,10324,2508,31,0,56623104
+All.Lookup (powers of two).HashMapBU.64,10912,1868,31,0,56623104
+All.Lookup (powers of two).HashMapUL.64,10531,2132,31,0,56623104
+All.Lookup (powers of two).HashMapUB.64,10482,2210,31,0,56623104
+All.Lookup (powers of two).HashMapUU.64,10440,2198,31,0,56623104
+All.Lookup (powers of two).Data_HashMap_Lazy.128,9448,1916,31,0,56623104
+All.Lookup (powers of two).Data_HashMap_Strict.128,9678,1816,31,0,56623104
+All.Lookup (powers of two).HashMapBL.128,10643,1888,31,0,56623104
+All.Lookup (powers of two).HashMapBB.128,10541,1936,31,0,56623104
+All.Lookup (powers of two).HashMapBU.128,10617,1988,31,0,56623104
+All.Lookup (powers of two).HashMapUL.128,10626,2056,31,0,56623104
+All.Lookup (powers of two).HashMapUB.128,10773,1702,31,0,56623104
+All.Lookup (powers of two).HashMapUU.128,10638,1744,31,0,56623104
+All.Lookup (powers of two).Data_HashMap_Lazy.256,9447,1900,31,0,56623104
+All.Lookup (powers of two).Data_HashMap_Strict.256,9512,1742,31,0,56623104
+All.Lookup (powers of two).HashMapBL.256,10858,2146,31,0,56623104
+All.Lookup (powers of two).HashMapBB.256,10838,1794,31,0,56623104
+All.Lookup (powers of two).HashMapBU.256,10517,2070,31,0,56623104
+All.Lookup (powers of two).HashMapUL.256,10674,1804,31,0,56623104
+All.Lookup (powers of two).HashMapUB.256,10555,1694,31,0,56623104
+All.Lookup (powers of two).HashMapUU.256,10737,2396,31,0,56623104
+All.Lookup (powers of two).Data_HashMap_Lazy.512,9760,1660,31,0,56623104
+All.Lookup (powers of two).Data_HashMap_Strict.512,9567,2146,31,0,56623104
+All.Lookup (powers of two).HashMapBL.512,10644,2226,31,0,56623104
+All.Lookup (powers of two).HashMapBB.512,10719,1796,31,0,56623104
+All.Lookup (powers of two).HashMapBU.512,10796,1790,31,0,56623104
+All.Lookup (powers of two).HashMapUL.512,10894,1766,31,0,56623104
+All.Lookup (powers of two).HashMapUB.512,10650,2196,31,0,56623104
+All.Lookup (powers of two).HashMapUU.512,10856,1832,31,0,56623104
+All.Lookup (powers of two).Data_HashMap_Lazy.1024,10787,2202,31,0,56623104
+All.Lookup (powers of two).Data_HashMap_Strict.1024,10540,1778,31,0,56623104
+All.Lookup (powers of two).HashMapBL.1024,14564,4378,32,0,57671680
+All.Lookup (powers of two).HashMapBB.1024,14281,4122,32,0,57671680
+All.Lookup (powers of two).HashMapBU.1024,14296,3226,32,0,57671680
+All.Lookup (powers of two).HashMapUL.1024,14247,3492,32,0,57671680
+All.Lookup (powers of two).HashMapUB.1024,14166,3976,32,0,57671680
+All.Lookup (powers of two).HashMapUU.1024,14191,3906,32,0,57671680
+All.Lookup ShortText (small).Data_HashMap_Lazy.0,10828,2066,31,0,57671680
+All.Lookup ShortText (small).Data_HashMap_Strict.0,10715,1836,31,0,57671680
+All.Lookup ShortText (small).HashMapBL.0,7529,2590,31,0,57671680
+All.Lookup ShortText (small).HashMapBB.0,7631,1866,31,0,57671680
+All.Lookup ShortText (small).HashMapBU.0,7615,1816,31,0,57671680
+All.Lookup ShortText (small).HashMapUlL.0,7392,2002,31,0,57671680
+All.Lookup ShortText (small).HashMapUlB.0,7494,1752,31,0,57671680
+All.Lookup ShortText (small).HashMapUlU.0,7390,1868,31,0,57671680
+All.Lookup ShortText (small).Data_HashMap_Lazy.1,10404,1688,31,0,57671680
+All.Lookup ShortText (small).Data_HashMap_Strict.1,10307,1842,31,0,57671680
+All.Lookup ShortText (small).HashMapBL.1,9838,2350,31,0,57671680
+All.Lookup ShortText (small).HashMapBB.1,9894,2318,31,0,57671680
+All.Lookup ShortText (small).HashMapBU.1,10016,2400,31,0,57671680
+All.Lookup ShortText (small).HashMapUlL.1,10524,2528,31,0,57671680
+All.Lookup ShortText (small).HashMapUlB.1,10012,1722,31,0,57671680
+All.Lookup ShortText (small).HashMapUlU.1,10054,1672,31,0,57671680
+All.Lookup ShortText (small).Data_HashMap_Lazy.2,10245,1896,31,0,57671680
+All.Lookup ShortText (small).Data_HashMap_Strict.2,10632,2618,31,0,57671680
+All.Lookup ShortText (small).HashMapBL.2,10147,2132,31,0,57671680
+All.Lookup ShortText (small).HashMapBB.2,10469,1922,31,0,57671680
+All.Lookup ShortText (small).HashMapBU.2,10298,1952,31,0,57671680
+All.Lookup ShortText (small).HashMapUlL.2,10480,2008,31,0,57671680
+All.Lookup ShortText (small).HashMapUlB.2,10448,2876,31,0,57671680
+All.Lookup ShortText (small).HashMapUlU.2,10400,1754,31,0,57671680
+All.Lookup ShortText (small).Data_HashMap_Lazy.3,10525,1822,31,0,57671680
+All.Lookup ShortText (small).Data_HashMap_Strict.3,10226,1758,31,0,57671680
+All.Lookup ShortText (small).HashMapBL.3,10415,2214,31,0,57671680
+All.Lookup ShortText (small).HashMapBB.3,10603,2182,31,0,57671680
+All.Lookup ShortText (small).HashMapBU.3,10779,2346,31,0,57671680
+All.Lookup ShortText (small).HashMapUlL.3,10720,1670,31,0,57671680
+All.Lookup ShortText (small).HashMapUlB.3,10684,1762,31,0,57671680
+All.Lookup ShortText (small).HashMapUlU.3,10494,1746,31,0,57671680
+All.Lookup ShortText (small).Data_HashMap_Lazy.4,10386,1926,31,0,57671680
+All.Lookup ShortText (small).Data_HashMap_Strict.4,10508,1976,31,0,57671680
+All.Lookup ShortText (small).HashMapBL.4,10496,2010,31,0,57671680
+All.Lookup ShortText (small).HashMapBB.4,10406,2206,31,0,57671680
+All.Lookup ShortText (small).HashMapBU.4,10548,1692,31,0,57671680
+All.Lookup ShortText (small).HashMapUlL.4,10597,2262,31,0,57671680
+All.Lookup ShortText (small).HashMapUlB.4,10457,2244,31,0,57671680
+All.Lookup ShortText (small).HashMapUlU.4,10566,2242,31,0,57671680
+All.Lookup ShortText (small).Data_HashMap_Lazy.5,10494,2144,31,0,57671680
+All.Lookup ShortText (small).Data_HashMap_Strict.5,10464,1872,31,0,57671680
+All.Lookup ShortText (small).HashMapBL.5,10285,1840,31,0,57671680
+All.Lookup ShortText (small).HashMapBB.5,10447,1894,31,0,57671680
+All.Lookup ShortText (small).HashMapBU.5,10556,2966,31,0,57671680
+All.Lookup ShortText (small).HashMapUlL.5,10445,2076,31,0,57671680
+All.Lookup ShortText (small).HashMapUlB.5,10637,1748,31,0,57671680
+All.Lookup ShortText (small).HashMapUlU.5,10476,1712,31,0,57671680
+All.Lookup ShortText (small).Data_HashMap_Lazy.6,10365,1778,31,0,57671680
+All.Lookup ShortText (small).Data_HashMap_Strict.6,10363,2072,31,0,57671680
+All.Lookup ShortText (small).HashMapBL.6,10222,1938,31,0,57671680
+All.Lookup ShortText (small).HashMapBB.6,10548,1658,31,0,57671680
+All.Lookup ShortText (small).HashMapBU.6,10492,1994,31,0,57671680
+All.Lookup ShortText (small).HashMapUlL.6,10829,1634,31,0,57671680
+All.Lookup ShortText (small).HashMapUlB.6,10591,2242,31,0,57671680
+All.Lookup ShortText (small).HashMapUlU.6,10389,1866,31,0,57671680
+All.Lookup ShortText (small).Data_HashMap_Lazy.7,10773,2168,31,0,57671680
+All.Lookup ShortText (small).Data_HashMap_Strict.7,10360,2006,31,0,57671680
+All.Lookup ShortText (small).HashMapBL.7,10225,2094,31,0,57671680
+All.Lookup ShortText (small).HashMapBB.7,10479,1758,31,0,57671680
+All.Lookup ShortText (small).HashMapBU.7,10402,2178,31,0,57671680
+All.Lookup ShortText (small).HashMapUlL.7,10581,2160,31,0,57671680
+All.Lookup ShortText (small).HashMapUlB.7,10437,1844,31,0,57671680
+All.Lookup ShortText (small).HashMapUlU.7,10664,1948,31,0,57671680
+All.Lookup ShortText (small).Data_HashMap_Lazy.8,10282,1710,31,0,57671680
+All.Lookup ShortText (small).Data_HashMap_Strict.8,10310,1888,31,0,57671680
+All.Lookup ShortText (small).HashMapBL.8,10383,2908,31,0,57671680
+All.Lookup ShortText (small).HashMapBB.8,10413,1998,31,0,57671680
+All.Lookup ShortText (small).HashMapBU.8,10715,1748,31,0,57671680
+All.Lookup ShortText (small).HashMapUlL.8,10966,1732,31,0,57671680
+All.Lookup ShortText (small).HashMapUlB.8,10890,1602,31,0,57671680
+All.Lookup ShortText (small).HashMapUlU.8,10917,1858,31,0,57671680
+All.Lookup ShortText (small).Data_HashMap_Lazy.9,10876,1616,31,0,57671680
+All.Lookup ShortText (small).Data_HashMap_Strict.9,10882,1618,31,0,57671680
+All.Lookup ShortText (small).HashMapBL.9,10818,1902,31,0,57671680
+All.Lookup ShortText (small).HashMapBB.9,10886,2116,31,0,57671680
+All.Lookup ShortText (small).HashMapBU.9,10939,2078,31,0,57671680
+All.Lookup ShortText (small).HashMapUlL.9,11024,2094,31,0,57671680
+All.Lookup ShortText (small).HashMapUlB.9,10706,2598,31,0,57671680
+All.Lookup ShortText (small).HashMapUlU.9,10989,2150,31,0,57671680
+All.Lookup ShortText (small).Data_HashMap_Lazy.10,14528,4454,32,0,57671680
+All.Lookup ShortText (small).Data_HashMap_Strict.10,14333,3798,32,0,57671680
+All.Lookup ShortText (small).HashMapBL.10,14221,3584,32,0,57671680
+All.Lookup ShortText (small).HashMapBB.10,14394,4124,32,0,57671680
+All.Lookup ShortText (small).HashMapBU.10,14617,3884,32,0,58720256
+All.Lookup ShortText (small).HashMapUlL.10,14178,3212,32,0,58720256
+All.Lookup ShortText (small).HashMapUlB.10,13819,3706,32,0,58720256
+All.Lookup ShortText (small).HashMapUlU.10,14165,3814,32,0,58720256
+All.Lookup ShortText (small).Data_HashMap_Lazy.11,14254,4230,32,0,58720256
+All.Lookup ShortText (small).Data_HashMap_Strict.11,14550,4006,32,0,58720256
+All.Lookup ShortText (small).HashMapBL.11,14380,3718,32,0,58720256
+All.Lookup ShortText (small).HashMapBB.11,14368,3812,32,0,58720256
+All.Lookup ShortText (small).HashMapBU.11,14663,3280,32,0,58720256
+All.Lookup ShortText (small).HashMapUlL.11,14413,3200,32,0,58720256
+All.Lookup ShortText (small).HashMapUlB.11,14022,5142,32,0,58720256
+All.Lookup ShortText (small).HashMapUlU.11,13986,4102,32,0,58720256
+All.Lookup ShortText (small).Data_HashMap_Lazy.12,14077,4088,32,0,58720256
+All.Lookup ShortText (small).Data_HashMap_Strict.12,14852,3290,32,0,58720256
+All.Lookup ShortText (small).HashMapBL.12,14296,4208,32,0,58720256
+All.Lookup ShortText (small).HashMapBB.12,14351,3664,32,0,58720256
+All.Lookup ShortText (small).HashMapBU.12,14422,4030,32,0,58720256
+All.Lookup ShortText (small).HashMapUlL.12,14097,3720,32,0,58720256
+All.Lookup ShortText (small).HashMapUlB.12,14340,3980,32,0,58720256
+All.Lookup ShortText (small).HashMapUlU.12,14016,4224,32,0,58720256
+All.Lookup ShortText (small).Data_HashMap_Lazy.13,14654,4650,32,0,58720256
+All.Lookup ShortText (small).Data_HashMap_Strict.13,14339,4414,32,0,58720256
+All.Lookup ShortText (small).HashMapBL.13,14052,3302,32,0,58720256
+All.Lookup ShortText (small).HashMapBB.13,14491,4228,32,0,58720256
+All.Lookup ShortText (small).HashMapBU.13,14106,3902,32,0,58720256
+All.Lookup ShortText (small).HashMapUlL.13,13942,3884,32,0,58720256
+All.Lookup ShortText (small).HashMapUlB.13,13741,4054,32,0,58720256
+All.Lookup ShortText (small).HashMapUlU.13,14088,3730,32,0,58720256
+All.Lookup ShortText (small).Data_HashMap_Lazy.14,11534,2294,31,0,58720256
+All.Lookup ShortText (small).Data_HashMap_Strict.14,10958,2028,31,0,58720256
+All.Lookup ShortText (small).HashMapBL.14,10800,2142,31,0,58720256
+All.Lookup ShortText (small).HashMapBB.14,11075,2136,31,0,58720256
+All.Lookup ShortText (small).HashMapBU.14,11245,2032,31,0,58720256
+All.Lookup ShortText (small).HashMapUlL.14,11067,1888,31,0,58720256
+All.Lookup ShortText (small).HashMapUlB.14,10845,2612,31,0,58720256
+All.Lookup ShortText (small).HashMapUlU.14,10914,2224,31,0,58720256
+All.Lookup ShortText (small).Data_HashMap_Lazy.15,10800,2300,31,0,58720256
+All.Lookup ShortText (small).Data_HashMap_Strict.15,10734,1640,31,0,58720256
+All.Lookup ShortText (small).HashMapBL.15,10926,1988,31,0,58720256
+All.Lookup ShortText (small).HashMapBB.15,11111,1620,31,0,58720256
+All.Lookup ShortText (small).HashMapBU.15,10947,1750,31,0,58720256
+All.Lookup ShortText (small).HashMapUlL.15,11005,1886,31,0,58720256
+All.Lookup ShortText (small).HashMapUlB.15,10822,1774,31,0,58720256
+All.Lookup ShortText (small).HashMapUlU.15,10985,2034,31,0,58720256
+All.Lookup ShortText (small).Data_HashMap_Lazy.16,14240,4682,32,0,58720256
+All.Lookup ShortText (small).Data_HashMap_Strict.16,14394,3942,32,0,58720256
+All.Lookup ShortText (small).HashMapBL.16,16999,4090,32,0,58720256
+All.Lookup ShortText (small).HashMapBB.16,16918,3348,32,0,58720256
+All.Lookup ShortText (small).HashMapBU.16,17063,3972,32,0,58720256
+All.Lookup ShortText (small).HashMapUlL.16,17338,3350,32,0,58720256
+All.Lookup ShortText (small).HashMapUlB.16,16918,3948,32,0,58720256
+All.Lookup ShortText (small).HashMapUlU.16,17063,4118,32,0,58720256
+All.Lookup ShortText (small).Data_HashMap_Lazy.17,11118,1848,31,0,58720256
+All.Lookup ShortText (small).Data_HashMap_Strict.17,10953,1644,31,0,58720256
+All.Lookup ShortText (small).HashMapBL.17,10835,2428,31,0,58720256
+All.Lookup ShortText (small).HashMapBB.17,10633,1956,31,0,58720256
+All.Lookup ShortText (small).HashMapBU.17,10829,2166,31,0,58720256
+All.Lookup ShortText (small).HashMapUlL.17,10923,2696,31,0,58720256
+All.Lookup ShortText (small).HashMapUlB.17,10766,2122,31,0,58720256
+All.Lookup ShortText (small).HashMapUlU.17,10956,2278,31,0,58720256
+All.Lookup ShortText (small).Data_HashMap_Lazy.18,10752,1740,31,0,58720256
+All.Lookup ShortText (small).Data_HashMap_Strict.18,10835,1736,31,0,58720256
+All.Lookup ShortText (small).HashMapBL.18,10657,1766,31,0,58720256
+All.Lookup ShortText (small).HashMapBB.18,11118,2052,31,0,58720256
+All.Lookup ShortText (small).HashMapBU.18,10891,2244,31,0,58720256
+All.Lookup ShortText (small).HashMapUlL.18,10929,1866,31,0,58720256
+All.Lookup ShortText (small).HashMapUlB.18,10842,1736,31,0,58720256
+All.Lookup ShortText (small).HashMapUlU.18,10999,2082,31,0,58720256
+All.Lookup ShortText (small).Data_HashMap_Lazy.19,14225,4266,32,0,58720256
+All.Lookup ShortText (small).Data_HashMap_Strict.19,14543,3580,32,0,58720256
+All.Lookup ShortText (small).HashMapBL.19,14285,3420,32,0,58720256
+All.Lookup ShortText (small).HashMapBB.19,14163,3828,32,0,58720256
+All.Lookup ShortText (small).HashMapBU.19,14177,3456,32,0,58720256
+All.Lookup ShortText (small).HashMapUlL.19,13834,3546,32,0,58720256
+All.Lookup ShortText (small).HashMapUlB.19,13913,3286,32,0,58720256
+All.Lookup ShortText (small).HashMapUlU.19,13996,3736,32,0,58720256
+All.Lookup ShortText (small).Data_HashMap_Lazy.20,10866,2114,31,0,58720256
+All.Lookup ShortText (small).Data_HashMap_Strict.20,10825,1608,31,0,58720256
+All.Lookup ShortText (small).HashMapBL.20,10741,2000,31,0,58720256
+All.Lookup ShortText (small).HashMapBB.20,10793,2016,31,0,58720256
+All.Lookup ShortText (small).HashMapBU.20,11027,2062,31,0,58720256
+All.Lookup ShortText (small).HashMapUlL.20,10756,1994,31,0,58720256
+All.Lookup ShortText (small).HashMapUlB.20,10901,1628,31,0,58720256
+All.Lookup ShortText (small).HashMapUlU.20,11246,1974,31,0,58720256
+All.Lookup ShortText (small).Data_HashMap_Lazy.21,14111,3942,32,0,58720256
+All.Lookup ShortText (small).Data_HashMap_Strict.21,14129,4206,32,0,58720256
+All.Lookup ShortText (small).HashMapBL.21,16530,4050,32,0,58720256
+All.Lookup ShortText (small).HashMapBB.21,16625,3342,32,0,58720256
+All.Lookup ShortText (small).HashMapBU.21,16438,3812,32,0,58720256
+All.Lookup ShortText (small).HashMapUlL.21,16484,3568,32,0,58720256
+All.Lookup ShortText (small).HashMapUlB.21,15920,3522,32,0,58720256
+All.Lookup ShortText (small).HashMapUlU.21,16392,3370,32,0,58720256
+All.Lookup ShortText (small).Data_HashMap_Lazy.22,10782,2302,31,0,58720256
+All.Lookup ShortText (small).Data_HashMap_Strict.22,10694,1608,31,0,58720256
+All.Lookup ShortText (small).HashMapBL.22,10775,1802,31,0,58720256
+All.Lookup ShortText (small).HashMapBB.22,10804,2052,31,0,58720256
+All.Lookup ShortText (small).HashMapBU.22,11147,2428,31,0,58720256
+All.Lookup ShortText (small).HashMapUlL.22,10799,1822,31,0,58720256
+All.Lookup ShortText (small).HashMapUlB.22,10862,2114,31,0,58720256
+All.Lookup ShortText (small).HashMapUlU.22,10952,2472,31,0,58720256
+All.Lookup ShortText (small).Data_HashMap_Lazy.23,14135,3360,32,0,58720256
+All.Lookup ShortText (small).Data_HashMap_Strict.23,14300,3606,32,0,58720256
+All.Lookup ShortText (small).HashMapBL.23,14547,5384,32,0,58720256
+All.Lookup ShortText (small).HashMapBB.23,14260,3902,32,0,59768832
+All.Lookup ShortText (small).HashMapBU.23,14448,4316,32,0,59768832
+All.Lookup ShortText (small).HashMapUlL.23,14302,3600,32,0,59768832
+All.Lookup ShortText (small).HashMapUlB.23,14297,3986,32,0,59768832
+All.Lookup ShortText (small).HashMapUlU.23,13732,3676,32,0,59768832
+All.Lookup ShortText (small).Data_HashMap_Lazy.24,10991,2386,31,0,59768832
+All.Lookup ShortText (small).Data_HashMap_Strict.24,10810,1956,31,0,59768832
+All.Lookup ShortText (small).HashMapBL.24,10564,2406,31,0,59768832
+All.Lookup ShortText (small).HashMapBB.24,10725,2178,31,0,59768832
+All.Lookup ShortText (small).HashMapBU.24,10922,2512,31,0,59768832
+All.Lookup ShortText (small).HashMapUlL.24,11200,1602,31,0,59768832
+All.Lookup ShortText (small).HashMapUlB.24,10765,2636,31,0,59768832
+All.Lookup ShortText (small).HashMapUlU.24,11045,1600,31,0,59768832
+All.Lookup ShortText (small).Data_HashMap_Lazy.25,14208,3812,32,0,59768832
+All.Lookup ShortText (small).Data_HashMap_Strict.25,13994,3676,32,0,59768832
+All.Lookup ShortText (small).HashMapBL.25,16963,3950,32,0,59768832
+All.Lookup ShortText (small).HashMapBB.25,17469,3290,32,0,59768832
+All.Lookup ShortText (small).HashMapBU.25,16978,3242,32,0,59768832
+All.Lookup ShortText (small).HashMapUlL.25,17576,3854,32,0,59768832
+All.Lookup ShortText (small).HashMapUlB.25,16673,4180,32,0,59768832
+All.Lookup ShortText (small).HashMapUlU.25,16725,3614,32,0,59768832
+All.Lookup ShortText (small).Data_HashMap_Lazy.26,14821,3440,32,0,59768832
+All.Lookup ShortText (small).Data_HashMap_Strict.26,14622,3854,32,0,59768832
+All.Lookup ShortText (small).HashMapBL.26,14470,3878,32,0,59768832
+All.Lookup ShortText (small).HashMapBB.26,14087,3250,32,0,59768832
+All.Lookup ShortText (small).HashMapBU.26,13985,4676,32,0,59768832
+All.Lookup ShortText (small).HashMapUlL.26,14321,3612,32,0,59768832
+All.Lookup ShortText (small).HashMapUlB.26,13960,4546,32,0,59768832
+All.Lookup ShortText (small).HashMapUlU.26,14658,4686,32,0,59768832
+All.Lookup ShortText (small).Data_HashMap_Lazy.27,10969,1866,31,0,59768832
+All.Lookup ShortText (small).Data_HashMap_Strict.27,11203,2622,31,0,59768832
+All.Lookup ShortText (small).HashMapBL.27,10774,2008,31,0,59768832
+All.Lookup ShortText (small).HashMapBB.27,10787,1868,31,0,59768832
+All.Lookup ShortText (small).HashMapBU.27,10771,1716,31,0,59768832
+All.Lookup ShortText (small).HashMapUlL.27,10833,1948,31,0,59768832
+All.Lookup ShortText (small).HashMapUlB.27,10856,1882,31,0,59768832
+All.Lookup ShortText (small).HashMapUlU.27,10800,2592,31,0,59768832
+All.Lookup ShortText (small).Data_HashMap_Lazy.28,14490,4002,32,0,59768832
+All.Lookup ShortText (small).Data_HashMap_Strict.28,14405,5052,32,0,59768832
+All.Lookup ShortText (small).HashMapBL.28,16628,5012,32,0,59768832
+All.Lookup ShortText (small).HashMapBB.28,17033,3550,32,0,59768832
+All.Lookup ShortText (small).HashMapBU.28,17174,4450,32,0,59768832
+All.Lookup ShortText (small).HashMapUlL.28,17022,3830,32,0,59768832
+All.Lookup ShortText (small).HashMapUlB.28,16978,3866,32,0,59768832
+All.Lookup ShortText (small).HashMapUlU.28,16656,4224,32,0,59768832
+All.Lookup ShortText (small).Data_HashMap_Lazy.29,14496,4522,32,0,59768832
+All.Lookup ShortText (small).Data_HashMap_Strict.29,14324,4276,32,0,59768832
+All.Lookup ShortText (small).HashMapBL.29,16684,4016,32,0,59768832
+All.Lookup ShortText (small).HashMapBB.29,16476,3598,32,0,59768832
+All.Lookup ShortText (small).HashMapBU.29,16847,3428,32,0,59768832
+All.Lookup ShortText (small).HashMapUlL.29,16430,4608,32,0,59768832
+All.Lookup ShortText (small).HashMapUlB.29,16679,3442,32,0,59768832
+All.Lookup ShortText (small).HashMapUlU.29,16394,3960,32,0,59768832
+All.Lookup ShortText (small).Data_HashMap_Lazy.30,10758,1758,31,0,59768832
+All.Lookup ShortText (small).Data_HashMap_Strict.30,10927,2194,31,0,59768832
+All.Lookup ShortText (small).HashMapBL.30,10753,2110,31,0,59768832
+All.Lookup ShortText (small).HashMapBB.30,10647,2390,31,0,59768832
+All.Lookup ShortText (small).HashMapBU.30,10779,1754,31,0,59768832
+All.Lookup ShortText (small).HashMapUlL.30,11068,1640,31,0,59768832
+All.Lookup ShortText (small).HashMapUlB.30,10949,1820,31,0,59768832
+All.Lookup ShortText (small).HashMapUlU.30,10786,2194,31,0,59768832
+All.Lookup ShortText (small).Data_HashMap_Lazy.31,14237,3886,32,0,59768832
+All.Lookup ShortText (small).Data_HashMap_Strict.31,14324,3474,32,0,59768832
+All.Lookup ShortText (small).HashMapBL.31,16554,3546,32,0,59768832
+All.Lookup ShortText (small).HashMapBB.31,16523,3686,32,0,59768832
+All.Lookup ShortText (small).HashMapBU.31,16725,3490,32,0,59768832
+All.Lookup ShortText (small).HashMapUlL.31,16823,4132,32,0,60817408
+All.Lookup ShortText (small).HashMapUlB.31,16197,4888,32,0,60817408
+All.Lookup ShortText (small).HashMapUlU.31,16085,4118,32,0,60817408
+All.Lookup ShortText (small).Data_HashMap_Lazy.32,10633,1778,31,0,60817408
+All.Lookup ShortText (small).Data_HashMap_Strict.32,10633,2052,31,0,60817408
+All.Lookup ShortText (small).HashMapBL.32,10832,1704,31,0,60817408
+All.Lookup ShortText (small).HashMapBB.32,10707,2056,31,0,60817408
+All.Lookup ShortText (small).HashMapBU.32,10779,1814,31,0,60817408
+All.Lookup ShortText (small).HashMapUlL.32,10826,1686,31,0,60817408
+All.Lookup ShortText (small).HashMapUlB.32,10973,2108,31,0,60817408
+All.Lookup ShortText (small).HashMapUlU.32,10959,2156,31,0,60817408
+All.Lookup ShortText (powers of two).Data_HashMap_Lazy.1,10423,1984,31,0,60817408
+All.Lookup ShortText (powers of two).Data_HashMap_Strict.1,10571,1608,31,0,60817408
+All.Lookup ShortText (powers of two).HashMapBL.1,10025,1838,31,0,60817408
+All.Lookup ShortText (powers of two).HashMapBB.1,10093,1842,31,0,60817408
+All.Lookup ShortText (powers of two).HashMapBU.1,10146,2172,31,0,60817408
+All.Lookup ShortText (powers of two).HashMapUlL.1,10469,2028,31,0,60817408
+All.Lookup ShortText (powers of two).HashMapUlB.1,10142,1658,31,0,60817408
+All.Lookup ShortText (powers of two).HashMapUlU.1,9974,2222,31,0,60817408
+All.Lookup ShortText (powers of two).Data_HashMap_Lazy.2,10787,1832,31,0,60817408
+All.Lookup ShortText (powers of two).Data_HashMap_Strict.2,10788,2216,31,0,60817408
+All.Lookup ShortText (powers of two).HashMapBL.2,10448,2170,31,0,60817408
+All.Lookup ShortText (powers of two).HashMapBB.2,10788,1702,31,0,60817408
+All.Lookup ShortText (powers of two).HashMapBU.2,10624,1902,31,0,60817408
+All.Lookup ShortText (powers of two).HashMapUlL.2,10730,2206,31,0,60817408
+All.Lookup ShortText (powers of two).HashMapUlB.2,10693,2288,31,0,60817408
+All.Lookup ShortText (powers of two).HashMapUlU.2,11026,2500,31,0,60817408
+All.Lookup ShortText (powers of two).Data_HashMap_Lazy.4,10913,2628,31,0,60817408
+All.Lookup ShortText (powers of two).Data_HashMap_Strict.4,10627,2058,31,0,60817408
+All.Lookup ShortText (powers of two).HashMapBL.4,10702,1602,31,0,60817408
+All.Lookup ShortText (powers of two).HashMapBB.4,10718,1770,31,0,60817408
+All.Lookup ShortText (powers of two).HashMapBU.4,10728,1668,31,0,60817408
+All.Lookup ShortText (powers of two).HashMapUlL.4,11035,2036,31,0,60817408
+All.Lookup ShortText (powers of two).HashMapUlB.4,10694,2106,31,0,60817408
+All.Lookup ShortText (powers of two).HashMapUlU.4,10783,2488,31,0,60817408
+All.Lookup ShortText (powers of two).Data_HashMap_Lazy.8,10631,1702,31,0,60817408
+All.Lookup ShortText (powers of two).Data_HashMap_Strict.8,10795,1632,31,0,60817408
+All.Lookup ShortText (powers of two).HashMapBL.8,10574,2024,31,0,60817408
+All.Lookup ShortText (powers of two).HashMapBB.8,10690,1684,31,0,60817408
+All.Lookup ShortText (powers of two).HashMapBU.8,10958,1978,31,0,60817408
+All.Lookup ShortText (powers of two).HashMapUlL.8,10746,1618,31,0,60817408
+All.Lookup ShortText (powers of two).HashMapUlB.8,10906,1610,31,0,60817408
+All.Lookup ShortText (powers of two).HashMapUlU.8,10426,2452,31,0,60817408
+All.Lookup ShortText (powers of two).Data_HashMap_Lazy.16,13970,4164,32,0,60817408
+All.Lookup ShortText (powers of two).Data_HashMap_Strict.16,14162,5546,32,0,60817408
+All.Lookup ShortText (powers of two).HashMapBL.16,16822,3788,32,0,60817408
+All.Lookup ShortText (powers of two).HashMapBB.16,17003,3974,32,0,60817408
+All.Lookup ShortText (powers of two).HashMapBU.16,17104,5328,32,0,60817408
+All.Lookup ShortText (powers of two).HashMapUlL.16,16965,3470,32,0,60817408
+All.Lookup ShortText (powers of two).HashMapUlB.16,16628,4158,32,0,60817408
+All.Lookup ShortText (powers of two).HashMapUlU.16,17124,4588,32,0,60817408
+All.Lookup ShortText (powers of two).Data_HashMap_Lazy.32,10663,2216,31,0,60817408
+All.Lookup ShortText (powers of two).Data_HashMap_Strict.32,10741,1604,31,0,60817408
+All.Lookup ShortText (powers of two).HashMapBL.32,10602,1822,31,0,60817408
+All.Lookup ShortText (powers of two).HashMapBB.32,10727,2052,31,0,60817408
+All.Lookup ShortText (powers of two).HashMapBU.32,10857,1712,31,0,60817408
+All.Lookup ShortText (powers of two).HashMapUlL.32,10846,2546,31,0,60817408
+All.Lookup ShortText (powers of two).HashMapUlB.32,11000,1840,31,0,60817408
+All.Lookup ShortText (powers of two).HashMapUlU.32,10688,1722,31,0,60817408
+All.Lookup ShortText (powers of two).Data_HashMap_Lazy.64,14533,4000,32,0,60817408
+All.Lookup ShortText (powers of two).Data_HashMap_Strict.64,14614,4374,32,0,60817408
+All.Lookup ShortText (powers of two).HashMapBL.64,14327,3394,32,0,60817408
+All.Lookup ShortText (powers of two).HashMapBB.64,14074,4318,32,0,60817408
+All.Lookup ShortText (powers of two).HashMapBU.64,14127,3734,32,0,60817408
+All.Lookup ShortText (powers of two).HashMapUlL.64,14097,4024,32,0,60817408
+All.Lookup ShortText (powers of two).HashMapUlB.64,14148,3634,32,0,60817408
+All.Lookup ShortText (powers of two).HashMapUlU.64,14101,4770,32,0,60817408
+All.Lookup ShortText (powers of two).Data_HashMap_Lazy.128,11970,3716,32,0,60817408
+All.Lookup ShortText (powers of two).Data_HashMap_Strict.128,11800,1930,31,0,60817408
+All.Lookup ShortText (powers of two).HashMapBL.128,14097,3300,32,0,60817408
+All.Lookup ShortText (powers of two).HashMapBB.128,14281,3224,32,0,60817408
+All.Lookup ShortText (powers of two).HashMapBU.128,14125,4230,32,0,60817408
+All.Lookup ShortText (powers of two).HashMapUlL.128,14351,3228,32,0,60817408
+All.Lookup ShortText (powers of two).HashMapUlB.128,14179,4870,32,0,60817408
+All.Lookup ShortText (powers of two).HashMapUlU.128,14108,3304,32,0,60817408
+All.Lookup ShortText (powers of two).Data_HashMap_Lazy.256,12076,3704,32,0,60817408
+All.Lookup ShortText (powers of two).Data_HashMap_Strict.256,11910,1734,31,0,60817408
+All.Lookup ShortText (powers of two).HashMapBL.256,14230,3274,32,0,60817408
+All.Lookup ShortText (powers of two).HashMapBB.256,13981,3880,32,0,60817408
+All.Lookup ShortText (powers of two).HashMapBU.256,14040,3882,32,0,60817408
+All.Lookup ShortText (powers of two).HashMapUlL.256,13951,3548,32,0,60817408
+All.Lookup ShortText (powers of two).HashMapUlB.256,13751,4230,32,0,60817408
+All.Lookup ShortText (powers of two).HashMapUlU.256,14008,3946,32,0,60817408
+All.Lookup ShortText (powers of two).Data_HashMap_Lazy.512,21955,3910,32,0,60817408
+All.Lookup ShortText (powers of two).Data_HashMap_Strict.512,22214,3256,32,0,60817408
+All.Lookup ShortText (powers of two).HashMapBL.512,27180,9306,32,0,60817408
+All.Lookup ShortText (powers of two).HashMapBB.512,26848,7972,32,0,60817408
+All.Lookup ShortText (powers of two).HashMapBU.512,26912,7070,32,0,61865984
+All.Lookup ShortText (powers of two).HashMapUlL.512,26777,7426,32,0,61865984
+All.Lookup ShortText (powers of two).HashMapUlB.512,26143,8432,32,0,61865984
+All.Lookup ShortText (powers of two).HashMapUlU.512,26496,8172,32,0,61865984
+All.Lookup ShortText (powers of two).Data_HashMap_Lazy.1024,15725,3462,32,0,61865984
+All.Lookup ShortText (powers of two).Data_HashMap_Strict.1024,16050,3604,32,0,61865984
+All.Lookup ShortText (powers of two).HashMapBL.1024,19447,3204,32,0,62914560
+All.Lookup ShortText (powers of two).HashMapBB.1024,20107,3420,32,0,62914560
+All.Lookup ShortText (powers of two).HashMapBU.1024,19304,4314,32,0,62914560
+All.Lookup ShortText (powers of two).HashMapUlL.1024,19205,3500,32,0,63963136
+All.Lookup ShortText (powers of two).HashMapUlB.1024,19255,5576,32,0,63963136
+All.Lookup ShortText (powers of two).HashMapUlU.1024,19702,3396,32,0,63963136
+All.Foldr (+) 0 (small).Data_HashMap_Lazy.0,7935,2622,47,0,63963136
+All.Foldr (+) 0 (small).Data_HashMap_Strict.0,8049,1790,47,0,63963136
+All.Foldr (+) 0 (small).HashMapBL.0,7138,1764,31,0,63963136
+All.Foldr (+) 0 (small).HashMapBB.0,7256,1694,31,0,63963136
+All.Foldr (+) 0 (small).HashMapBU.0,7191,2134,31,0,63963136
+All.Foldr (+) 0 (small).HashMapUL.0,6979,1924,31,0,63963136
+All.Foldr (+) 0 (small).HashMapUB.0,7250,1684,31,0,63963136
+All.Foldr (+) 0 (small).HashMapUU.0,7228,1872,31,0,63963136
+All.Foldr (+) 0 (small).Data_HashMap_Lazy.1,8000,1910,47,0,63963136
+All.Foldr (+) 0 (small).Data_HashMap_Strict.1,7607,2880,47,0,63963136
+All.Foldr (+) 0 (small).HashMapBL.1,7399,1726,31,0,63963136
+All.Foldr (+) 0 (small).HashMapBB.1,7235,1750,31,0,63963136
+All.Foldr (+) 0 (small).HashMapBU.1,6949,2898,31,0,63963136
+All.Foldr (+) 0 (small).HashMapUL.1,7483,2174,31,0,63963136
+All.Foldr (+) 0 (small).HashMapUB.1,7199,2518,31,0,63963136
+All.Foldr (+) 0 (small).HashMapUU.1,7582,2066,31,0,63963136
+All.Foldr (+) 0 (small).Data_HashMap_Lazy.2,17807,5608,63,0,63963136
+All.Foldr (+) 0 (small).Data_HashMap_Strict.2,17246,3898,63,0,63963136
+All.Foldr (+) 0 (small).HashMapBL.2,17937,3796,103,0,63963136
+All.Foldr (+) 0 (small).HashMapBB.2,16835,4110,103,0,63963136
+All.Foldr (+) 0 (small).HashMapBU.2,17764,7294,103,0,63963136
+All.Foldr (+) 0 (small).HashMapUL.2,18404,4098,103,0,63963136
+All.Foldr (+) 0 (small).HashMapUB.2,16242,3340,103,0,63963136
+All.Foldr (+) 0 (small).HashMapUU.2,17149,3324,103,0,63963136
+All.Foldr (+) 0 (small).Data_HashMap_Lazy.3,20392,4744,63,0,63963136
+All.Foldr (+) 0 (small).Data_HashMap_Strict.3,20178,3746,63,0,63963136
+All.Foldr (+) 0 (small).HashMapBL.3,19658,4854,103,0,63963136
+All.Foldr (+) 0 (small).HashMapBB.3,18004,3324,103,0,63963136
+All.Foldr (+) 0 (small).HashMapBU.3,18262,4704,103,0,63963136
+All.Foldr (+) 0 (small).HashMapUL.3,19770,4690,103,0,63963136
+All.Foldr (+) 0 (small).HashMapUB.3,18029,3220,103,0,63963136
+All.Foldr (+) 0 (small).HashMapUU.3,18682,4252,103,0,63963136
+All.Foldr (+) 0 (small).Data_HashMap_Lazy.4,23360,3656,63,0,63963136
+All.Foldr (+) 0 (small).Data_HashMap_Strict.4,23144,4722,63,0,63963136
+All.Foldr (+) 0 (small).HashMapBL.4,21014,5300,103,0,63963136
+All.Foldr (+) 0 (small).HashMapBB.4,19447,3588,103,0,63963136
+All.Foldr (+) 0 (small).HashMapBU.4,19315,3436,103,0,63963136
+All.Foldr (+) 0 (small).HashMapUL.4,20268,4990,103,0,63963136
+All.Foldr (+) 0 (small).HashMapUB.4,19486,4898,103,0,63963136
+All.Foldr (+) 0 (small).HashMapUU.4,20024,5106,103,0,63963136
+All.Foldr (+) 0 (small).Data_HashMap_Lazy.5,25628,8598,64,0,63963136
+All.Foldr (+) 0 (small).Data_HashMap_Strict.5,26216,7844,64,0,63963136
+All.Foldr (+) 0 (small).HashMapBL.5,22135,5488,103,0,63963136
+All.Foldr (+) 0 (small).HashMapBB.5,20010,4116,103,0,63963136
+All.Foldr (+) 0 (small).HashMapBU.5,20974,3614,103,0,63963136
+All.Foldr (+) 0 (small).HashMapUL.5,24240,8512,103,0,63963136
+All.Foldr (+) 0 (small).HashMapUB.5,20755,4150,103,0,63963136
+All.Foldr (+) 0 (small).HashMapUU.5,21680,6396,103,0,63963136
+All.Foldr (+) 0 (small).Data_HashMap_Lazy.6,28932,6916,64,0,63963136
+All.Foldr (+) 0 (small).Data_HashMap_Strict.6,28936,7756,64,0,63963136
+All.Foldr (+) 0 (small).HashMapBL.6,23298,3560,103,0,63963136
+All.Foldr (+) 0 (small).HashMapBB.6,21528,4272,103,0,63963136
+All.Foldr (+) 0 (small).HashMapBU.6,22652,4490,103,0,63963136
+All.Foldr (+) 0 (small).HashMapUL.6,24486,6750,103,0,63963136
+All.Foldr (+) 0 (small).HashMapUB.6,21623,4066,103,0,63963136
+All.Foldr (+) 0 (small).HashMapUU.6,22081,3634,103,0,63963136
+All.Foldr (+) 0 (small).Data_HashMap_Lazy.7,32723,6870,64,0,63963136
+All.Foldr (+) 0 (small).Data_HashMap_Strict.7,32028,7064,64,0,63963136
+All.Foldr (+) 0 (small).HashMapBL.7,24427,7760,103,0,63963136
+All.Foldr (+) 0 (small).HashMapBB.7,21585,3704,103,0,63963136
+All.Foldr (+) 0 (small).HashMapBU.7,22363,3580,103,0,63963136
+All.Foldr (+) 0 (small).HashMapUL.7,24407,6548,103,0,63963136
+All.Foldr (+) 0 (small).HashMapUB.7,22272,3954,103,0,63963136
+All.Foldr (+) 0 (small).HashMapUU.7,22421,4568,103,0,63963136
+All.Foldr (+) 0 (small).Data_HashMap_Lazy.8,37983,8742,64,0,63963136
+All.Foldr (+) 0 (small).Data_HashMap_Strict.8,38424,7524,64,0,63963136
+All.Foldr (+) 0 (small).HashMapBL.8,26561,8726,103,0,63963136
+All.Foldr (+) 0 (small).HashMapBB.8,23959,3258,103,0,63963136
+All.Foldr (+) 0 (small).HashMapBU.8,22748,5406,103,0,63963136
+All.Foldr (+) 0 (small).HashMapUL.8,25767,8014,103,0,63963136
+All.Foldr (+) 0 (small).HashMapUB.8,23373,3706,103,0,63963136
+All.Foldr (+) 0 (small).HashMapUU.8,24367,6784,103,0,63963136
+All.Foldr (+) 0 (small).Data_HashMap_Lazy.9,41289,8400,64,0,63963136
+All.Foldr (+) 0 (small).Data_HashMap_Strict.9,41129,6882,64,0,63963136
+All.Foldr (+) 0 (small).HashMapBL.9,26535,7236,103,0,63963136
+All.Foldr (+) 0 (small).HashMapBB.9,22769,4250,103,0,63963136
+All.Foldr (+) 0 (small).HashMapBU.9,22715,4226,103,0,63963136
+All.Foldr (+) 0 (small).HashMapUL.9,27773,8782,103,0,63963136
+All.Foldr (+) 0 (small).HashMapUB.9,24875,7338,103,0,63963136
+All.Foldr (+) 0 (small).HashMapUU.9,24859,8982,103,0,63963136
+All.Foldr (+) 0 (small).Data_HashMap_Lazy.10,46528,6884,64,0,63963136
+All.Foldr (+) 0 (small).Data_HashMap_Strict.10,46740,7844,64,0,63963136
+All.Foldr (+) 0 (small).HashMapBL.10,29577,7122,103,0,63963136
+All.Foldr (+) 0 (small).HashMapBB.10,25832,7134,103,0,63963136
+All.Foldr (+) 0 (small).HashMapBU.10,26240,6486,103,0,63963136
+All.Foldr (+) 0 (small).HashMapUL.10,29878,7972,103,0,63963136
+All.Foldr (+) 0 (small).HashMapUB.10,25085,7926,103,0,63963136
+All.Foldr (+) 0 (small).HashMapUU.10,25834,8736,103,0,63963136
+All.Foldr (+) 0 (small).Data_HashMap_Lazy.11,51071,17658,64,0,63963136
+All.Foldr (+) 0 (small).Data_HashMap_Strict.11,51032,15154,64,0,63963136
+All.Foldr (+) 0 (small).HashMapBL.11,32072,7004,103,0,63963136
+All.Foldr (+) 0 (small).HashMapBB.11,27333,6566,103,0,63963136
+All.Foldr (+) 0 (small).HashMapBU.11,26407,7836,103,0,63963136
+All.Foldr (+) 0 (small).HashMapUL.11,31730,7026,103,0,63963136
+All.Foldr (+) 0 (small).HashMapUB.11,26249,7854,103,0,63963136
+All.Foldr (+) 0 (small).HashMapUU.11,26342,7202,103,0,63963136
+All.Foldr (+) 0 (small).Data_HashMap_Lazy.12,57673,13310,64,0,63963136
+All.Foldr (+) 0 (small).Data_HashMap_Strict.12,56821,14280,64,0,65011712
+All.Foldr (+) 0 (small).HashMapBL.12,34359,7884,103,0,65011712
+All.Foldr (+) 0 (small).HashMapBB.12,28153,7638,103,0,65011712
+All.Foldr (+) 0 (small).HashMapBU.12,27108,6482,103,0,65011712
+All.Foldr (+) 0 (small).HashMapUL.12,34425,7558,103,0,65011712
+All.Foldr (+) 0 (small).HashMapUB.12,26912,8284,103,0,65011712
+All.Foldr (+) 0 (small).HashMapUU.12,27534,8122,103,0,65011712
+All.Foldr (+) 0 (small).Data_HashMap_Lazy.13,60611,21322,64,0,65011712
+All.Foldr (+) 0 (small).Data_HashMap_Strict.13,60348,13810,64,0,65011712
+All.Foldr (+) 0 (small).HashMapBL.13,34838,9148,103,0,65011712
+All.Foldr (+) 0 (small).HashMapBB.13,28856,8162,103,0,65011712
+All.Foldr (+) 0 (small).HashMapBU.13,28637,7560,103,0,65011712
+All.Foldr (+) 0 (small).HashMapUL.13,35914,7318,103,0,65011712
+All.Foldr (+) 0 (small).HashMapUB.13,27841,10780,103,0,65011712
+All.Foldr (+) 0 (small).HashMapUU.13,31126,8384,103,0,65011712
+All.Foldr (+) 0 (small).Data_HashMap_Lazy.14,65601,15412,64,0,65011712
+All.Foldr (+) 0 (small).Data_HashMap_Strict.14,65193,19106,64,0,65011712
+All.Foldr (+) 0 (small).HashMapBL.14,37892,9798,103,0,65011712
+All.Foldr (+) 0 (small).HashMapBB.14,29506,7664,103,0,65011712
+All.Foldr (+) 0 (small).HashMapBU.14,29826,8892,103,0,65011712
+All.Foldr (+) 0 (small).HashMapUL.14,38084,10036,103,0,65011712
+All.Foldr (+) 0 (small).HashMapUB.14,29176,8548,103,0,65011712
+All.Foldr (+) 0 (small).HashMapUU.14,30101,8114,103,0,65011712
+All.Foldr (+) 0 (small).Data_HashMap_Lazy.15,70447,17548,64,0,65011712
+All.Foldr (+) 0 (small).Data_HashMap_Strict.15,68734,13522,64,0,65011712
+All.Foldr (+) 0 (small).HashMapBL.15,40632,7394,103,0,65011712
+All.Foldr (+) 0 (small).HashMapBB.15,30831,9658,103,0,65011712
+All.Foldr (+) 0 (small).HashMapBU.15,31437,7866,103,0,65011712
+All.Foldr (+) 0 (small).HashMapUL.15,40346,7080,103,0,65011712
+All.Foldr (+) 0 (small).HashMapUB.15,31056,9512,103,0,65011712
+All.Foldr (+) 0 (small).HashMapUU.15,31042,6864,103,0,65011712
+All.Foldr (+) 0 (small).Data_HashMap_Lazy.16,84276,32278,64,0,65011712
+All.Foldr (+) 0 (small).Data_HashMap_Strict.16,81324,15724,64,0,65011712
+All.Foldr (+) 0 (small).HashMapBL.16,42974,9260,103,0,65011712
+All.Foldr (+) 0 (small).HashMapBB.16,32892,7450,103,0,65011712
+All.Foldr (+) 0 (small).HashMapBU.16,32285,6618,103,0,65011712
+All.Foldr (+) 0 (small).HashMapUL.16,42262,7392,103,0,65011712
+All.Foldr (+) 0 (small).HashMapUB.16,32989,8566,103,0,65011712
+All.Foldr (+) 0 (small).HashMapUU.16,32341,9516,103,0,65011712
+All.Foldr (+) 0 (small).Data_HashMap_Lazy.17,84567,14676,64,0,65011712
+All.Foldr (+) 0 (small).Data_HashMap_Strict.17,84808,16254,64,0,65011712
+All.Foldr (+) 0 (small).HashMapBL.17,44509,8010,103,0,65011712
+All.Foldr (+) 0 (small).HashMapBB.17,34228,8586,103,0,65011712
+All.Foldr (+) 0 (small).HashMapBU.17,33042,6828,103,0,65011712
+All.Foldr (+) 0 (small).HashMapUL.17,43579,6548,103,0,65011712
+All.Foldr (+) 0 (small).HashMapUB.17,32437,6424,103,0,65011712
+All.Foldr (+) 0 (small).HashMapUU.17,32812,8356,103,0,65011712
+All.Foldr (+) 0 (small).Data_HashMap_Lazy.18,89423,13740,64,0,65011712
+All.Foldr (+) 0 (small).Data_HashMap_Strict.18,90626,14902,64,0,65011712
+All.Foldr (+) 0 (small).HashMapBL.18,46827,7140,103,0,65011712
+All.Foldr (+) 0 (small).HashMapBB.18,35285,6434,103,0,65011712
+All.Foldr (+) 0 (small).HashMapBU.18,34269,7214,103,0,65011712
+All.Foldr (+) 0 (small).HashMapUL.18,46669,8226,103,0,65011712
+All.Foldr (+) 0 (small).HashMapUB.18,35020,8384,103,0,65011712
+All.Foldr (+) 0 (small).HashMapUU.18,34726,7762,103,0,65011712
+All.Foldr (+) 0 (small).Data_HashMap_Lazy.19,91721,15720,64,0,65011712
+All.Foldr (+) 0 (small).Data_HashMap_Strict.19,92821,15292,64,0,65011712
+All.Foldr (+) 0 (small).HashMapBL.19,50925,14420,104,0,65011712
+All.Foldr (+) 0 (small).HashMapBB.19,37116,7358,103,0,65011712
+All.Foldr (+) 0 (small).HashMapBU.19,34589,8756,103,0,65011712
+All.Foldr (+) 0 (small).HashMapUL.19,50557,13924,104,0,65011712
+All.Foldr (+) 0 (small).HashMapUB.19,37092,7404,103,0,65011712
+All.Foldr (+) 0 (small).HashMapUU.19,35048,7656,103,0,65011712
+All.Foldr (+) 0 (small).Data_HashMap_Lazy.20,101961,28578,64,0,65011712
+All.Foldr (+) 0 (small).Data_HashMap_Strict.20,105355,26470,64,0,65011712
+All.Foldr (+) 0 (small).HashMapBL.20,51926,14668,104,0,65011712
+All.Foldr (+) 0 (small).HashMapBB.20,37543,6512,103,0,65011712
+All.Foldr (+) 0 (small).HashMapBU.20,36714,9254,103,0,65011712
+All.Foldr (+) 0 (small).HashMapUL.20,52636,15868,104,0,65011712
+All.Foldr (+) 0 (small).HashMapUB.20,38088,7364,103,0,65011712
+All.Foldr (+) 0 (small).HashMapUU.20,36535,6988,103,0,65011712
+All.Foldr (+) 0 (small).Data_HashMap_Lazy.21,101461,30076,64,0,65011712
+All.Foldr (+) 0 (small).Data_HashMap_Strict.21,103208,28928,64,0,65011712
+All.Foldr (+) 0 (small).HashMapBL.21,55287,13022,104,0,65011712
+All.Foldr (+) 0 (small).HashMapBB.21,39050,7380,103,0,65011712
+All.Foldr (+) 0 (small).HashMapBU.21,35981,8644,103,0,65011712
+All.Foldr (+) 0 (small).HashMapUL.21,55475,13026,104,0,65011712
+All.Foldr (+) 0 (small).HashMapUB.21,39053,7844,103,0,65011712
+All.Foldr (+) 0 (small).HashMapUU.21,36757,6972,103,0,65011712
+All.Foldr (+) 0 (small).Data_HashMap_Lazy.22,109845,35254,64,0,65011712
+All.Foldr (+) 0 (small).Data_HashMap_Strict.22,108192,28888,64,0,65011712
+All.Foldr (+) 0 (small).HashMapBL.22,56054,13990,104,0,65011712
+All.Foldr (+) 0 (small).HashMapBB.22,39910,7136,103,0,65011712
+All.Foldr (+) 0 (small).HashMapBU.22,35905,6872,103,0,65011712
+All.Foldr (+) 0 (small).HashMapUL.22,55431,17018,104,0,65011712
+All.Foldr (+) 0 (small).HashMapUB.22,40115,9080,103,0,65011712
+All.Foldr (+) 0 (small).HashMapUU.22,37268,6488,103,0,65011712
+All.Foldr (+) 0 (small).Data_HashMap_Lazy.23,112160,30052,64,0,65011712
+All.Foldr (+) 0 (small).Data_HashMap_Strict.23,115316,32212,64,0,65011712
+All.Foldr (+) 0 (small).HashMapBL.23,57979,19200,104,0,65011712
+All.Foldr (+) 0 (small).HashMapBB.23,41409,7132,103,0,65011712
+All.Foldr (+) 0 (small).HashMapBU.23,39044,9020,103,0,65011712
+All.Foldr (+) 0 (small).HashMapUL.23,58809,13268,104,0,65011712
+All.Foldr (+) 0 (small).HashMapUB.23,41640,6646,103,0,65011712
+All.Foldr (+) 0 (small).HashMapUU.23,38736,7760,103,0,65011712
+All.Foldr (+) 0 (small).Data_HashMap_Lazy.24,128544,35146,64,0,65011712
+All.Foldr (+) 0 (small).Data_HashMap_Strict.24,132043,27882,64,0,65011712
+All.Foldr (+) 0 (small).HashMapBL.24,60011,15326,104,0,65011712
+All.Foldr (+) 0 (small).HashMapBB.24,41920,8676,103,0,65011712
+All.Foldr (+) 0 (small).HashMapBU.24,39882,9044,103,0,65011712
+All.Foldr (+) 0 (small).HashMapUL.24,61211,13442,104,0,65011712
+All.Foldr (+) 0 (small).HashMapUB.24,42903,7992,103,0,65011712
+All.Foldr (+) 0 (small).HashMapUU.24,40126,7278,103,0,65011712
+All.Foldr (+) 0 (small).Data_HashMap_Lazy.25,124469,25700,64,0,65011712
+All.Foldr (+) 0 (small).Data_HashMap_Strict.25,125877,26882,64,0,65011712
+All.Foldr (+) 0 (small).HashMapBL.25,64413,14320,104,0,65011712
+All.Foldr (+) 0 (small).HashMapBB.25,43485,6518,103,0,65011712
+All.Foldr (+) 0 (small).HashMapBU.25,40540,7778,103,0,65011712
+All.Foldr (+) 0 (small).HashMapUL.25,64494,13680,104,0,65011712
+All.Foldr (+) 0 (small).HashMapUB.25,43690,7068,103,0,65011712
+All.Foldr (+) 0 (small).HashMapUU.25,40901,7638,103,0,65011712
+All.Foldr (+) 0 (small).Data_HashMap_Lazy.26,127875,31078,64,0,65011712
+All.Foldr (+) 0 (small).Data_HashMap_Strict.26,131079,28552,64,0,65011712
+All.Foldr (+) 0 (small).HashMapBL.26,67597,18488,104,0,66060288
+All.Foldr (+) 0 (small).HashMapBB.26,44483,7134,103,0,66060288
+All.Foldr (+) 0 (small).HashMapBU.26,41605,7412,103,0,66060288
+All.Foldr (+) 0 (small).HashMapUL.26,66127,14896,104,0,66060288
+All.Foldr (+) 0 (small).HashMapUB.26,45222,7580,103,0,66060288
+All.Foldr (+) 0 (small).HashMapUU.26,41445,8260,103,0,66060288
+All.Foldr (+) 0 (small).Data_HashMap_Lazy.27,133493,31816,64,0,66060288
+All.Foldr (+) 0 (small).Data_HashMap_Strict.27,134051,39992,64,0,66060288
+All.Foldr (+) 0 (small).HashMapBL.27,68233,14232,104,0,66060288
+All.Foldr (+) 0 (small).HashMapBB.27,45062,7252,103,0,66060288
+All.Foldr (+) 0 (small).HashMapBU.27,42285,6988,103,0,66060288
+All.Foldr (+) 0 (small).HashMapUL.27,67788,13036,104,0,66060288
+All.Foldr (+) 0 (small).HashMapUB.27,45499,8856,103,0,66060288
+All.Foldr (+) 0 (small).HashMapUU.27,42875,6556,103,0,66060288
+All.Foldr (+) 0 (small).Data_HashMap_Lazy.28,151834,27832,64,0,66060288
+All.Foldr (+) 0 (small).Data_HashMap_Strict.28,152071,29092,64,0,66060288
+All.Foldr (+) 0 (small).HashMapBL.28,70596,14480,104,0,66060288
+All.Foldr (+) 0 (small).HashMapBB.28,46652,6718,103,0,66060288
+All.Foldr (+) 0 (small).HashMapBU.28,43657,6932,103,0,66060288
+All.Foldr (+) 0 (small).HashMapUL.28,70328,13094,104,0,66060288
+All.Foldr (+) 0 (small).HashMapUB.28,46068,7052,103,0,66060288
+All.Foldr (+) 0 (small).HashMapUU.28,43177,7726,103,0,66060288
+All.Foldr (+) 0 (small).Data_HashMap_Lazy.29,143393,42370,64,0,66060288
+All.Foldr (+) 0 (small).Data_HashMap_Strict.29,142988,28438,64,0,66060288
+All.Foldr (+) 0 (small).HashMapBL.29,72394,14254,104,0,66060288
+All.Foldr (+) 0 (small).HashMapBB.29,48443,13338,104,0,66060288
+All.Foldr (+) 0 (small).HashMapBU.29,43718,8380,103,0,66060288
+All.Foldr (+) 0 (small).HashMapUL.29,73309,14304,104,0,66060288
+All.Foldr (+) 0 (small).HashMapUB.29,48722,14824,104,0,66060288
+All.Foldr (+) 0 (small).HashMapUU.29,44226,6760,103,0,66060288
+All.Foldr (+) 0 (small).Data_HashMap_Lazy.30,150171,29004,64,0,66060288
+All.Foldr (+) 0 (small).Data_HashMap_Strict.30,148438,27966,64,0,66060288
+All.Foldr (+) 0 (small).HashMapBL.30,74734,16930,104,0,66060288
+All.Foldr (+) 0 (small).HashMapBB.30,49893,14330,104,0,66060288
+All.Foldr (+) 0 (small).HashMapBU.30,44668,8032,103,0,66060288
+All.Foldr (+) 0 (small).HashMapUL.30,75555,13200,104,0,66060288
+All.Foldr (+) 0 (small).HashMapUB.30,49102,13744,104,0,66060288
+All.Foldr (+) 0 (small).HashMapUU.30,45704,7314,103,0,66060288
+All.Foldr (+) 0 (small).Data_HashMap_Lazy.31,154719,27486,64,0,66060288
+All.Foldr (+) 0 (small).Data_HashMap_Strict.31,153138,28552,64,0,66060288
+All.Foldr (+) 0 (small).HashMapBL.31,76597,12828,104,0,66060288
+All.Foldr (+) 0 (small).HashMapBB.31,51418,13804,104,0,66060288
+All.Foldr (+) 0 (small).HashMapBU.31,45539,6516,103,0,66060288
+All.Foldr (+) 0 (small).HashMapUL.31,77210,16038,104,0,66060288
+All.Foldr (+) 0 (small).HashMapUB.31,50759,15608,104,0,66060288
+All.Foldr (+) 0 (small).HashMapUU.31,46517,6568,103,0,66060288
+All.Foldr (+) 0 (small).Data_HashMap_Lazy.32,174701,28174,64,0,66060288
+All.Foldr (+) 0 (small).Data_HashMap_Strict.32,174601,29154,64,0,66060288
+All.Foldr (+) 0 (small).HashMapBL.32,79868,14860,104,0,66060288
+All.Foldr (+) 0 (small).HashMapBB.32,51636,18660,104,0,66060288
+All.Foldr (+) 0 (small).HashMapBU.32,46742,7178,103,0,66060288
+All.Foldr (+) 0 (small).HashMapUL.32,79180,15344,104,0,66060288
+All.Foldr (+) 0 (small).HashMapUB.32,51781,12880,104,0,66060288
+All.Foldr (+) 0 (small).HashMapUU.32,48404,13640,104,0,66060288
+All.Foldr (+) 0 (powers of two).Data_HashMap_Lazy.0,7676,1898,47,0,66060288
+All.Foldr (+) 0 (powers of two).Data_HashMap_Strict.0,7816,1606,47,0,66060288
+All.Foldr (+) 0 (powers of two).HashMapBL.0,7045,1814,31,0,66060288
+All.Foldr (+) 0 (powers of two).HashMapBB.0,7148,1616,31,0,66060288
+All.Foldr (+) 0 (powers of two).HashMapBU.0,7519,2008,31,0,66060288
+All.Foldr (+) 0 (powers of two).HashMapUL.0,7454,2050,31,0,66060288
+All.Foldr (+) 0 (powers of two).HashMapUB.0,7115,2300,31,0,66060288
+All.Foldr (+) 0 (powers of two).HashMapUU.0,7073,2804,31,0,66060288
+All.Foldr (+) 0 (powers of two).Data_HashMap_Lazy.1,7808,2538,47,0,66060288
+All.Foldr (+) 0 (powers of two).Data_HashMap_Strict.1,7768,2372,47,0,66060288
+All.Foldr (+) 0 (powers of two).HashMapBL.1,7501,2410,31,0,66060288
+All.Foldr (+) 0 (powers of two).HashMapBB.1,7251,2282,31,0,66060288
+All.Foldr (+) 0 (powers of two).HashMapBU.1,7097,2108,31,0,66060288
+All.Foldr (+) 0 (powers of two).HashMapUL.1,7496,2256,31,0,66060288
+All.Foldr (+) 0 (powers of two).HashMapUB.1,7221,2058,31,0,66060288
+All.Foldr (+) 0 (powers of two).HashMapUU.1,6973,1990,31,0,66060288
+All.Foldr (+) 0 (powers of two).Data_HashMap_Lazy.2,17586,3388,63,0,66060288
+All.Foldr (+) 0 (powers of two).Data_HashMap_Strict.2,17807,3896,63,0,66060288
+All.Foldr (+) 0 (powers of two).HashMapBL.2,18428,3226,103,0,66060288
+All.Foldr (+) 0 (powers of two).HashMapBB.2,17400,5154,103,0,66060288
+All.Foldr (+) 0 (powers of two).HashMapBU.2,18127,3998,103,0,66060288
+All.Foldr (+) 0 (powers of two).HashMapUL.2,18235,3890,103,0,66060288
+All.Foldr (+) 0 (powers of two).HashMapUB.2,17720,3922,103,0,66060288
+All.Foldr (+) 0 (powers of two).HashMapUU.2,17876,4110,103,0,66060288
+All.Foldr (+) 0 (powers of two).Data_HashMap_Lazy.4,23323,4456,63,0,66060288
+All.Foldr (+) 0 (powers of two).Data_HashMap_Strict.4,23575,3694,63,0,66060288
+All.Foldr (+) 0 (powers of two).HashMapBL.4,21087,3908,103,0,66060288
+All.Foldr (+) 0 (powers of two).HashMapBB.4,18866,3216,103,0,66060288
+All.Foldr (+) 0 (powers of two).HashMapBU.4,20265,3298,103,0,66060288
+All.Foldr (+) 0 (powers of two).HashMapUL.4,20543,3808,103,0,66060288
+All.Foldr (+) 0 (powers of two).HashMapUB.4,20169,3224,103,0,66060288
+All.Foldr (+) 0 (powers of two).HashMapUU.4,19952,3292,103,0,66060288
+All.Foldr (+) 0 (powers of two).Data_HashMap_Lazy.8,38513,6536,64,0,66060288
+All.Foldr (+) 0 (powers of two).Data_HashMap_Strict.8,38014,6876,64,0,66060288
+All.Foldr (+) 0 (powers of two).HashMapBL.8,26111,6590,103,0,66060288
+All.Foldr (+) 0 (powers of two).HashMapBB.8,23795,4000,103,0,66060288
+All.Foldr (+) 0 (powers of two).HashMapBU.8,23778,3214,103,0,66060288
+All.Foldr (+) 0 (powers of two).HashMapUL.8,26267,7884,103,0,66060288
+All.Foldr (+) 0 (powers of two).HashMapUB.8,23146,4130,103,0,66060288
+All.Foldr (+) 0 (powers of two).HashMapUU.8,23277,3202,103,0,66060288
+All.Foldr (+) 0 (powers of two).Data_HashMap_Lazy.16,81093,12800,64,0,66060288
+All.Foldr (+) 0 (powers of two).Data_HashMap_Strict.16,80626,14312,64,0,66060288
+All.Foldr (+) 0 (powers of two).HashMapBL.16,42735,7460,103,0,66060288
+All.Foldr (+) 0 (powers of two).HashMapBB.16,34245,10394,103,0,66060288
+All.Foldr (+) 0 (powers of two).HashMapBU.16,31083,8910,103,0,66060288
+All.Foldr (+) 0 (powers of two).HashMapUL.16,42148,6446,103,0,66060288
+All.Foldr (+) 0 (powers of two).HashMapUB.16,33680,9780,103,0,66060288
+All.Foldr (+) 0 (powers of two).HashMapUU.16,31188,8282,103,0,66060288
+All.Foldr (+) 0 (powers of two).Data_HashMap_Lazy.32,172665,27770,64,0,66060288
+All.Foldr (+) 0 (powers of two).Data_HashMap_Strict.32,176167,33334,64,0,66060288
+All.Foldr (+) 0 (powers of two).HashMapBL.32,79679,14122,104,0,66060288
+All.Foldr (+) 0 (powers of two).HashMapBB.32,52871,13186,104,0,66060288
+All.Foldr (+) 0 (powers of two).HashMapBU.32,47108,8002,103,0,66060288
+All.Foldr (+) 0 (powers of two).HashMapUL.32,79579,14490,104,0,66060288
+All.Foldr (+) 0 (powers of two).HashMapUB.32,53015,13794,104,0,66060288
+All.Foldr (+) 0 (powers of two).HashMapUU.32,46614,8582,103,0,66060288
+All.Foldr (+) 0 (powers of two).Data_HashMap_Lazy.64,420303,115118,576,0,66060288
+All.Foldr (+) 0 (powers of two).Data_HashMap_Strict.64,439933,108318,576,0,67108864
+All.Foldr (+) 0 (powers of two).HashMapBL.64,359889,64796,2150,1,67108864
+All.Foldr (+) 0 (powers of two).HashMapBB.64,347395,64590,2150,1,67108864
+All.Foldr (+) 0 (powers of two).HashMapBU.64,341066,58036,2150,1,67108864
+All.Foldr (+) 0 (powers of two).HashMapUL.64,373643,91702,2150,1,67108864
+All.Foldr (+) 0 (powers of two).HashMapUB.64,334872,134172,2150,1,67108864
+All.Foldr (+) 0 (powers of two).HashMapUU.64,344376,76648,2150,1,67108864
+All.Foldr (+) 0 (powers of two).Data_HashMap_Lazy.128,649606,108384,576,0,67108864
+All.Foldr (+) 0 (powers of two).Data_HashMap_Strict.128,652374,102716,576,0,67108864
+All.Foldr (+) 0 (powers of two).HashMapBL.128,486666,112928,2151,1,67108864
+All.Foldr (+) 0 (powers of two).HashMapBB.128,420385,156048,2151,1,67108864
+All.Foldr (+) 0 (powers of two).HashMapBU.128,396818,128872,2151,1,67108864
+All.Foldr (+) 0 (powers of two).HashMapUL.128,466955,128070,2151,1,67108864
+All.Foldr (+) 0 (powers of two).HashMapUB.128,412733,125972,2151,1,67108864
+All.Foldr (+) 0 (powers of two).HashMapUU.128,404209,207856,2151,1,67108864
+All.Foldr (+) 0 (powers of two).Data_HashMap_Lazy.256,1279179,263478,577,0,67108864
+All.Foldr (+) 0 (powers of two).Data_HashMap_Strict.256,1275234,218508,577,0,67108864
+All.Foldr (+) 0 (powers of two).HashMapBL.256,664631,103988,2151,1,67108864
+All.Foldr (+) 0 (powers of two).HashMapBB.256,542170,109824,2151,1,67108864
+All.Foldr (+) 0 (powers of two).HashMapBU.256,540263,115518,2151,1,67108864
+All.Foldr (+) 0 (powers of two).HashMapUL.256,651934,124608,2151,1,67108864
+All.Foldr (+) 0 (powers of two).HashMapUB.256,551519,111670,2151,1,67108864
+All.Foldr (+) 0 (powers of two).HashMapUU.256,543948,104244,2151,1,67108864
+All.Foldr (+) 0 (powers of two).Data_HashMap_Lazy.512,2497988,423656,580,0,67108864
+All.Foldr (+) 0 (powers of two).Data_HashMap_Strict.512,2514309,493070,580,0,67108864
+All.Foldr (+) 0 (powers of two).HashMapBL.512,1213708,278600,2152,1,67108864
+All.Foldr (+) 0 (powers of two).HashMapBB.512,931884,248492,2152,1,67108864
+All.Foldr (+) 0 (powers of two).HashMapBU.512,793379,241280,2152,1,67108864
+All.Foldr (+) 0 (powers of two).HashMapUL.512,1229960,213322,2152,1,67108864
+All.Foldr (+) 0 (powers of two).HashMapUB.512,929156,256914,2152,1,67108864
+All.Foldr (+) 0 (powers of two).HashMapUU.512,779949,293538,2152,1,67108864
+All.Foldr (+) 0 (powers of two).Data_HashMap_Lazy.1024,5175018,883016,585,0,67108864
+All.Foldr (+) 0 (powers of two).Data_HashMap_Strict.1024,4956207,919046,585,0,67108864
+All.Foldr (+) 0 (powers of two).HashMapBL.1024,2372134,459824,2155,1,67108864
+All.Foldr (+) 0 (powers of two).HashMapBB.1024,1569519,423220,2155,1,67108864
+All.Foldr (+) 0 (powers of two).HashMapBU.1024,1338026,257138,2152,1,67108864
+All.Foldr (+) 0 (powers of two).HashMapUL.1024,2401898,441822,2155,1,67108864
+All.Foldr (+) 0 (powers of two).HashMapUB.1024,1563403,441002,2155,1,67108864
+All.Foldr (+) 0 (powers of two).HashMapUU.1024,1299259,253004,2152,1,67108864
+All.foldl' (+) 0 (small).Data_HashMap_Lazy.0,7704,2040,47,0,67108864
+All.foldl' (+) 0 (small).Data_HashMap_Strict.0,7756,3718,47,0,67108864
+All.foldl' (+) 0 (small).HashMapBL.0,7016,1602,31,0,67108864
+All.foldl' (+) 0 (small).HashMapBB.0,6694,1966,31,0,67108864
+All.foldl' (+) 0 (small).HashMapBU.0,7194,2418,31,0,68157440
+All.foldl' (+) 0 (small).HashMapUL.0,7220,2904,31,0,68157440
+All.foldl' (+) 0 (small).HashMapUB.0,6651,2082,31,0,68157440
+All.foldl' (+) 0 (small).HashMapUU.0,6864,1936,31,0,68157440
+All.foldl' (+) 0 (small).Data_HashMap_Lazy.1,8071,1792,47,0,68157440
+All.foldl' (+) 0 (small).Data_HashMap_Strict.1,7567,2310,47,0,68157440
+All.foldl' (+) 0 (small).HashMapBL.1,7867,2392,31,0,68157440
+All.foldl' (+) 0 (small).HashMapBB.1,7164,1960,31,0,68157440
+All.foldl' (+) 0 (small).HashMapBU.1,7077,2166,31,0,68157440
+All.foldl' (+) 0 (small).HashMapUL.1,7533,2014,31,0,68157440
+All.foldl' (+) 0 (small).HashMapUB.1,7061,1686,31,0,68157440
+All.foldl' (+) 0 (small).HashMapUU.1,6935,2116,31,0,68157440
+All.foldl' (+) 0 (small).Data_HashMap_Lazy.2,15291,3516,63,0,68157440
+All.foldl' (+) 0 (small).Data_HashMap_Strict.2,14895,4298,63,0,68157440
+All.foldl' (+) 0 (small).HashMapBL.2,11003,1852,47,0,68157440
+All.foldl' (+) 0 (small).HashMapBB.2,11111,2914,47,0,68157440
+All.foldl' (+) 0 (small).HashMapBU.2,10315,2766,47,0,68157440
+All.foldl' (+) 0 (small).HashMapUL.2,11117,2350,47,0,68157440
+All.foldl' (+) 0 (small).HashMapUB.2,10265,2384,47,0,68157440
+All.foldl' (+) 0 (small).HashMapUU.2,10677,2044,47,0,68157440
+All.foldl' (+) 0 (small).Data_HashMap_Lazy.3,17260,3558,63,0,68157440
+All.foldl' (+) 0 (small).Data_HashMap_Strict.3,17293,4350,63,0,68157440
+All.foldl' (+) 0 (small).HashMapBL.3,12072,4126,47,0,68157440
+All.foldl' (+) 0 (small).HashMapBB.3,10920,2326,47,0,68157440
+All.foldl' (+) 0 (small).HashMapBU.3,11081,1826,47,0,68157440
+All.foldl' (+) 0 (small).HashMapUL.3,11790,1656,47,0,68157440
+All.foldl' (+) 0 (small).HashMapUB.3,10803,2256,47,0,68157440
+All.foldl' (+) 0 (small).HashMapUU.3,11062,2072,47,0,68157440
+All.foldl' (+) 0 (small).Data_HashMap_Lazy.4,20525,5468,63,0,68157440
+All.foldl' (+) 0 (small).Data_HashMap_Strict.4,20183,3220,63,0,68157440
+All.foldl' (+) 0 (small).HashMapBL.4,12885,5020,47,0,68157440
+All.foldl' (+) 0 (small).HashMapBB.4,12141,3470,47,0,68157440
+All.foldl' (+) 0 (small).HashMapBU.4,11801,1908,47,0,68157440
+All.foldl' (+) 0 (small).HashMapUL.4,12921,3670,47,0,68157440
+All.foldl' (+) 0 (small).HashMapUB.4,11896,1636,47,0,68157440
+All.foldl' (+) 0 (small).HashMapUU.4,12289,5228,47,0,68157440
+All.foldl' (+) 0 (small).Data_HashMap_Lazy.5,22181,4284,63,0,68157440
+All.foldl' (+) 0 (small).Data_HashMap_Strict.5,22677,3454,63,0,68157440
+All.foldl' (+) 0 (small).HashMapBL.5,14399,3500,47,0,68157440
+All.foldl' (+) 0 (small).HashMapBB.5,12296,4186,47,0,68157440
+All.foldl' (+) 0 (small).HashMapBU.5,12327,4642,47,0,68157440
+All.foldl' (+) 0 (small).HashMapUL.5,14552,3246,47,0,68157440
+All.foldl' (+) 0 (small).HashMapUB.5,12494,3646,47,0,68157440
+All.foldl' (+) 0 (small).HashMapUU.5,12486,4240,47,0,68157440
+All.foldl' (+) 0 (small).Data_HashMap_Lazy.6,24676,6818,64,0,68157440
+All.foldl' (+) 0 (small).Data_HashMap_Strict.6,24680,7788,64,0,68157440
+All.foldl' (+) 0 (small).HashMapBL.6,15952,3480,47,0,68157440
+All.foldl' (+) 0 (small).HashMapBB.6,13340,3350,47,0,68157440
+All.foldl' (+) 0 (small).HashMapBU.6,13356,3536,48,0,68157440
+All.foldl' (+) 0 (small).HashMapUL.6,15981,3834,47,0,68157440
+All.foldl' (+) 0 (small).HashMapUB.6,13060,4088,47,0,68157440
+All.foldl' (+) 0 (small).HashMapUU.6,13150,3554,47,0,68157440
+All.foldl' (+) 0 (small).Data_HashMap_Lazy.7,26896,6684,64,0,68157440
+All.foldl' (+) 0 (small).Data_HashMap_Strict.7,27212,7354,64,0,68157440
+All.foldl' (+) 0 (small).HashMapBL.7,17709,3768,47,0,68157440
+All.foldl' (+) 0 (small).HashMapBB.7,14066,4938,47,0,68157440
+All.foldl' (+) 0 (small).HashMapBU.7,13847,4434,47,0,68157440
+All.foldl' (+) 0 (small).HashMapUL.7,17740,3494,47,0,68157440
+All.foldl' (+) 0 (small).HashMapUB.7,13854,3620,47,0,68157440
+All.foldl' (+) 0 (small).HashMapUU.7,13557,3616,47,0,68157440
+All.foldl' (+) 0 (small).Data_HashMap_Lazy.8,29349,8900,64,0,68157440
+All.foldl' (+) 0 (small).Data_HashMap_Strict.8,29626,7468,64,0,68157440
+All.foldl' (+) 0 (small).HashMapBL.8,19300,3744,48,0,68157440
+All.foldl' (+) 0 (small).HashMapBB.8,14396,3458,47,0,68157440
+All.foldl' (+) 0 (small).HashMapBU.8,14351,4050,47,0,68157440
+All.foldl' (+) 0 (small).HashMapUL.8,19601,3352,47,0,68157440
+All.foldl' (+) 0 (small).HashMapUB.8,14794,3580,48,0,68157440
+All.foldl' (+) 0 (small).HashMapUU.8,14339,3462,47,0,68157440
+All.foldl' (+) 0 (small).Data_HashMap_Lazy.9,32427,7402,64,0,68157440
+All.foldl' (+) 0 (small).Data_HashMap_Strict.9,32219,7698,64,0,68157440
+All.foldl' (+) 0 (small).HashMapBL.9,21194,4110,47,0,69206016
+All.foldl' (+) 0 (small).HashMapBB.9,15395,3440,47,0,69206016
+All.foldl' (+) 0 (small).HashMapBU.9,14690,4556,47,0,69206016
+All.foldl' (+) 0 (small).HashMapUL.9,21108,3270,47,0,69206016
+All.foldl' (+) 0 (small).HashMapUB.9,15390,4300,47,0,69206016
+All.foldl' (+) 0 (small).HashMapUU.9,15011,4442,47,0,69206016
+All.foldl' (+) 0 (small).Data_HashMap_Lazy.10,35366,6480,64,0,69206016
+All.foldl' (+) 0 (small).Data_HashMap_Strict.10,35056,9118,64,0,69206016
+All.foldl' (+) 0 (small).HashMapBL.10,23715,3994,47,0,69206016
+All.foldl' (+) 0 (small).HashMapBB.10,15811,3250,47,0,69206016
+All.foldl' (+) 0 (small).HashMapBU.10,15534,4186,47,0,69206016
+All.foldl' (+) 0 (small).HashMapUL.10,23159,3358,47,0,69206016
+All.foldl' (+) 0 (small).HashMapUB.10,16177,4458,47,0,69206016
+All.foldl' (+) 0 (small).HashMapUU.10,15366,4732,47,0,69206016
+All.foldl' (+) 0 (small).Data_HashMap_Lazy.11,37181,10128,64,0,69206016
+All.foldl' (+) 0 (small).Data_HashMap_Strict.11,37293,7540,64,0,69206016
+All.foldl' (+) 0 (small).HashMapBL.11,25260,7070,48,0,69206016
+All.foldl' (+) 0 (small).HashMapBB.11,16276,3682,47,0,69206016
+All.foldl' (+) 0 (small).HashMapBU.11,16207,3206,47,0,69206016
+All.foldl' (+) 0 (small).HashMapUL.11,25128,6482,48,0,69206016
+All.foldl' (+) 0 (small).HashMapUB.11,16550,3626,47,0,69206016
+All.foldl' (+) 0 (small).HashMapUU.11,16112,4314,47,0,69206016
+All.foldl' (+) 0 (small).Data_HashMap_Lazy.12,39556,7522,64,0,69206016
+All.foldl' (+) 0 (small).Data_HashMap_Strict.12,39787,6604,64,0,69206016
+All.foldl' (+) 0 (small).HashMapBL.12,27312,7438,48,0,69206016
+All.foldl' (+) 0 (small).HashMapBB.12,17214,3276,47,0,69206016
+All.foldl' (+) 0 (small).HashMapBU.12,17403,3734,47,0,69206016
+All.foldl' (+) 0 (small).HashMapUL.12,26966,6782,48,0,69206016
+All.foldl' (+) 0 (small).HashMapUB.12,17084,3736,47,0,69206016
+All.foldl' (+) 0 (small).HashMapUU.12,17285,3890,47,0,69206016
+All.foldl' (+) 0 (small).Data_HashMap_Lazy.13,43136,8510,64,0,69206016
+All.foldl' (+) 0 (small).Data_HashMap_Strict.13,42420,8510,64,0,69206016
+All.foldl' (+) 0 (small).HashMapBL.13,29084,6580,48,0,69206016
+All.foldl' (+) 0 (small).HashMapBB.13,17893,3436,47,0,69206016
+All.foldl' (+) 0 (small).HashMapBU.13,17832,3496,47,0,69206016
+All.foldl' (+) 0 (small).HashMapUL.13,28992,6886,48,0,69206016
+All.foldl' (+) 0 (small).HashMapUB.13,17553,4192,47,0,69206016
+All.foldl' (+) 0 (small).HashMapUU.13,17787,3560,47,0,69206016
+All.foldl' (+) 0 (small).Data_HashMap_Lazy.14,45321,6944,64,0,69206016
+All.foldl' (+) 0 (small).Data_HashMap_Strict.14,45421,6578,64,0,69206016
+All.foldl' (+) 0 (small).HashMapBL.14,31078,7630,48,0,69206016
+All.foldl' (+) 0 (small).HashMapBB.14,18357,3812,47,0,69206016
+All.foldl' (+) 0 (small).HashMapBU.14,18688,3444,47,0,69206016
+All.foldl' (+) 0 (small).HashMapUL.14,31155,7536,48,0,69206016
+All.foldl' (+) 0 (small).HashMapUB.14,18802,3988,47,0,69206016
+All.foldl' (+) 0 (small).HashMapUU.14,18407,5454,47,0,69206016
+All.foldl' (+) 0 (small).Data_HashMap_Lazy.15,57231,14538,64,0,69206016
+All.foldl' (+) 0 (small).Data_HashMap_Strict.15,56527,15668,64,0,69206016
+All.foldl' (+) 0 (small).HashMapBL.15,33108,8972,48,0,69206016
+All.foldl' (+) 0 (small).HashMapBB.15,19463,3846,48,0,69206016
+All.foldl' (+) 0 (small).HashMapBU.15,19317,4280,47,0,69206016
+All.foldl' (+) 0 (small).HashMapUL.15,33043,7512,48,0,69206016
+All.foldl' (+) 0 (small).HashMapUB.15,19781,3704,47,0,69206016
+All.foldl' (+) 0 (small).HashMapUU.15,19067,3420,47,0,69206016
+All.foldl' (+) 0 (small).Data_HashMap_Lazy.16,60054,14072,64,0,69206016
+All.foldl' (+) 0 (small).Data_HashMap_Strict.16,58643,14790,64,0,69206016
+All.foldl' (+) 0 (small).HashMapBL.16,35313,13014,48,0,69206016
+All.foldl' (+) 0 (small).HashMapBB.16,19937,3964,47,0,69206016
+All.foldl' (+) 0 (small).HashMapBU.16,19754,3774,47,0,69206016
+All.foldl' (+) 0 (small).HashMapUL.16,35296,6748,48,0,69206016
+All.foldl' (+) 0 (small).HashMapUB.16,19762,3706,47,0,69206016
+All.foldl' (+) 0 (small).HashMapUU.16,19782,3418,47,0,69206016
+All.foldl' (+) 0 (small).Data_HashMap_Lazy.17,61929,14366,64,0,69206016
+All.foldl' (+) 0 (small).Data_HashMap_Strict.17,62968,13038,64,0,69206016
+All.foldl' (+) 0 (small).HashMapBL.17,36565,9932,48,0,69206016
+All.foldl' (+) 0 (small).HashMapBB.17,20475,3280,47,0,69206016
+All.foldl' (+) 0 (small).HashMapBU.17,20203,3900,47,0,69206016
+All.foldl' (+) 0 (small).HashMapUL.17,36986,7062,48,0,69206016
+All.foldl' (+) 0 (small).HashMapUB.17,20900,3636,47,0,69206016
+All.foldl' (+) 0 (small).HashMapUU.17,20681,4052,47,0,69206016
+All.foldl' (+) 0 (small).Data_HashMap_Lazy.18,65475,13004,64,0,69206016
+All.foldl' (+) 0 (small).Data_HashMap_Strict.18,64754,15144,64,0,69206016
+All.foldl' (+) 0 (small).HashMapBL.18,38825,7638,48,0,69206016
+All.foldl' (+) 0 (small).HashMapBB.18,21533,3662,47,0,69206016
+All.foldl' (+) 0 (small).HashMapBU.18,21021,4372,47,0,69206016
+All.foldl' (+) 0 (small).HashMapUL.18,39147,6406,48,0,69206016
+All.foldl' (+) 0 (small).HashMapUB.18,21383,4250,47,0,69206016
+All.foldl' (+) 0 (small).HashMapUU.18,20721,3804,47,0,69206016
+All.foldl' (+) 0 (small).Data_HashMap_Lazy.19,68541,14258,64,0,69206016
+All.foldl' (+) 0 (small).Data_HashMap_Strict.19,68475,15876,64,0,69206016
+All.foldl' (+) 0 (small).HashMapBL.19,40470,9386,48,0,69206016
+All.foldl' (+) 0 (small).HashMapBB.19,22199,3400,47,0,69206016
+All.foldl' (+) 0 (small).HashMapBU.19,21203,3444,47,0,69206016
+All.foldl' (+) 0 (small).HashMapUL.19,40959,6500,48,0,69206016
+All.foldl' (+) 0 (small).HashMapUB.19,21594,4056,47,0,69206016
+All.foldl' (+) 0 (small).HashMapUU.19,21105,4940,47,0,69206016
+All.foldl' (+) 0 (small).Data_HashMap_Lazy.20,71808,15500,64,0,69206016
+All.foldl' (+) 0 (small).Data_HashMap_Strict.20,71180,15596,64,0,69206016
+All.foldl' (+) 0 (small).HashMapBL.20,44228,6708,48,0,69206016
+All.foldl' (+) 0 (small).HashMapBB.20,22599,4566,47,0,69206016
+All.foldl' (+) 0 (small).HashMapBU.20,22369,4414,47,0,69206016
+All.foldl' (+) 0 (small).HashMapUL.20,43437,6482,48,0,69206016
+All.foldl' (+) 0 (small).HashMapUB.20,22746,3382,48,0,69206016
+All.foldl' (+) 0 (small).HashMapUU.20,22406,4992,47,0,69206016
+All.foldl' (+) 0 (small).Data_HashMap_Lazy.21,74740,17610,64,0,69206016
+All.foldl' (+) 0 (small).Data_HashMap_Strict.21,73433,15186,64,0,69206016
+All.foldl' (+) 0 (small).HashMapBL.21,45582,7024,48,0,69206016
+All.foldl' (+) 0 (small).HashMapBB.21,23178,4302,47,0,69206016
+All.foldl' (+) 0 (small).HashMapBU.21,22578,4242,47,0,69206016
+All.foldl' (+) 0 (small).HashMapUL.21,44638,7564,48,0,69206016
+All.foldl' (+) 0 (small).HashMapUB.21,24402,6862,48,0,69206016
+All.foldl' (+) 0 (small).HashMapUU.21,22551,3338,47,0,69206016
+All.foldl' (+) 0 (small).Data_HashMap_Lazy.22,77443,13118,64,0,69206016
+All.foldl' (+) 0 (small).Data_HashMap_Strict.22,77140,15060,64,0,69206016
+All.foldl' (+) 0 (small).HashMapBL.22,47276,7306,48,0,69206016
+All.foldl' (+) 0 (small).HashMapBB.22,24600,6730,48,0,69206016
+All.foldl' (+) 0 (small).HashMapBU.22,23483,3430,47,0,69206016
+All.foldl' (+) 0 (small).HashMapUL.22,47113,6548,48,0,69206016
+All.foldl' (+) 0 (small).HashMapUB.22,24061,7348,48,0,69206016
+All.foldl' (+) 0 (small).HashMapUU.22,23422,3758,47,0,70254592
+All.foldl' (+) 0 (small).Data_HashMap_Lazy.23,82265,14294,64,0,70254592
+All.foldl' (+) 0 (small).Data_HashMap_Strict.23,81721,15240,64,0,70254592
+All.foldl' (+) 0 (small).HashMapBL.23,50263,14018,48,0,70254592
+All.foldl' (+) 0 (small).HashMapBB.23,24930,8070,48,0,70254592
+All.foldl' (+) 0 (small).HashMapBU.23,24701,10750,48,0,70254592
+All.foldl' (+) 0 (small).HashMapUL.23,49786,14312,48,0,70254592
+All.foldl' (+) 0 (small).HashMapUB.23,24530,9104,48,0,70254592
+All.foldl' (+) 0 (small).HashMapUU.23,24132,6452,48,0,70254592
+All.foldl' (+) 0 (small).Data_HashMap_Lazy.24,83974,15978,64,0,70254592
+All.foldl' (+) 0 (small).Data_HashMap_Strict.24,86388,13814,64,0,70254592
+All.foldl' (+) 0 (small).HashMapBL.24,51936,13588,48,0,70254592
+All.foldl' (+) 0 (small).HashMapBB.24,25078,7806,48,0,70254592
+All.foldl' (+) 0 (small).HashMapBU.24,24620,8188,48,0,70254592
+All.foldl' (+) 0 (small).HashMapUL.24,50924,13350,48,0,70254592
+All.foldl' (+) 0 (small).HashMapUB.24,24849,8748,48,0,70254592
+All.foldl' (+) 0 (small).HashMapUU.24,24966,7592,48,0,70254592
+All.foldl' (+) 0 (small).Data_HashMap_Lazy.25,89374,14476,64,0,70254592
+All.foldl' (+) 0 (small).Data_HashMap_Strict.25,88084,17616,64,0,70254592
+All.foldl' (+) 0 (small).HashMapBL.25,54621,13002,48,0,70254592
+All.foldl' (+) 0 (small).HashMapBB.25,25698,7428,48,0,70254592
+All.foldl' (+) 0 (small).HashMapBU.25,25009,7946,48,0,70254592
+All.foldl' (+) 0 (small).HashMapUL.25,53857,16246,48,0,70254592
+All.foldl' (+) 0 (small).HashMapUB.25,25618,6816,48,0,70254592
+All.foldl' (+) 0 (small).HashMapUU.25,25891,7756,48,0,70254592
+All.foldl' (+) 0 (small).Data_HashMap_Lazy.26,90824,15048,64,0,70254592
+All.foldl' (+) 0 (small).Data_HashMap_Strict.26,92042,13458,64,0,70254592
+All.foldl' (+) 0 (small).HashMapBL.26,55007,14176,48,0,70254592
+All.foldl' (+) 0 (small).HashMapBB.26,26989,6748,48,0,70254592
+All.foldl' (+) 0 (small).HashMapBU.26,26176,7790,48,0,70254592
+All.foldl' (+) 0 (small).HashMapUL.26,55836,15306,48,0,70254592
+All.foldl' (+) 0 (small).HashMapUB.26,26426,6674,48,0,70254592
+All.foldl' (+) 0 (small).HashMapUU.26,25863,6626,48,0,70254592
+All.foldl' (+) 0 (small).Data_HashMap_Lazy.27,94406,15248,64,0,70254592
+All.foldl' (+) 0 (small).Data_HashMap_Strict.27,95942,18506,64,0,70254592
+All.foldl' (+) 0 (small).HashMapBL.27,57537,15996,48,0,70254592
+All.foldl' (+) 0 (small).HashMapBB.27,26736,6890,48,0,70254592
+All.foldl' (+) 0 (small).HashMapBU.27,27338,6886,48,0,70254592
+All.foldl' (+) 0 (small).HashMapUL.27,57564,13086,48,0,70254592
+All.foldl' (+) 0 (small).HashMapUB.27,26936,7130,48,0,70254592
+All.foldl' (+) 0 (small).HashMapUU.27,26608,7374,48,0,70254592
+All.foldl' (+) 0 (small).Data_HashMap_Lazy.28,99378,25780,64,0,70254592
+All.foldl' (+) 0 (small).Data_HashMap_Strict.28,99577,27554,64,0,70254592
+All.foldl' (+) 0 (small).HashMapBL.28,59488,13728,48,0,70254592
+All.foldl' (+) 0 (small).HashMapBB.28,27651,9514,48,0,70254592
+All.foldl' (+) 0 (small).HashMapBU.28,27481,6546,48,0,70254592
+All.foldl' (+) 0 (small).HashMapUL.28,59740,13294,48,0,70254592
+All.foldl' (+) 0 (small).HashMapUB.28,28440,9104,48,0,70254592
+All.foldl' (+) 0 (small).HashMapUU.28,28855,9570,48,0,70254592
+All.foldl' (+) 0 (small).Data_HashMap_Lazy.29,102911,27648,64,0,70254592
+All.foldl' (+) 0 (small).Data_HashMap_Strict.29,102895,28906,64,0,70254592
+All.foldl' (+) 0 (small).HashMapBL.29,61808,14258,48,0,70254592
+All.foldl' (+) 0 (small).HashMapBB.29,28038,6574,48,0,70254592
+All.foldl' (+) 0 (small).HashMapBU.29,27498,7688,48,0,70254592
+All.foldl' (+) 0 (small).HashMapUL.29,60806,16646,48,0,70254592
+All.foldl' (+) 0 (small).HashMapUB.29,28235,7290,48,0,70254592
+All.foldl' (+) 0 (small).HashMapUU.29,27527,6924,48,0,70254592
+All.foldl' (+) 0 (small).Data_HashMap_Lazy.30,107208,33444,64,0,70254592
+All.foldl' (+) 0 (small).Data_HashMap_Strict.30,106726,26394,64,0,70254592
+All.foldl' (+) 0 (small).HashMapBL.30,64003,15358,48,0,70254592
+All.foldl' (+) 0 (small).HashMapBB.30,29174,6616,48,0,70254592
+All.foldl' (+) 0 (small).HashMapBU.30,28092,6420,48,0,70254592
+All.foldl' (+) 0 (small).HashMapUL.30,62938,13762,48,0,70254592
+All.foldl' (+) 0 (small).HashMapUB.30,29514,7930,48,0,70254592
+All.foldl' (+) 0 (small).HashMapUU.30,28582,7232,48,0,70254592
+All.foldl' (+) 0 (small).Data_HashMap_Lazy.31,110399,30636,64,0,70254592
+All.foldl' (+) 0 (small).Data_HashMap_Strict.31,110791,26046,64,0,70254592
+All.foldl' (+) 0 (small).HashMapBL.31,67813,14152,48,0,70254592
+All.foldl' (+) 0 (small).HashMapBB.31,29503,7168,48,0,70254592
+All.foldl' (+) 0 (small).HashMapBU.31,29121,6644,48,0,70254592
+All.foldl' (+) 0 (small).HashMapUL.31,65493,13494,48,0,70254592
+All.foldl' (+) 0 (small).HashMapUB.31,29251,8316,48,0,70254592
+All.foldl' (+) 0 (small).HashMapUU.31,29723,6462,48,0,70254592
+All.foldl' (+) 0 (small).Data_HashMap_Lazy.32,113034,29244,64,0,70254592
+All.foldl' (+) 0 (small).Data_HashMap_Strict.32,112137,28348,64,0,70254592
+All.foldl' (+) 0 (small).HashMapBL.32,67872,13342,48,0,70254592
+All.foldl' (+) 0 (small).HashMapBB.32,30472,6840,48,0,70254592
+All.foldl' (+) 0 (small).HashMapBU.32,29016,6478,48,0,70254592
+All.foldl' (+) 0 (small).HashMapUL.32,67525,14556,48,0,70254592
+All.foldl' (+) 0 (small).HashMapUB.32,29772,7800,48,0,70254592
+All.foldl' (+) 0 (small).HashMapUU.32,29518,7072,48,0,70254592
+All.foldl' (+) 0 (powers of two).Data_HashMap_Lazy.0,7624,2052,47,0,70254592
+All.foldl' (+) 0 (powers of two).Data_HashMap_Strict.0,8024,2580,47,0,70254592
+All.foldl' (+) 0 (powers of two).HashMapBL.0,7091,1872,31,0,70254592
+All.foldl' (+) 0 (powers of two).HashMapBB.0,6684,2042,31,0,70254592
+All.foldl' (+) 0 (powers of two).HashMapBU.0,6682,1834,31,0,70254592
+All.foldl' (+) 0 (powers of two).HashMapUL.0,6655,2186,31,0,70254592
+All.foldl' (+) 0 (powers of two).HashMapUB.0,6712,1798,31,0,70254592
+All.foldl' (+) 0 (powers of two).HashMapUU.0,6748,2076,31,0,70254592
+All.foldl' (+) 0 (powers of two).Data_HashMap_Lazy.1,7911,1890,47,0,70254592
+All.foldl' (+) 0 (powers of two).Data_HashMap_Strict.1,7725,2482,47,0,70254592
+All.foldl' (+) 0 (powers of two).HashMapBL.1,7418,1682,31,0,70254592
+All.foldl' (+) 0 (powers of two).HashMapBB.1,7126,1696,31,0,70254592
+All.foldl' (+) 0 (powers of two).HashMapBU.1,7024,1678,31,0,70254592
+All.foldl' (+) 0 (powers of two).HashMapUL.1,7479,2346,31,0,70254592
+All.foldl' (+) 0 (powers of two).HashMapUB.1,7001,2014,31,0,70254592
+All.foldl' (+) 0 (powers of two).HashMapUU.1,7043,1612,31,0,70254592
+All.foldl' (+) 0 (powers of two).Data_HashMap_Lazy.2,15426,4770,63,0,70254592
+All.foldl' (+) 0 (powers of two).Data_HashMap_Strict.2,15475,4338,63,0,70254592
+All.foldl' (+) 0 (powers of two).HashMapBL.2,11027,2318,47,0,70254592
+All.foldl' (+) 0 (powers of two).HashMapBB.2,10351,1922,47,0,70254592
+All.foldl' (+) 0 (powers of two).HashMapBU.2,10898,2268,47,0,70254592
+All.foldl' (+) 0 (powers of two).HashMapUL.2,10987,2532,47,0,70254592
+All.foldl' (+) 0 (powers of two).HashMapUB.2,10633,2068,47,0,70254592
+All.foldl' (+) 0 (powers of two).HashMapUU.2,10883,1678,47,0,70254592
+All.foldl' (+) 0 (powers of two).Data_HashMap_Lazy.4,19386,3542,63,0,70254592
+All.foldl' (+) 0 (powers of two).Data_HashMap_Strict.4,19388,3622,63,0,70254592
+All.foldl' (+) 0 (powers of two).HashMapBL.4,12953,4462,47,0,70254592
+All.foldl' (+) 0 (powers of two).HashMapBB.4,11607,2030,47,0,70254592
+All.foldl' (+) 0 (powers of two).HashMapBU.4,12819,3398,47,0,70254592
+All.foldl' (+) 0 (powers of two).HashMapUL.4,13177,3690,47,0,71303168
+All.foldl' (+) 0 (powers of two).HashMapUB.4,11846,2128,47,0,71303168
+All.foldl' (+) 0 (powers of two).HashMapUU.4,12316,3602,47,0,71303168
+All.foldl' (+) 0 (powers of two).Data_HashMap_Lazy.8,29967,6430,64,0,71303168
+All.foldl' (+) 0 (powers of two).Data_HashMap_Strict.8,29347,7316,64,0,71303168
+All.foldl' (+) 0 (powers of two).HashMapBL.8,19405,3322,47,0,71303168
+All.foldl' (+) 0 (powers of two).HashMapBB.8,14412,4442,47,0,71303168
+All.foldl' (+) 0 (powers of two).HashMapBU.8,14052,4018,47,0,71303168
+All.foldl' (+) 0 (powers of two).HashMapUL.8,19934,4378,47,0,71303168
+All.foldl' (+) 0 (powers of two).HashMapUB.8,14509,3950,47,0,71303168
+All.foldl' (+) 0 (powers of two).HashMapUU.8,14648,3442,47,0,71303168
+All.foldl' (+) 0 (powers of two).Data_HashMap_Lazy.16,60463,17470,64,0,71303168
+All.foldl' (+) 0 (powers of two).Data_HashMap_Strict.16,58369,12956,64,0,71303168
+All.foldl' (+) 0 (powers of two).HashMapBL.16,35079,7158,48,0,71303168
+All.foldl' (+) 0 (powers of two).HashMapBB.16,19935,3332,47,0,71303168
+All.foldl' (+) 0 (powers of two).HashMapBU.16,19651,3280,47,0,71303168
+All.foldl' (+) 0 (powers of two).HashMapUL.16,35005,6726,48,0,71303168
+All.foldl' (+) 0 (powers of two).HashMapUB.16,20225,4196,47,0,71303168
+All.foldl' (+) 0 (powers of two).HashMapUU.16,19702,3416,47,0,71303168
+All.foldl' (+) 0 (powers of two).Data_HashMap_Lazy.32,115063,41492,64,0,71303168
+All.foldl' (+) 0 (powers of two).Data_HashMap_Strict.32,113586,26244,64,0,71303168
+All.foldl' (+) 0 (powers of two).HashMapBL.32,68641,13190,48,0,71303168
+All.foldl' (+) 0 (powers of two).HashMapBB.32,31033,7328,48,0,71303168
+All.foldl' (+) 0 (powers of two).HashMapBU.32,29955,8048,48,0,71303168
+All.foldl' (+) 0 (powers of two).HashMapUL.32,67635,13304,48,0,71303168
+All.foldl' (+) 0 (powers of two).HashMapUB.32,31304,10376,48,0,71303168
+All.foldl' (+) 0 (powers of two).HashMapUU.32,30145,6520,48,0,71303168
+All.foldl' (+) 0 (powers of two).Data_HashMap_Lazy.64,335788,58476,576,0,71303168
+All.foldl' (+) 0 (powers of two).Data_HashMap_Strict.64,333451,51662,576,0,71303168
+All.foldl' (+) 0 (powers of two).HashMapBL.64,154615,25946,48,0,71303168
+All.foldl' (+) 0 (powers of two).HashMapBB.64,129631,28206,48,0,71303168
+All.foldl' (+) 0 (powers of two).HashMapBU.64,139807,28036,48,0,71303168
+All.foldl' (+) 0 (powers of two).HashMapUL.64,155246,28128,48,0,71303168
+All.foldl' (+) 0 (powers of two).HashMapUB.64,129508,28772,48,0,71303168
+All.foldl' (+) 0 (powers of two).HashMapUU.64,135919,27532,48,0,71303168
+All.foldl' (+) 0 (powers of two).Data_HashMap_Lazy.128,542751,112424,576,0,71303168
+All.foldl' (+) 0 (powers of two).Data_HashMap_Strict.128,550224,151592,576,0,71303168
+All.foldl' (+) 0 (powers of two).HashMapBL.128,275639,51612,48,0,71303168
+All.foldl' (+) 0 (powers of two).HashMapBB.128,168931,27456,48,0,71303168
+All.foldl' (+) 0 (powers of two).HashMapBU.128,176474,26190,48,0,71303168
+All.foldl' (+) 0 (powers of two).HashMapUL.128,272992,54092,48,0,71303168
+All.foldl' (+) 0 (powers of two).HashMapUB.128,170026,26494,48,0,71303168
+All.foldl' (+) 0 (powers of two).HashMapUU.128,179941,31588,48,0,71303168
+All.foldl' (+) 0 (powers of two).Data_HashMap_Lazy.256,984796,241444,577,0,71303168
+All.foldl' (+) 0 (powers of two).Data_HashMap_Strict.256,1009777,214550,577,0,71303168
+All.foldl' (+) 0 (powers of two).HashMapBL.256,530391,104918,49,0,71303168
+All.foldl' (+) 0 (powers of two).HashMapBB.256,265660,56514,48,0,71303168
+All.foldl' (+) 0 (powers of two).HashMapBU.256,255930,57710,48,0,71303168
+All.foldl' (+) 0 (powers of two).HashMapUL.256,526209,122662,49,0,71303168
+All.foldl' (+) 0 (powers of two).HashMapUB.256,265391,62096,48,0,71303168
+All.foldl' (+) 0 (powers of two).HashMapUU.256,256898,54924,48,0,71303168
+All.foldl' (+) 0 (powers of two).Data_HashMap_Lazy.512,1907763,431108,580,0,71303168
+All.foldl' (+) 0 (powers of two).Data_HashMap_Strict.512,1925112,440526,580,0,71303168
+All.foldl' (+) 0 (powers of two).HashMapBL.512,1049870,260612,50,0,71303168
+All.foldl' (+) 0 (powers of two).HashMapBB.512,468785,106080,49,0,71303168
+All.foldl' (+) 0 (powers of two).HashMapBU.512,428559,114262,49,0,71303168
+All.foldl' (+) 0 (powers of two).HashMapUL.512,1065008,271544,50,0,71303168
+All.foldl' (+) 0 (powers of two).HashMapUB.512,462812,110858,49,0,71303168
+All.foldl' (+) 0 (powers of two).HashMapUU.512,423113,117630,49,0,71303168
+All.foldl' (+) 0 (powers of two).Data_HashMap_Lazy.1024,3852319,915008,585,0,71303168
+All.foldl' (+) 0 (powers of two).Data_HashMap_Strict.1024,3778985,955022,585,0,71303168
+All.foldl' (+) 0 (powers of two).HashMapBL.1024,2088729,471464,52,0,71303168
+All.foldl' (+) 0 (powers of two).HashMapBB.1024,790606,215834,50,0,71303168
+All.foldl' (+) 0 (powers of two).HashMapBU.1024,736573,110128,49,0,71303168
+All.foldl' (+) 0 (powers of two).HashMapUL.1024,2083023,464778,52,0,71303168
+All.foldl' (+) 0 (powers of two).HashMapUB.1024,801391,216148,50,0,71303168
+All.foldl' (+) 0 (powers of two).HashMapUU.1024,739344,102720,49,0,72351744
+All.toList (small).Data_HashMap_Lazy.0,7960,1670,31,0,72351744
+All.toList (small).Data_HashMap_Strict.0,7934,2432,31,0,72351744
+All.toList (small).HashMapBL.0,7416,1984,31,0,72351744
+All.toList (small).HashMapBB.0,7360,1732,31,0,72351744
+All.toList (small).HashMapBU.0,7664,2782,31,0,72351744
+All.toList (small).HashMapUL.0,7393,2208,31,0,72351744
+All.toList (small).HashMapUB.0,7371,1848,31,0,72351744
+All.toList (small).HashMapUU.0,7366,1996,31,0,72351744
+All.toList (small).Data_HashMap_Lazy.1,10429,2114,79,0,72351744
+All.toList (small).Data_HashMap_Strict.1,11192,1892,79,0,72351744
+All.toList (small).HashMapBL.1,17182,3732,103,0,72351744
+All.toList (small).HashMapBB.1,11079,2788,79,0,72351744
+All.toList (small).HashMapBU.1,12033,3412,79,0,72351744
+All.toList (small).HashMapUL.1,17097,3578,103,0,72351744
+All.toList (small).HashMapUB.1,11303,2418,79,0,72351744
+All.toList (small).HashMapUU.1,11396,1950,79,0,72351744
+All.toList (small).Data_HashMap_Lazy.2,31194,6898,223,0,72351744
+All.toList (small).Data_HashMap_Strict.2,31862,14840,223,0,72351744
+All.toList (small).HashMapBL.2,44110,7636,351,0,72351744
+All.toList (small).HashMapBB.2,61010,14836,415,0,72351744
+All.toList (small).HashMapBU.2,59555,17198,447,0,72351744
+All.toList (small).HashMapUL.2,46383,7926,383,0,72351744
+All.toList (small).HashMapUB.2,60507,13448,447,0,72351744
+All.toList (small).HashMapUU.2,57930,24088,479,0,72351744
+All.toList (small).Data_HashMap_Lazy.3,40540,10250,319,0,72351744
+All.toList (small).Data_HashMap_Strict.3,42586,7946,319,0,72351744
+All.toList (small).HashMapBL.3,57214,24998,463,0,72351744
+All.toList (small).HashMapBB.3,73294,17716,559,0,72351744
+All.toList (small).HashMapBU.3,72785,24024,607,0,72351744
+All.toList (small).HashMapUL.3,64173,15352,511,0,72351744
+All.toList (small).HashMapUB.3,76109,13276,607,0,72351744
+All.toList (small).HashMapUU.3,77774,15508,655,0,72351744
+All.toList (small).Data_HashMap_Lazy.4,51974,17494,415,0,72351744
+All.toList (small).Data_HashMap_Strict.4,54954,21410,415,0,72351744
+All.toList (small).HashMapBL.4,74024,19740,575,0,72351744
+All.toList (small).HashMapBB.4,91842,15712,703,0,72351744
+All.toList (small).HashMapBU.4,90234,15024,767,0,72351744
+All.toList (small).HashMapUL.4,71953,13594,639,0,72351744
+All.toList (small).HashMapUB.4,101391,29644,767,0,72351744
+All.toList (small).HashMapUU.4,100267,32252,831,0,72351744
+All.toList (small).Data_HashMap_Lazy.5,60475,17186,511,0,72351744
+All.toList (small).Data_HashMap_Strict.5,76109,23258,511,0,72351744
+All.toList (small).HashMapBL.5,82542,16222,687,0,72351744
+All.toList (small).HashMapBB.5,105660,35578,847,0,72351744
+All.toList (small).HashMapBU.5,112841,50890,927,0,72351744
+All.toList (small).HashMapUL.5,85528,16452,767,0,72351744
+All.toList (small).HashMapUB.5,106361,36802,927,0,72351744
+All.toList (small).HashMapUU.5,117765,56612,1007,0,72351744
+All.toList (small).Data_HashMap_Lazy.6,65229,14184,607,0,72351744
+All.toList (small).Data_HashMap_Strict.6,79757,41462,607,0,73400320
+All.toList (small).HashMapBL.6,98259,56920,799,0,73400320
+All.toList (small).HashMapBB.6,123548,30098,991,0,73400320
+All.toList (small).HashMapBU.6,132100,27074,1087,0,73400320
+All.toList (small).HashMapUL.6,111568,38654,895,0,73400320
+All.toList (small).HashMapUB.6,130971,29030,1087,0,73400320
+All.toList (small).HashMapUU.6,138281,41894,1183,0,73400320
+All.toList (small).Data_HashMap_Lazy.7,81127,33754,703,0,73400320
+All.toList (small).Data_HashMap_Strict.7,88339,16120,703,0,73400320
+All.toList (small).HashMapBL.7,113863,28434,911,0,73400320
+All.toList (small).HashMapBB.7,143513,29178,1135,0,73400320
+All.toList (small).HashMapBU.7,172734,40854,1247,0,73400320
+All.toList (small).HashMapUL.7,120975,54238,1023,0,73400320
+All.toList (small).HashMapUB.7,146625,32278,1247,0,73400320
+All.toList (small).HashMapUU.7,181796,41266,1359,0,73400320
+All.toList (small).Data_HashMap_Lazy.8,94233,13998,799,0,73400320
+All.toList (small).Data_HashMap_Strict.8,97943,27360,799,0,73400320
+All.toList (small).HashMapBL.8,122736,26180,1023,0,73400320
+All.toList (small).HashMapBB.8,160150,27802,1279,0,73400320
+All.toList (small).HashMapBU.8,171506,34432,1407,0,73400320
+All.toList (small).HashMapUL.8,145710,26068,1151,0,73400320
+All.toList (small).HashMapUB.8,173364,26828,1407,0,73400320
+All.toList (small).HashMapUU.8,183402,47512,1534,0,73400320
+All.toList (small).Data_HashMap_Lazy.9,113676,33314,895,0,73400320
+All.toList (small).Data_HashMap_Strict.9,120353,36402,895,0,73400320
+All.toList (small).HashMapBL.9,148972,37738,1135,0,73400320
+All.toList (small).HashMapBB.9,193127,55602,1423,0,73400320
+All.toList (small).HashMapBU.9,198155,55872,1567,0,73400320
+All.toList (small).HashMapUL.9,161487,50800,1279,0,73400320
+All.toList (small).HashMapUB.9,189566,38384,1566,0,73400320
+All.toList (small).HashMapUU.9,192974,98398,1711,1,73400320
+All.toList (small).Data_HashMap_Lazy.10,134513,32030,991,0,73400320
+All.toList (small).Data_HashMap_Strict.10,132642,34198,991,0,73400320
+All.toList (small).HashMapBL.10,150740,44168,1247,0,73400320
+All.toList (small).HashMapBB.10,190755,59836,1567,1,73400320
+All.toList (small).HashMapBU.10,200883,89832,1727,1,73400320
+All.toList (small).HashMapUL.10,162068,56548,1407,0,73400320
+All.toList (small).HashMapUB.10,205454,55246,1727,1,73400320
+All.toList (small).HashMapUU.10,215644,72366,1887,1,73400320
+All.toList (small).Data_HashMap_Lazy.11,130409,37170,1087,0,73400320
+All.toList (small).Data_HashMap_Strict.11,132300,62794,1087,0,73400320
+All.toList (small).HashMapBL.11,162768,34396,1359,1,73400320
+All.toList (small).HashMapBB.11,223971,58110,1711,1,73400320
+All.toList (small).HashMapBU.11,222731,71080,1887,1,73400320
+All.toList (small).HashMapUL.11,170547,39438,1534,0,73400320
+All.toList (small).HashMapUB.11,217829,58058,1887,1,73400320
+All.toList (small).HashMapUU.11,231864,66062,2062,1,73400320
+All.toList (small).Data_HashMap_Lazy.12,156868,32786,1183,0,73400320
+All.toList (small).Data_HashMap_Strict.12,149924,40000,1183,0,73400320
+All.toList (small).HashMapBL.12,172095,56676,1471,1,73400320
+All.toList (small).HashMapBB.12,228782,83170,1855,1,73400320
+All.toList (small).HashMapBU.12,274427,63738,2046,1,73400320
+All.toList (small).HashMapUL.12,208765,55008,1663,1,73400320
+All.toList (small).HashMapUB.12,271617,78758,2046,1,73400320
+All.toList (small).HashMapUU.12,279756,92870,2238,1,73400320
+All.toList (small).Data_HashMap_Lazy.13,171562,46180,1279,0,73400320
+All.toList (small).Data_HashMap_Strict.13,155180,27358,1279,0,73400320
+All.toList (small).HashMapBL.13,185998,28646,1582,0,73400320
+All.toList (small).HashMapBB.13,256321,58432,1998,1,73400320
+All.toList (small).HashMapBU.13,281749,70150,2206,1,73400320
+All.toList (small).HashMapUL.13,208911,70214,1791,1,73400320
+All.toList (small).HashMapUB.13,263545,54008,2206,1,73400320
+All.toList (small).HashMapUU.13,304337,67080,2414,1,73400320
+All.toList (small).Data_HashMap_Lazy.14,168967,32326,1375,0,73400320
+All.toList (small).Data_HashMap_Strict.14,163420,35228,1375,0,73400320
+All.toList (small).HashMapBL.14,196980,59118,1695,1,73400320
+All.toList (small).HashMapBB.14,266437,104332,2142,1,73400320
+All.toList (small).HashMapBU.14,286386,52348,2366,1,73400320
+All.toList (small).HashMapUL.14,220188,68168,1918,1,73400320
+All.toList (small).HashMapUB.14,271374,92816,2366,1,73400320
+All.toList (small).HashMapUU.14,335563,116530,2590,1,73400320
+All.toList (small).Data_HashMap_Lazy.15,178138,33982,1471,0,73400320
+All.toList (small).Data_HashMap_Strict.15,162385,29662,1471,0,73400320
+All.toList (small).HashMapBL.15,210752,68320,1807,1,73400320
+All.toList (small).HashMapBB.15,293997,57040,2286,1,73400320
+All.toList (small).HashMapBU.15,291844,59796,2526,1,73400320
+All.toList (small).HashMapUL.15,223784,88914,2046,1,73400320
+All.toList (small).HashMapUB.15,311341,82652,2526,1,73400320
+All.toList (small).HashMapUU.15,332229,108670,2766,1,73400320
+All.toList (small).Data_HashMap_Lazy.16,184571,36454,1566,0,73400320
+All.toList (small).Data_HashMap_Strict.16,180884,39976,1566,0,73400320
+All.toList (small).HashMapBL.16,230532,63844,1918,1,73400320
+All.toList (small).HashMapBB.16,296401,80966,2430,1,73400320
+All.toList (small).HashMapBU.16,363832,72226,2686,1,73400320
+All.toList (small).HashMapUL.16,239123,74160,2174,1,73400320
+All.toList (small).HashMapUB.16,313701,82914,2686,1,73400320
+All.toList (small).HashMapUU.16,336239,66958,2942,1,73400320
+All.toList (small).Data_HashMap_Lazy.17,182572,37082,1662,1,73400320
+All.toList (small).Data_HashMap_Strict.17,197116,89018,1663,1,73400320
+All.toList (small).HashMapBL.17,240447,57942,2030,1,73400320
+All.toList (small).HashMapBB.17,319361,63532,2574,1,73400320
+All.toList (small).HashMapBU.17,341568,54978,2846,1,73400320
+All.toList (small).HashMapUL.17,261937,54604,2302,1,73400320
+All.toList (small).HashMapUB.17,370904,94392,2846,1,73400320
+All.toList (small).HashMapUU.17,340772,70418,3117,1,73400320
+All.toList (small).Data_HashMap_Lazy.18,208802,71856,1759,1,73400320
+All.toList (small).Data_HashMap_Strict.18,233238,61844,1759,1,73400320
+All.toList (small).HashMapBL.18,245737,59248,2142,1,73400320
+All.toList (small).HashMapBB.18,358296,109434,2718,1,73400320
+All.toList (small).HashMapBU.18,416739,105010,3006,1,73400320
+All.toList (small).HashMapUL.18,297311,67280,2430,1,73400320
+All.toList (small).HashMapUB.18,393271,118796,3006,1,73400320
+All.toList (small).HashMapUU.18,403465,142244,3294,2,73400320
+All.toList (small).Data_HashMap_Lazy.19,208042,59808,1855,1,73400320
+All.toList (small).Data_HashMap_Strict.19,216318,58602,1855,1,73400320
+All.toList (small).HashMapBL.19,256097,56800,2254,1,73400320
+All.toList (small).HashMapBB.19,341621,61324,2862,1,73400320
+All.toList (small).HashMapBU.19,368671,66728,3165,1,73400320
+All.toList (small).HashMapUL.19,302782,114606,2558,1,73400320
+All.toList (small).HashMapUB.19,361586,69810,3165,1,73400320
+All.toList (small).HashMapUU.19,396401,165128,3470,2,73400320
+All.toList (small).Data_HashMap_Lazy.20,235858,68600,1950,1,73400320
+All.toList (small).Data_HashMap_Strict.20,207285,107044,1950,1,73400320
+All.toList (small).HashMapBL.20,251879,56038,2366,1,73400320
+All.toList (small).HashMapBB.20,365178,76450,3006,1,73400320
+All.toList (small).HashMapBU.20,397370,134506,3326,2,73400320
+All.toList (small).HashMapUL.20,296451,100222,2686,1,73400320
+All.toList (small).HashMapUB.20,398647,154134,3326,2,73400320
+All.toList (small).HashMapUU.20,416179,137706,3646,2,73400320
+All.toList (small).Data_HashMap_Lazy.21,236825,64482,2046,1,73400320
+All.toList (small).Data_HashMap_Strict.21,239168,132642,2046,1,73400320
+All.toList (small).HashMapBL.21,278047,70988,2478,1,73400320
+All.toList (small).HashMapBB.21,403462,116412,3150,1,73400320
+All.toList (small).HashMapBU.21,429269,103386,3486,2,73400320
+All.toList (small).HashMapUL.21,312770,141106,2814,1,74448896
+All.toList (small).HashMapUB.21,422254,166200,3486,2,74448896
+All.toList (small).HashMapUU.21,469291,180202,3821,2,74448896
+All.toList (small).Data_HashMap_Lazy.22,271669,53938,2142,1,74448896
+All.toList (small).Data_HashMap_Strict.22,243495,77794,2142,1,74448896
+All.toList (small).HashMapBL.22,309499,54434,2590,1,74448896
+All.toList (small).HashMapBB.22,404010,133724,3294,2,74448896
+All.toList (small).HashMapBU.22,412505,123352,3646,2,74448896
+All.toList (small).HashMapUL.22,354434,66820,2942,1,74448896
+All.toList (small).HashMapUB.22,421708,104232,3646,2,74448896
+All.toList (small).HashMapUU.22,454042,153610,3997,2,74448896
+All.toList (small).Data_HashMap_Lazy.23,266225,64118,2238,1,74448896
+All.toList (small).Data_HashMap_Strict.23,285802,116934,2238,1,74448896
+All.toList (small).HashMapBL.23,326639,102564,2702,1,74448896
+All.toList (small).HashMapBB.23,468936,109892,3438,2,74448896
+All.toList (small).HashMapBU.23,450540,162730,3805,2,74448896
+All.toList (small).HashMapUL.23,361439,100384,3069,1,74448896
+All.toList (small).HashMapUB.23,533016,145196,3805,2,74448896
+All.toList (small).HashMapUU.23,478281,103174,4173,2,74448896
+All.toList (small).Data_HashMap_Lazy.24,259299,52488,2334,1,74448896
+All.toList (small).Data_HashMap_Strict.24,270051,94322,2334,1,74448896
+All.toList (small).HashMapBL.24,349919,61062,2814,1,74448896
+All.toList (small).HashMapBB.24,500528,213500,3582,2,74448896
+All.toList (small).HashMapBU.24,474430,165224,3965,2,74448896
+All.toList (small).HashMapUL.24,396196,105426,3198,1,74448896
+All.toList (small).HashMapUB.24,465753,160450,3965,2,74448896
+All.toList (small).HashMapUU.24,471063,133428,4349,2,74448896
+All.toList (small).Data_HashMap_Lazy.25,304101,105890,2430,1,74448896
+All.toList (small).Data_HashMap_Strict.25,289088,80622,2430,1,74448896
+All.toList (small).HashMapBL.25,347610,71304,2926,1,74448896
+All.toList (small).HashMapBB.25,442086,218004,3726,2,74448896
+All.toList (small).HashMapBU.25,503865,128116,4125,2,74448896
+All.toList (small).HashMapUL.25,342276,58382,3325,1,74448896
+All.toList (small).HashMapUB.25,474984,199476,4125,2,74448896
+All.toList (small).HashMapUU.25,520160,131906,4525,2,74448896
+All.toList (small).Data_HashMap_Lazy.26,283859,74340,2526,1,74448896
+All.toList (small).Data_HashMap_Strict.26,291458,51540,2526,1,74448896
+All.toList (small).HashMapBL.26,343643,67322,3038,1,74448896
+All.toList (small).HashMapBB.26,476747,127722,3869,2,74448896
+All.toList (small).HashMapBU.26,513011,175688,4285,2,74448896
+All.toList (small).HashMapUL.26,392826,128142,3454,2,74448896
+All.toList (small).HashMapUB.26,504468,123952,4285,2,74448896
+All.toList (small).HashMapUU.26,520662,156502,4701,2,74448896
+All.toList (small).Data_HashMap_Lazy.27,276243,57072,2622,1,74448896
+All.toList (small).Data_HashMap_Strict.27,299312,74150,2622,1,74448896
+All.toList (small).HashMapBL.27,395978,131306,3150,1,74448896
+All.toList (small).HashMapBB.27,506391,144390,4013,2,74448896
+All.toList (small).HashMapBU.27,526003,174696,4445,2,74448896
+All.toList (small).HashMapUL.27,401039,149024,3582,2,74448896
+All.toList (small).HashMapUB.27,519758,157594,4445,2,74448896
+All.toList (small).HashMapUU.27,557581,145420,4877,5,74448896
+All.toList (small).Data_HashMap_Lazy.28,308370,64016,2718,1,74448896
+All.toList (small).Data_HashMap_Strict.28,304389,107196,2718,1,74448896
+All.toList (small).HashMapBL.28,366203,73744,3261,1,74448896
+All.toList (small).HashMapBB.28,516573,139432,4157,2,74448896
+All.toList (small).HashMapBU.28,519590,152244,4605,2,74448896
+All.toList (small).HashMapUL.28,412812,125112,3710,2,74448896
+All.toList (small).HashMapUB.28,560758,175668,4605,2,74448896
+All.toList (small).HashMapUU.28,566153,106138,5052,3,74448896
+All.toList (small).Data_HashMap_Lazy.29,314959,68130,2814,1,74448896
+All.toList (small).Data_HashMap_Strict.29,311581,76994,2814,1,74448896
+All.toList (small).HashMapBL.29,397309,116460,3374,2,74448896
+All.toList (small).HashMapBB.29,499768,160828,4301,2,74448896
+All.toList (small).HashMapBU.29,572137,222780,4765,2,74448896
+All.toList (small).HashMapUL.29,404479,104996,3837,2,74448896
+All.toList (small).HashMapUB.29,546135,130054,4765,2,74448896
+All.toList (small).HashMapUU.29,553270,175462,5228,3,74448896
+All.toList (small).Data_HashMap_Lazy.30,323669,70596,2910,1,74448896
+All.toList (small).Data_HashMap_Strict.30,342757,79662,2910,1,74448896
+All.toList (small).HashMapBL.30,414839,133198,3486,2,74448896
+All.toList (small).HashMapBB.30,522118,171526,4445,2,74448896
+All.toList (small).HashMapBU.30,567459,120946,4925,2,74448896
+All.toList (small).HashMapUL.30,441430,130630,3965,2,74448896
+All.toList (small).HashMapUB.30,655186,286290,4925,2,74448896
+All.toList (small).HashMapUU.30,615026,319748,5404,3,74448896
+All.toList (small).Data_HashMap_Lazy.31,332460,64882,3006,3,74448896
+All.toList (small).Data_HashMap_Strict.31,357628,86292,3006,1,74448896
+All.toList (small).HashMapBL.31,410334,121526,3598,2,74448896
+All.toList (small).HashMapBB.31,605282,123878,4589,2,74448896
+All.toList (small).HashMapBU.31,652113,264918,5084,3,74448896
+All.toList (small).HashMapUL.31,469992,127562,4093,2,74448896
+All.toList (small).HashMapUB.31,562098,295282,5084,3,74448896
+All.toList (small).HashMapUU.31,666432,205492,5580,3,74448896
+All.toList (small).Data_HashMap_Lazy.32,343628,54938,3101,1,74448896
+All.toList (small).Data_HashMap_Strict.32,344527,89562,3101,1,74448896
+All.toList (small).HashMapBL.32,423450,173634,3710,2,74448896
+All.toList (small).HashMapBB.32,568219,149924,4733,2,74448896
+All.toList (small).HashMapBU.32,640568,179394,5244,3,74448896
+All.toList (small).HashMapUL.32,474845,114328,4221,2,74448896
+All.toList (small).HashMapUB.32,611614,294458,5244,3,74448896
+All.toList (small).HashMapUU.32,641809,300596,5756,6,74448896
+All.toList (powers of two).Data_HashMap_Lazy.0,7878,1854,31,0,75497472
+All.toList (powers of two).Data_HashMap_Strict.0,7862,2074,31,0,75497472
+All.toList (powers of two).HashMapBL.0,7385,1900,31,0,75497472
+All.toList (powers of two).HashMapBB.0,7455,1990,31,0,75497472
+All.toList (powers of two).HashMapBU.0,7490,1680,31,0,75497472
+All.toList (powers of two).HashMapUL.0,7526,1734,31,0,75497472
+All.toList (powers of two).HashMapUB.0,7335,1838,31,0,75497472
+All.toList (powers of two).HashMapUU.0,7630,1874,31,0,75497472
+All.toList (powers of two).Data_HashMap_Lazy.1,10664,1888,79,0,75497472
+All.toList (powers of two).Data_HashMap_Strict.1,10829,2686,79,0,75497472
+All.toList (powers of two).HashMapBL.1,17350,3520,103,0,75497472
+All.toList (powers of two).HashMapBU.1,13032,4516,79,0,76546048
+All.toList (powers of two).HashMapUL.1,17171,3356,103,0,76546048
+All.toList (powers of two).HashMapUB.1,10991,1864,79,0,76546048
+All.toList (powers of two).Data_HashMap_Lazy.2,32806,7312,223,0,76546048
+All.toList (powers of two).Data_HashMap_Strict.2,34112,8216,223,0,76546048
+All.toList (powers of two).HashMapBL.2,45462,10908,351,0,76546048
+All.toList (powers of two).HashMapBB.2,52535,19460,415,0,76546048
+All.toList (powers of two).HashMapBU.2,55944,14392,447,0,76546048
+All.toList (powers of two).HashMapUL.2,48825,14828,383,0,76546048
+All.toList (powers of two).HashMapUB.2,55743,17764,447,0,76546048
+All.toList (powers of two).HashMapUU.2,58496,40388,479,0,76546048
+All.toList (powers of two).Data_HashMap_Lazy.4,54149,16756,415,0,76546048
+All.toList (powers of two).Data_HashMap_Strict.4,53020,15558,415,0,76546048
+All.toList (powers of two).HashMapBL.4,74138,24568,575,0,76546048
+All.toList (powers of two).HashMapBB.4,92770,21756,703,0,76546048
+All.toList (powers of two).HashMapBU.4,94803,18986,767,0,76546048
+All.toList (powers of two).HashMapUL.4,72933,17656,639,0,76546048
+All.toList (powers of two).HashMapUB.4,89235,26202,767,0,76546048
+All.toList (powers of two).HashMapUU.4,98066,28330,831,0,76546048
+All.toList (powers of two).Data_HashMap_Lazy.8,88391,18850,799,0,76546048
+All.toList (powers of two).Data_HashMap_Strict.8,94447,22478,799,0,77594624
+All.toList (powers of two).HashMapBL.8,115297,38776,1023,0,77594624
+All.toList (powers of two).HashMapBB.8,158607,42726,1279,0,77594624
+All.toList (powers of two).HashMapBU.8,172161,37222,1407,0,77594624
+All.toList (powers of two).HashMapUL.8,148275,52576,1151,0,77594624
+All.toList (powers of two).HashMapUB.8,175598,34852,1407,0,77594624
+All.toList (powers of two).HashMapUU.8,181112,38460,1535,1,77594624
+All.toList (powers of two).Data_HashMap_Lazy.16,196812,64208,1567,1,77594624
+All.toList (powers of two).Data_HashMap_Strict.16,184961,28588,1566,0,77594624
+All.toList (powers of two).HashMapBL.16,218161,65960,1918,1,77594624
+All.toList (powers of two).HashMapBB.16,317229,109406,2430,1,77594624
+All.toList (powers of two).HashMapBU.16,296511,96598,2686,1,77594624
+All.toList (powers of two).HashMapUL.16,252906,76462,2174,1,77594624
+All.toList (powers of two).HashMapUB.16,329317,112678,2686,1,77594624
+All.toList (powers of two).HashMapUU.16,336376,56828,2942,1,77594624
+All.toList (powers of two).Data_HashMap_Lazy.32,359036,87816,3101,1,77594624
+All.toList (powers of two).Data_HashMap_Strict.32,340530,92918,3101,1,77594624
+All.toList (powers of two).HashMapBL.32,420929,129728,3710,2,77594624
+All.toList (powers of two).HashMapBB.32,643858,273056,4733,2,77594624
+All.toList (powers of two).HashMapBU.32,666284,249002,5244,3,77594624
+All.toList (powers of two).HashMapUL.32,494437,164006,4221,2,77594624
+All.toList (powers of two).HashMapUB.32,588233,120066,5244,3,77594624
+All.toList (powers of two).HashMapUU.32,631523,110718,5756,3,77594624
+All.toList (powers of two).Data_HashMap_Lazy.64,1016770,320916,7707,4,77594624
+All.toList (powers of two).Data_HashMap_Strict.64,937882,227216,7707,4,77594624
+All.toList (powers of two).HashMapBL.64,1389196,298116,11896,6,77594624
+All.toList (powers of two).HashMapBB.64,1725274,909234,13945,8,77594624
+All.toList (powers of two).HashMapBU.64,1786019,418116,14968,8,77594624
+All.toList (powers of two).HashMapUL.64,1423652,380980,12919,7,77594624
+All.toList (powers of two).HashMapUB.64,1734951,550596,14968,8,77594624
+All.toList (powers of two).HashMapUU.64,1762362,505830,15991,9,77594624
+All.toList (powers of two).Data_HashMap_Lazy.128,1605038,577482,13849,7,77594624
+All.toList (powers of two).Data_HashMap_Strict.128,1763455,626804,13849,7,77594624
+All.toList (powers of two).HashMapBL.128,2205401,468968,19060,10,77594624
+All.toList (powers of two).HashMapBB.128,2643508,434274,23153,13,77594624
+All.toList (powers of two).HashMapBU.128,2904177,873150,25199,14,77594624
+All.toList (powers of two).HashMapUL.128,2307904,431722,21106,12,77594624
+All.toList (powers of two).HashMapUB.128,3068405,495622,25199,14,77594624
+All.toList (powers of two).HashMapUU.128,2950119,553284,27245,15,77594624
+All.toList (powers of two).Data_HashMap_Lazy.256,3147833,939982,26131,14,77594624
+All.toList (powers of two).Data_HashMap_Strict.256,2952926,502650,26126,14,77594624
+All.toList (powers of two).HashMapBL.256,3860229,906900,33389,19,77594624
+All.toList (powers of two).HashMapBB.256,5108935,1272282,41574,23,77594624
+All.toList (powers of two).HashMapBU.256,5324566,1328238,45666,26,77594624
+All.toList (powers of two).HashMapUL.256,4269433,1357062,37481,21,77594624
+All.toList (powers of two).HashMapUB.256,5934521,2646758,45666,26,78643200
+All.toList (powers of two).HashMapUU.256,5931072,968480,49759,28,78643200
+All.toList (powers of two).Data_HashMap_Lazy.512,6169232,1984290,50686,28,78643200
+All.toList (powers of two).Data_HashMap_Strict.512,6126910,847642,50686,28,78643200
+All.toList (powers of two).HashMapBL.512,7589941,2082720,62046,34,78643200
+All.toList (powers of two).HashMapBB.512,9844836,2066396,78416,44,78643200
+All.toList (powers of two).HashMapBU.512,9863562,2406448,86601,50,78643200
+All.toList (powers of two).HashMapUL.512,8076794,2290822,70231,39,78643200
+All.toList (powers of two).HashMapUB.512,10333032,3023876,86601,50,78643200
+All.toList (powers of two).HashMapUU.512,10375610,2226786,94786,54,78643200
+All.toList (powers of two).Data_HashMap_Lazy.1024,11029553,3043912,99806,55,78643200
+All.toList (powers of two).Data_HashMap_Strict.1024,10760827,2683772,99806,55,78643200
+All.toList (powers of two).HashMapBL.1024,13647314,4742690,119361,67,78643200
+All.toList (powers of two).HashMapBB.1024,18298266,4128646,152101,86,78643200
+All.toList (powers of two).HashMapBU.1024,21086181,8285352,168471,96,78643200
+All.toList (powers of two).HashMapUL.1024,15598388,3408692,135731,77,78643200
+All.toList (powers of two).HashMapUB.1024,20101440,5787244,168471,96,78643200
+All.toList (powers of two).HashMapUU.1024,19939355,4810384,184841,104,78643200
