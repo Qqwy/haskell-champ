@@ -12,12 +12,15 @@
 
 #if __GLASGOW_HASKELL__ >= 906
 {-# LANGUAGE TypeData #-}
+{-# LANGUAGE AllowAmbiguousTypes #-}
 #endif
 
 module Champ.Internal.Storage where
 
 import Champ.Internal.Array qualified as Array
 import Data.Kind (Type)
+import Data.Tuple (Solo (MkSolo))
+import Data.Functor.Identity (Identity(..))
 
 -- | The different ways of storing data.
 --
@@ -59,3 +62,28 @@ type family ArrayOf (s :: Storage) = (r :: Type -> Type) | r -> s where
   ArrayOf (Strict Unlifted) = Array.SmallUnliftedArray'
   ArrayOf (Strict Unboxed) = Array.PrimArray
   ArrayOf Unexistent = Array.UnitArray
+
+-- | Internal class, used to wrap a single value stored in a hashmap that is lazy in its values,
+-- behind a `Data.Tuple.Solo`.
+--
+-- For any other kind of hashmap, this indirection is not required, 
+-- so there the `Identity` newtype is used instead.
+class Soloist (s :: Storage) where
+  type SoloType s :: Type -> Type
+  unSolo :: SoloType s a -> a
+  solo :: a -> SoloType s a
+
+instance Soloist Lazy where
+  type SoloType Lazy = Data.Tuple.Solo
+  unSolo (Data.Tuple.MkSolo x) = x
+  solo = Data.Tuple.MkSolo
+
+instance Soloist (Strict any) where
+  type SoloType (Strict any) = Identity
+  unSolo (Identity x) = x
+  solo = Identity
+
+instance Soloist Unexistent where
+  type SoloType Unexistent = Identity
+  unSolo (Identity x) = x
+  solo = Identity
