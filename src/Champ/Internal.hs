@@ -286,7 +286,7 @@ bitposLocation node@(MapNode bitmap _ _ _) bitpos
   | (childrenBitmap node) .&. bitpos /= 0 = InChild
   | otherwise = Nowhere
 
--- \(O(n)\) Construct a map with the supplied key-value mappings.
+-- \(O(n \log32 n)\) Construct a map with the supplied key-value mappings.
 -- 
 -- If the list contains duplicate keys, later mappings take precedence.
 --
@@ -296,14 +296,14 @@ fromList :: (Hashable k, MapRepr keys vals k v) => [(k, v)] -> HashMap keys vals
 {-# INLINE fromList #-}
 fromList = Foldable.foldl' (\m (k, v) -> unsafeInsert k v m) empty
 
--- | \(O(n \log n)\) Construct a map from a list of elements.  Uses
+-- | \(O(n \log32 n)\) Construct a map from a list of elements.  Uses
 -- the provided function @f@ to merge duplicate entries with
 -- @(f newVal oldVal)@.
 fromListWith :: (Eq k, Hashable k, MapRepr keys vals k v) => (v -> v -> v) -> [(k, v)] -> HashMap keys vals k v
 {-# INLINE fromListWith #-}
 fromListWith f = List.foldl' (\m (k, v) -> unsafeInsertWith f k v m) empty
 
--- | \(O(n \log n)\) Construct a map from a list of elements.  Uses
+-- | \(O(n \log32 n)\) Construct a map from a list of elements.  Uses
 -- the provided function @f@ to merge duplicate entries with
 -- @(f key newVal oldVal)@.
 fromListWithKey :: (Eq k, Hashable k, MapRepr keys vals k v) => (k -> v -> v -> v) -> [(k, v)] -> HashMap keys vals k v
@@ -318,7 +318,7 @@ toList :: (MapRepr keys vals k v) => HashMap keys vals k v -> [(k, v)]
 {-# INLINE toList #-}
 toList hashmap = Exts.build (\fusedCons fusedNil -> foldrWithKey (\k v xs -> (k, v) `fusedCons` xs) fusedNil hashmap)
 
--- | \(O(\log n)\) Adjust the value tied to a given key in this map only
+-- | \(O(\log32 n)\) Adjust the value tied to a given key in this map only
 -- if it is present. Otherwise, leave the map alone.
 --
 -- The current implementation is very simple
@@ -332,7 +332,7 @@ adjust f k m =
       let v' = f v 
       in insert' Safe h k' v' m 
 
--- | \(O(\log n)\)  The expression @('alter' f k map)@ alters the value @x@ at @k@, or
+-- | \(O(\log32 n)\)  The expression @('alter' f k map)@ alters the value @x@ at @k@, or
 -- absence thereof.
 --
 -- 'alter' can be used to insert, delete, or update a value in a map.
@@ -357,14 +357,14 @@ alter f k m =
       Nothing -> delete' Safe h k' m
       Just v' -> if ptrEq v v' then m else insert' Safe h k' v' m
 
--- | \(O(\log n)\)  The expression @('update' f k map)@ updates the value @x@ at @k@
+-- | \(O(\log32 n)\)  The expression @('update' f k map)@ updates the value @x@ at @k@
 -- (if it is in the map). If @(f x)@ is 'Nothing', the element is deleted.
 -- If it is @('Just' y)@, the key @k@ is bound to the new value @y@.
 update :: (Eq k, Hashable k, MapRepr keys vals k v) => (v -> Maybe v) -> k -> HashMap keys vals k v -> HashMap keys vals k v
 {-# INLINABLE update #-}
 update f = alter (>>= f)
 
--- | \(O(\log n)\)  The expression @('alterF' f k map)@ alters the value @x@ at
+-- | \(O(\log32 n)\)  The expression @('alterF' f k map)@ alters the value @x@ at
 -- @k@, or absence thereof.
 --
 --  'alterF' can be used to insert, delete, or update a value in a map.
@@ -393,7 +393,7 @@ alterF f = \ !k !m ->
           Nothing -> delete' Safe h k' m
           Just v' -> insert' Safe h k' v' m
 
--- | \(O(n)\).
+-- | \(O(n \log32 n)\).
 -- @'mapKeys' f s@ is the map obtained by applying @f@ to each key of @s@.
 --
 -- The size of the result may be smaller if @f@ maps two or more distinct
