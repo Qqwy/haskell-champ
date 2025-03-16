@@ -148,6 +148,7 @@ test-suite test
     build-depends:
         -- Library and datatypes to exercise during tests:
         base,
+        contiguous,
         unordered-containers,
         champ,
         -- Test framework:
@@ -183,7 +184,7 @@ benchmark bench
 
     -- Base language which the package is written in.
     default-language: GHC2021
-    ghc-options:   "-with-rtsopts=-A32m"
+    ghc-options:   "-with-rtsopts=-A32m" -rtsopts
     if impl(ghc >= 8.6)
         ghc-options: -fproc-alignment=64
     main-is:       Bench.hs

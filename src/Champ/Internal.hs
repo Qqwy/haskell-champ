@@ -13,9 +13,8 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE UndecidableSuperClasses #-}
 {-# LANGUAGE ViewPatterns #-}
-{-# OPTIONS_GHC -ddump-simpl -dsuppress-all -ddump-stg-from-core -ddump-cmm -ddump-to-file #-}
-{-# OPTIONS_GHC -funbox-strict-fields #-}
-{-# OPTIONS_GHC -funbox-strict-fields #-}
+-- {-# OPTIONS_GHC -ddump-simpl -dsuppress-all -dsuppress-uniques -ddump-stg-from-core -ddump-cmm -ddump-to-file #-}
+{-# OPTIONS_GHC -funbox-strict-fields -O2 #-}
 
 -- We'd really like to use the names 'keys', 'elems', 'vals'
 -- for a bunch of different things.
@@ -28,7 +27,6 @@ import Champ.Internal.Array qualified as Array
 import Champ.Internal.Collision qualified as Collision
 import Champ.Internal.Storage (ArrayOf, Storage (..), StrictStorage (..), Soloist(..))
 import Champ.Internal.Util (ptrEq)
-import Control.DeepSeq (NFData (..))
 import Control.Monad qualified
 import Data.Bits hiding (shift)
 import Data.Foldable qualified as Foldable
@@ -40,7 +38,7 @@ import Data.List qualified as List
 import Data.Primitive (Prim)
 import Data.Primitive.Contiguous (Element)
 import Data.Primitive.Contiguous qualified as Contiguous
-import Data.Word (Word64)
+import Data.Word (Word64, Word32)
 import GHC.Exts qualified as Exts
 import GHC.IsList (IsList (..))
 import Numeric (showBin)
@@ -50,6 +48,7 @@ import Data.Coerce qualified
 import Unsafe.Coerce (unsafeCoerce)
 import Data.Type.Coercion (Coercion(Coercion))
 import GHC.Exts (Any)
+import Control.DeepSeq
 
 -- * Setup
 --
@@ -826,8 +825,8 @@ instance (NFData v, NFData k, (MapRepr keys vals k v), NFData (MapNode keys vals
 instance {-# OVERLAPPABLE #-} (NFData k, NFData v, MapRepr keys vals k v) => NFData (MapNode keys vals k v) where
   {-# INLINE rnf #-}
   rnf (CollisionNode keys vals) = Contiguous.rnf keys `seq` Contiguous.rnf vals
-  rnf (MapNode _bitmap keys vals children) =
-    Contiguous.rnf keys `seq` Contiguous.rnf vals `seq` Contiguous.rnf children
+  rnf (MapNode bitmap keys vals children) =
+    rnf bitmap `seq` Contiguous.rnf keys `seq` Contiguous.rnf vals `seq` Contiguous.rnf children
 
 instance {-# OVERLAPS #-} (NFData k, NFData v) => NFData (MapNode Unboxed (Strict Unboxed) k v) where
   {-# INLINE rnf #-}
@@ -1004,20 +1003,193 @@ mapMaybe' :: (Eq k, Hashable k, MapRepr keys vals k v, MapRepr keys vals' k v') 
 {-# INLINE mapMaybe' #-}
 mapMaybe' f = mapMaybeWithKey' (const f)
 
--- | \(O(n log32(n))\) Filter this map by retaining only elements satisfying a
+-- | \(O(n)\) Filter this map by retaining only elements satisfying a
 -- predicate.
---
--- Simple, naive, implementation. It is possible to write an O(n) implementation of this
--- by traversing the existing map instead.
-filterWithKey :: (Eq k, Hashable k, MapRepr keys vals k v) => (k -> v -> Bool) -> HashMap keys vals k v -> HashMap keys vals k v
+filterWithKey :: forall k v keys vals. (Eq k, Hashable k, MapRepr keys vals k v) => (k -> v -> Bool) -> HashMap keys vals k v -> HashMap keys vals k v
 {-# INLINE filterWithKey #-}
-filterWithKey f = Champ.Internal.fromList . List.filter (\(k, v) -> f k v) . Champ.Internal.toList
+filterWithKey !f = \case
+  EmptyMap -> EmptyMap
+  SingletonMap h k v -> if f k v
+    then SingletonMap h k v
+    else EmptyMap
+  ManyMap _ node -> filterInNode f node
+
+filterInNode
+  :: (Hashable k, MapRepr keys vals k v)
+  => (k -> v -> Bool)
+  -> MapNode keys vals k v
+  -> HashMap keys vals k v
+{-# INLINE filterInNode #-}
+filterInNode f node = case node of
+  CollisionNode keys vals ->
+    let (keptKeyIxs :: Word32, keys', vals') = filterKeysVals f keys vals 0
+    in  ManyMap (fromIntegral (popCount keptKeyIxs)) (CollisionNode keys' vals')
+  CompactNode _ _ _ _ ->
+    let !result = filterCompactNode 0 node
+    in  result
+    where
+      filterCompactNode _ (CollisionNode _ _) = error "impossible"
+      filterCompactNode !shift _node@(CompactNode !bitmap !keys !vals !children) =
+        -- Straightforward tactic:
+        -- 1. Run the filter across the inline entries.
+        -- 2. Go over children and run the filter across them.
+        --  a. Remove any child nodes that become empty.
+        --  b. Bring up any child nodes that can be inlined.
+        -- 3. Depending on the final cardinality, emit smaller representations.
+        let
+          -- Go over inline values and see which survive.
+          (booleanMask :: Word32, keys', vals') =
+            filterKeysVals f keys vals (Contiguous.size children)
+          -- Notice that the relative 1 bit positions in the bitmap denote the
+          -- locations of the entries within the arrays. Seeing as we already
+          -- have a boolean bitmask on the entries, we can cross reference it
+          -- with the bitmap and flip entries we removed, without having to
+          -- rehash values.
+          inlineBitmap = bitmap .&. ((1 `unsafeShiftL` 32) - 1)
+          bitmapOnlyInline =
+            maskBitmap booleanMask inlineBitmap
+
+          -- Traverse over children, keeping track of data we need to determine what
+          -- variant of the map node we emit.
+          calcRemovedChild (!childSum, !childMask, !children', !keys', !vals', !dataBitmap) ix node =
+            let !filteredChild = filterCompactNode (nextShift shift) node
+            in  case filteredChild of
+                  EmptyMap ->
+                    ( childSum
+                    , childMask
+                    , children'
+                    , keys'
+                    , vals'
+                    , dataBitmap
+                    )
+
+                  SingletonMap h k v ->
+                    let
+                      bitpos = maskToBitpos (hashToMask shift h)
+                      !dataBitmap' = dataBitmap .|. bitpos
+                      idx = popCount $ dataBitmap' .&. (bitpos - 1)
+                      !keys'' = Array.insertAt Unsafe keys' idx k
+                      !vals'' = Array.insertAt Unsafe vals' idx v
+                    in
+                      ( childSum
+                      , childMask
+                      , children'
+                      , keys''
+                      , vals''
+                      , dataBitmap'
+                      )
+
+                  ManyMap childCount !child' ->
+                    let
+                      !nrInChildren' = childSum + childCount
+                      !childMask' = childMask `setBit` ix
+                      !idx = popCount $ childMask
+                      -- Notice that the ordering we handle the children in, is
+                      -- the same as what the hashes of the child node present
+                      -- in the bitmap corresponds to. So we can actually always
+                      -- write at the end of the new "filtered" array.
+                      !children'' = Array.replaceAt Unsafe children' idx child'
+                    in
+                      ( nrInChildren'
+                      , childMask'
+                      , children''
+                      , keys'
+                      , vals'
+                      , dataBitmap
+                      )
+
+          (!nrInChildren, !childMask, !children', !keys'', !vals'', !bitmapAllInlined) =
+            Contiguous.ifoldl'
+              calcRemovedChild
+              ( 0
+              , zeroBits
+              , Contiguous.create (Contiguous.new (Contiguous.size children))
+              , keys'
+              , vals'
+              , bitmapOnlyInline
+              )
+              children
+
+          -- Same trick applied to the inline key bitmap.
+          childBitmap = maskBitmap (childMask :: Word32) (bitmap !>>. 32)
+          bitmapRemovedChildren = childBitmap !<<. HASH_CODE_LENGTH
+          children'' = Contiguous.create $ do
+            dst <- Array.unsafeThaw children'
+            Contiguous.resize dst (popCount childMask)
+
+          -- Reduce when appropriate for the cardinality in the node
+          matchOnKeys b k v = \case
+            0 -> EmptyMap
+            1 -> SingletonMap (hash (Contiguous.index k 0)) (Contiguous.index k 0) (Contiguous.index v 0)
+            n -> ManyMap n (CompactNode b k v Contiguous.empty)
+
+          -- Do some optimistic shortcircuiting, to quicken leaves.
+          -- When there're no subnodes, only have to filter inline entries.
+          nrInlineKeys' = fromIntegral $ Contiguous.size keys'
+          nrInlineKeys'' = fromIntegral $ Contiguous.size keys''
+          shortcut c _ | Contiguous.null c =
+            matchOnKeys bitmapOnlyInline keys' vals' nrInlineKeys'
+          -- If all subnodes were filtered out, we only need take into account
+          -- subnodes that were inlined
+          shortcut _ c | Contiguous.null c = matchOnKeys bitmapAllInlined keys'' vals'' nrInlineKeys''
+          shortcut _ _ =
+            ManyMap
+              ( let !total = nrInChildren + nrInlineKeys'' in total )
+              ( let !bitmapComplete = bitmapAllInlined .|. bitmapRemovedChildren
+                    !children''' = children''
+                in CompactNode
+                  bitmapComplete
+                  keys''
+                  vals''
+                  children'''
+              )
+        in shortcut children children''
+
+-- | It's quite useful to take an existing bitmap, and using a bitmask on
+-- the elements, remove bits from the bitmap. To avoid having to rehash values
+-- to determine the positions of elements in the bitmap.
+maskBitmap :: (Bits a, Bits b, Bits c, Num a, Num b, Num c) => a -> b -> c
+{-# INLINE maskBitmap #-}
+maskBitmap !booleanMask !bitmap = let !result = go booleanMask bitmap 0 0 in result
+  where
+  go !_ !0 !acc !_ = acc
+  go !0 !_ !acc !_ = acc
+  go !booleanMask !bitmap !acc !ix | bitmap .&. 1 == 0
+    = go booleanMask (bitmap !>>. 1) acc (ix + 1)
+  go !booleanMask !bitmap !acc !ix | booleanMask .&. 1 == 0
+    = go (booleanMask !>>. 1) (bitmap !>>. 1) acc (ix + 1)
+  go !booleanMask !bitmap !acc !ix
+    = go (booleanMask !>>. 1) (bitmap !>>. 1) (acc `setBit` ix) (ix + 1)
+
+boolMask2
+  :: (Contiguous.Contiguous arr1, Element arr1 a, Contiguous.Contiguous arr2, Element arr2 b, Bits bits)
+  => (a -> b -> Bool)
+  -> arr1 a
+  -> arr2 b
+  -> bits
+{-# INLINE boolMask2 #-}
+boolMask2 !f !arr1 !arr2 =
+  let createMask !ix !a !b !acc = if f a b then acc `setBit` ix else acc
+      !mask = Array.ifoldrZipWith' createMask zeroBits arr1 arr2
+  in  mask
+
+filterKeysVals
+  :: (MapRepr keys vals k v, Bits bits, Integral bits)
+  => (k -> v -> Bool)
+  -> ArrayOf (Strict keys) k
+  -> ArrayOf vals v
+  -> Int
+  -> (bits, ArrayOf (Strict keys) k, ArrayOf vals v)
+{-# INLINE filterKeysVals #-}
+filterKeysVals !f !keys !vals !hint =
+  let
+    !mask = boolMask2 f keys vals
+    !keys' = Array.filterUsingMask keys mask hint
+    !vals' = Array.filterUsingMask vals mask hint
+  in (mask, keys', vals')
 
 -- | \(O(n)\) Filter this map by retaining only elements satisfying a
 -- predicate.
---
--- Simple, naive, implementation. It is possible to write an O(n) implementation of this
--- by traversing the existing map instead.
 filter :: (Eq k, Hashable k, MapRepr keys vals k v) => (v -> Bool) -> HashMap keys vals k v -> HashMap keys vals k v
 {-# INLINE filter #-}
 filter f = filterWithKey (const f)
@@ -1425,7 +1597,7 @@ compose bc !ab
 -- the lower 32 bits indicate the inline leaves
 -- and the higher 32 bits indicate child nodes
 newtype Bitmap = Bitmap Word64
-  deriving (Eq, Ord, Num, Bits, Enum, Real, Integral)
+  deriving (Eq, Ord, Num, Bits, Enum, Real, Integral, FiniteBits, NFData)
 
 instance Show Bitmap where
   -- \| Shows a bitmap in binary, with the lowest bit on the left

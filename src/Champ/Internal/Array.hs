@@ -13,7 +13,7 @@
 
 module Champ.Internal.Array (
   -- * Array class
-  Array,
+  Array (..),
   Element,
   -- * Simple arrays:
   SmallArray, 
@@ -28,6 +28,7 @@ module Champ.Internal.Array (
   doubletonBranchless, 
   foldrZipWith',
   foldlZipWith,
+  ifoldrZipWith',
   findIndex#,
   -- * Arrays to store zero-size values
   UnitArray,
@@ -38,13 +39,15 @@ module Champ.Internal.Array (
   Champ.Internal.Array.insertAt,
   Champ.Internal.Array.replaceAt,
   Champ.Internal.Array.deleteAt,
-  Champ.Internal.Array.singleton
+  Champ.Internal.Array.singleton,
+  Champ.Internal.Array.filterUsingMask,
 ) where
 
 import Champ.Internal.Util (ptrEq)
 import Control.DeepSeq (NFData)
 import Control.Monad.Primitive
 import Control.Monad.ST (runST)
+import Data.Bits hiding (shift)
 import Data.Elevator (Strict (Strict), UnliftedType)
 import Data.Foldable qualified as Foldable
 import Data.Hashable (Hashable)
@@ -59,8 +62,13 @@ import Data.Primitive.Unlifted.Class (PrimUnlifted (..), Unlifted)
 import Data.Primitive.Unlifted.Class qualified as Unlifted
 import Data.Primitive.Unlifted.SmallArray (SmallMutableUnliftedArray_ (..), SmallUnliftedArray_ (..), mapSmallUnliftedArray, unsafeThawSmallUnliftedArray, shrinkSmallMutableUnliftedArray)
 import Data.Primitive.Unlifted.SmallArray.Primops (SmallMutableUnliftedArray# (SmallMutableUnliftedArray#), SmallUnliftedArray# (SmallUnliftedArray#))
+import Numeric (showBin)
+import Data.Word
+import Unsafe.Coerce
 import GHC.Exts (SmallArray#, SmallMutableArray#)
 import Prelude hiding (foldl, foldl', foldr, length, null, read)
+import Debug.Trace
+import qualified GHC.Exts as Exts
 
 -- | Helper newtype to implement `PrimUnlifted` for any datatype
 -- to turn it into a `Data.Elevator.Strict`
@@ -124,7 +132,7 @@ instance Contiguous.Contiguous StrictSmallArray where
   {-# INLINE shrink #-}
   shrink (StrictSmallMutableArray arr) n = StrictSmallMutableArray <$> shrink arr n
   {-# INLINE empty #-}
-  empty = StrictSmallArray empty
+  empty = StrictSmallArray Contiguous.empty
   {-# INLINE singleton #-}
   singleton = StrictSmallArray . Contiguous.singleton . Strictly
   {-# INLINE doubleton #-}
@@ -227,7 +235,7 @@ instance Contiguous.Contiguous SmallUnliftedArray' where
   {-# INLINE shrink #-}
   shrink (MutableSmallUnliftedArray' arr) n = MutableSmallUnliftedArray' <$> shrink arr n
   {-# INLINE empty #-}
-  empty = SmallUnliftedArray' empty
+  empty = SmallUnliftedArray' Contiguous.empty
   {-# INLINE singleton #-}
   singleton = SmallUnliftedArray' . Contiguous.singleton
   {-# INLINE doubleton #-}
@@ -642,3 +650,53 @@ findIndex# p xs = loop 0
     | i < size xs = if p (index xs i) then (# | i #) else loop (i + 1)
     | otherwise = (# (# #) | #)
 {-# INLINE findIndex# #-}
+
+-- | Slice from a source array into a destination array, specified using
+-- indices. Returns whether it did anything. Does not do any bounds checking
+-- relative to the source or destination arrays.
+unsafeSliceInto
+  :: (Element arr b, Element arr b,  Contiguous arr, Contiguous arr, PrimMonad m)
+  => arr b
+  -> Mutable arr (PrimState m) b
+  -> Int
+  -> Int
+  -> Int
+  -> m Bool
+{-# INLINE unsafeSliceInto #-}
+unsafeSliceInto src dst !srcFromIx !srcToIx !dstIx = do
+  if srcToIx >= srcFromIx
+    then do
+      -- traceShowM ("slicing", srcFromIx, srcToIx, dstIx)
+      let srcSlice = Contiguous.slice src srcFromIx (srcToIx - srcFromIx + 1)
+      Contiguous.copy dst dstIx srcSlice
+      pure True
+    else pure False
+
+-- | Because @'Contiguous.ifilter'@ and @'Contiguous.filter'@ are too slow, if I
+-- already have a bitmask. There is no check that the mask does not match the
+-- source array. Does the writing in slices.
+--
+--  input = [1, 2, 3, 4]
+--  mask = 1011
+--  output = [1, 3, 4]
+filterUsingMask :: (Contiguous.Contiguous arr, Array arr, Element arr a, Bits bits) => arr a -> bits -> Int -> arr a
+{-# INLINE filterUsingMask #-}
+filterUsingMask src mask _hint | popCount mask == Contiguous.size src = src
+filterUsingMask _src mask _hint | mask == zeroBits = Contiguous.empty
+filterUsingMask src mask hint = Contiguous.create $ do
+  dst <- Contiguous.new (popCount mask + hint)
+  let
+    go !srcFromIx !srcToIx !dstIx !m | m == zeroBits = pure (srcFromIx, srcToIx, dstIx)
+    go !srcFromIx !srcToIx !dstIx !m = do
+        if m `testBit` 0
+          then go srcFromIx (srcToIx + 1) dstIx (m !>>. 1)
+          else do
+            didSlice <- unsafeSliceInto src dst srcFromIx srcToIx dstIx
+            if didSlice
+              then go (srcToIx + 2) (srcToIx + 1) (dstIx + (srcToIx - srcFromIx) + 1) (m !>>. 1)
+              else go (srcFromIx + 1) srcFromIx dstIx (m !>>. 1)
+
+  (!srcFromIx, !srcToIx, !dstIx) <- go 0 (-1) 0 mask
+  _ <- unsafeSliceInto src dst srcFromIx srcToIx dstIx
+  dst' <- Contiguous.resize dst (popCount mask)
+  pure dst'
