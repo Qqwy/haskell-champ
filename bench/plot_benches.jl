@@ -21,7 +21,7 @@ function splitup(name)::Tuple{String,String,UInt}
 end
 
 benches = 
-  "benches3.csv" |> CSV.File |> DataFrame |> frame -> select(frame,
+  "benches_x86.csv" |> CSV.File |> DataFrame |> frame -> select(frame,
               :Name => ByRow(splitup) => [:Benchmark, :DataStructure, :Size],
               :"Mean (ps)" => ByRow(x -> x / 10^3) => :Mean,
             )
