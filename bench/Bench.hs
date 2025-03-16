@@ -27,8 +27,10 @@ main =
     , foldrBench
     , foldl'SmallBench
     , foldl'Bench
-    , filterWithKeySmallBench
-    , filterWithKeyBench
+    , filterWithKeyBench [0..32]
+    , filterWithKeyBench (0 : powersOfTwo 13)
+    , mapMaybeWithKeyBench [0..32]
+    , mapMaybeWithKeyBench (0 : powersOfTwo 13)
     , toListSmallBench
     , toListBench
     ]
@@ -62,7 +64,7 @@ insertBench =
           Bench.bench ("HashMapUB." <> show n) $ Bench.nf (Champ.HashMap.insert n n) (buildN @HashMapUB n),
           Bench.bench ("HashMapUU." <> show n) $ Bench.nf (Champ.HashMap.insert n n) (buildN @HashMapUU n)
         ]
-      | n <- ([0] <> powersOfTwo)
+      | n <- ([0] <> powersOfTwo 10)
       ]
 
 lookupSmallBench :: Bench.Benchmark
@@ -94,7 +96,7 @@ lookupBench =
           Bench.bench ("HashMapUB." <> show n) $ Bench.nf (Champ.HashMap.lookup (n)) (buildN @HashMapUB n),
           Bench.bench ("HashMapUU." <> show n) $ Bench.nf (Champ.HashMap.lookup (n)) (buildN @HashMapUU n)
         ]
-      | n <- powersOfTwo
+      | n <- powersOfTwo 10
       ]
 
 lookupByteArraySmallBench :: Bench.Benchmark
@@ -126,7 +128,7 @@ lookupByteArrayBench =
           Bench.bench ("HashMapUlB." <> show n) $ Bench.nf (Champ.HashMap.lookup (fromString (show n))) (buildBAN @HashMapUlB n),
           Bench.bench ("HashMapUlU." <> show n) $ Bench.nf (Champ.HashMap.lookup (fromString (show n))) (buildBAN @HashMapUlU n)
         ]
-      | n <- powersOfTwo
+      | n <- powersOfTwo 10
       ]
 
 foldrSmallBench :: Bench.Benchmark
@@ -159,7 +161,7 @@ foldrBench =
               Bench.bench ("HashMapUB." <> show n) $ Bench.nf (Champ.HashMap.foldr (+) 0) (buildN @HashMapUB n),
               Bench.bench ("HashMapUU." <> show n) $ Bench.nf (Champ.HashMap.foldr (+) 0) (buildN @HashMapUU n)
             ]
-          | n <- ([0] <> powersOfTwo)
+          | n <- ([0] <> powersOfTwo 10)
           ]
 
 foldl'SmallBench :: Bench.Benchmark
@@ -192,7 +194,7 @@ foldl'Bench =
               Bench.bench ("HashMapUB." <> show n) $ Bench.nf (Champ.HashMap.foldl' (+) 0) (buildN @HashMapUB n),
               Bench.bench ("HashMapUU." <> show n) $ Bench.nf (Champ.HashMap.foldl' (+) 0) (buildN @HashMapUU n)
             ]
-          | n <- ([0] <> powersOfTwo)
+          | n <- ([0] <> powersOfTwo 10)
           ]
 
 toListSmallBench :: Bench.Benchmark
@@ -225,15 +227,17 @@ toListBench =
               Bench.bench ("HashMapUB." <> show n) $ Bench.nf (Champ.HashMap.toList) (buildN @HashMapUB n),
               Bench.bench ("HashMapUU." <> show n) $ Bench.nf (Champ.HashMap.toList) (buildN @HashMapUU n)
             ]
-          | n <- ([0] <> powersOfTwo)
+          | n <- ([0] <> powersOfTwo 10)
           ]
 
-filterWithKeySmallBench :: Bench.Benchmark
-filterWithKeySmallBench = do
+
+filterWithKeyBench :: [Int] -> Bench.Benchmark
+filterWithKeyBench ns = do
   let isEven _ v = even v
-  Bench.bgroup "filterWithKey (small)" $
+  Bench.bgroup "filterWithKey (powers of two)" $
      mconcat
-          [ [ Bench.bench ("Data.HashMap.Lazy." <> show n) $ Bench.nf (Data.HashMap.Lazy.filterWithKey isEven) (buildN @HashMap n),
+          [ [
+              Bench.bench ("Data.HashMap.Lazy." <> show n) $ Bench.nf (Data.HashMap.Lazy.filterWithKey isEven) (buildN @HashMap n),
               Bench.bench ("Data.HashMap.Strict." <> show n) $ Bench.nf (Data.HashMap.Strict.filterWithKey isEven) (buildN @HashMap n),
               Bench.bench ("HashMapBL." <> show n) $ Bench.nf (Champ.HashMap.filterWithKey isEven) (buildN @HashMapBL n),
               Bench.bench ("HashMapBB." <> show n) $ Bench.nf (Champ.HashMap.filterWithKey isEven) (buildN @HashMapBB n),
@@ -242,26 +246,29 @@ filterWithKeySmallBench = do
               Bench.bench ("HashMapUB." <> show n) $ Bench.nf (Champ.HashMap.filterWithKey isEven) (buildN @HashMapUB n),
               Bench.bench ("HashMapUU." <> show n) $ Bench.nf (Champ.HashMap.filterWithKey isEven) (buildN @HashMapUU n)
             ]
-          | n <- [0..32]
+          | n <- ns
           ]
 
 
-filterWithKeyBench :: Bench.Benchmark
-filterWithKeyBench = do
-  let isEven _ v = even v
-  Bench.bgroup "filterWithKey (powers of two)" $
+mapMaybeWithKeyBench :: [Int] -> Bench.Benchmark
+mapMaybeWithKeyBench ns = do
+  let isEven _ v =
+        if even v
+          then Just v
+          else Nothing
+  Bench.bgroup "mapMaybeWithKey (powers of two)" $
      mconcat
           [ [
-              Bench.bench ("Data.HashMap.Lazy." <> show n) $ Bench.nf (Data.HashMap.Lazy.filterWithKey isEven) (buildN @HashMap n),
-              Bench.bench ("Data.HashMap.Strict." <> show n) $ Bench.nf (Data.HashMap.Strict.filterWithKey isEven) (buildN @HashMap n),
-              Bench.bench ("HashMapBL." <> show n) $ Bench.nf (Champ.HashMap.filterWithKey isEven) (let !inp = buildN @HashMapBL n in inp),
-              Bench.bench ("HashMapBB." <> show n) $ Bench.nf (Champ.HashMap.filterWithKey isEven) (let !inp = buildN @HashMapBB n in inp),
-              Bench.bench ("HashMapBU." <> show n) $ Bench.nf (Champ.HashMap.filterWithKey isEven) (let !inp = buildN @HashMapBU n in inp),
-              Bench.bench ("HashMapUL." <> show n) $ Bench.nf (Champ.HashMap.filterWithKey isEven) (let !inp = buildN @HashMapUL n in inp),
-              Bench.bench ("HashMapUB." <> show n) $ Bench.nf (Champ.HashMap.filterWithKey isEven) (let !inp = buildN @HashMapUB n in inp),
-              Bench.bench ("HashMapUU." <> show n) $ Bench.nf (Champ.HashMap.filterWithKey isEven) (let !inp = buildN @HashMapUU n in inp)
+              Bench.bench ("Data.HashMap.Lazy." <> show n) $ Bench.nf (Data.HashMap.Lazy.mapMaybeWithKey isEven) (buildN @HashMap n),
+              Bench.bench ("Data.HashMap.Strict." <> show n) $ Bench.nf (Data.HashMap.Strict.mapMaybeWithKey isEven) (buildN @HashMap n),
+              Bench.bench ("HashMapBL." <> show n) $ Bench.nf (Champ.HashMap.mapMaybeWithKey isEven) (buildN @HashMapBL n),
+              Bench.bench ("HashMapBB." <> show n) $ Bench.nf (Champ.HashMap.mapMaybeWithKey isEven) (buildN @HashMapBB n),
+              Bench.bench ("HashMapBU." <> show n) $ Bench.nf (Champ.HashMap.mapMaybeWithKey isEven) (buildN @HashMapBU n),
+              Bench.bench ("HashMapUL." <> show n) $ Bench.nf (Champ.HashMap.mapMaybeWithKey isEven) (buildN @HashMapUL n),
+              Bench.bench ("HashMapUB." <> show n) $ Bench.nf (Champ.HashMap.mapMaybeWithKey isEven) (buildN @HashMapUB n),
+              Bench.bench ("HashMapUU." <> show n) $ Bench.nf (Champ.HashMap.mapMaybeWithKey isEven) (buildN @HashMapUU n)
             ]
-          | n <- ([0] <> powersOfTwo)
+          | n <- ns
           ]
 
 -- myinsert :: Int -> Int -> MyLib.MapBL Int Int -> MyLib.MapBL Int Int
@@ -286,5 +293,5 @@ buildN n = force $ fromList [(x, x) | x <- [0 .. (n - 1)]]
 buildBAN :: forall map. (NFData (map ShortText Int), IsList (map ShortText Int), Item (map ShortText Int) ~ (ShortText, Int)) => Int -> (map ShortText Int)
 buildBAN n = force $ fromList [(fromString (show x), x) | x <- [0 .. (n - 1)]]
 
-powersOfTwo :: [Int]
-powersOfTwo = [2 ^ (x :: Int) | x <- [0 .. 10]]
+powersOfTwo :: Int -> [Int]
+powersOfTwo n = [2 ^ (x :: Int) | x <- [0 .. n]]
