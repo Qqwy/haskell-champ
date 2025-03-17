@@ -990,7 +990,7 @@ mapMaybeWithKey' f = \case
     Nothing -> EmptyMap
     Just v' -> SingletonMap h k v'
   -- eta-expand because of https://gitlab.haskell.org/ghc/ghc/-/issues/23150
-  ManyMap _ node -> extractInNode (\k v hint -> mapMaybeKeysVals f k v hint) node
+  ManyMap _ node -> Exts.inline $ extractInNode (\k v hint -> mapMaybeKeysVals f k v hint) node
 
 mapMaybeKeysVals
   :: (MapRepr keys vals k v, MapRepr keys vals' k v')
@@ -1000,7 +1000,7 @@ mapMaybeKeysVals
   -> Int
   -> (Word32, ArrayOf (Strict keys) k, ArrayOf vals' v')
 {-# INLINE mapMaybeKeysVals #-}
-mapMaybeKeysVals f keys vals hint =
+mapMaybeKeysVals !f !keys !vals !hint =
   let
     !(mask, vals') = mapMaybeMask f keys vals hint
     !keys' = Array.filterUsingMask keys mask hint
@@ -1014,7 +1014,7 @@ mapMaybeMask
      )
   => (a -> b -> Maybe c) -> arr1 a -> arr2 b -> Int -> (bits, arr3 c)
 {-# INLINE mapMaybeMask #-}
-mapMaybeMask f keys vals hint = Contiguous.createT $ do
+mapMaybeMask !f !keys !vals !hint = Contiguous.createT $ do
   -- Preallocate a larger array
   dst <- Contiguous.new (Contiguous.size vals + hint)
   let
@@ -1024,8 +1024,8 @@ mapMaybeMask f keys vals hint = Contiguous.createT $ do
         Contiguous.write dst dstIx c
         pure (dstIx + 1, mask `setBit` ix)
 
-  (finalIx, mask) <- Contiguous.ifoldlZipWithM' fillDestination (0, zeroBits) keys vals
-  dst' <- Contiguous.resize dst finalIx
+  (finalIx, !mask) <- Contiguous.ifoldlZipWithM' fillDestination (0, zeroBits) keys vals
+  !dst' <- Contiguous.resize dst finalIx
   pure (mask, dst')
 
 -- | \(O(n)\) Transform this map by applying a function to every value
@@ -1048,7 +1048,7 @@ filterWithKey !f = \case
     then SingletonMap h k v
     else EmptyMap
   -- eta-expand because of https://gitlab.haskell.org/ghc/ghc/-/issues/23150
-  ManyMap _ node -> extractInNode (\k v hint -> filterKeysVals f k v hint) node
+  ManyMap _ node -> Exts.inline $ extractInNode (\k v hint -> filterKeysVals f k v hint) node
 
 -- | Generic implementation of filterWithKey and mapMaybeWithKey
 extractInNode
@@ -1057,16 +1057,15 @@ extractInNode
   -> MapNode keys vals k v
   -> HashMap keys vals' k v'
 {-# INLINE extractInNode #-}
-extractInNode extractFrom node = case node of
+extractInNode !extractFrom !node = case node of
   CollisionNode keys vals ->
     let (keptKeyIxs :: Word32, keys', vals') = extractFrom keys vals 0
     in  ManyMap (fromIntegral (popCount keptKeyIxs)) (CollisionNode keys' vals')
-  CompactNode _ _ _ _ ->
-    let !result = Exts.inline $ mapMaybeCompactNode 0 node
+  CompactNode b k v c ->
+    let !result = Exts.inline $ extractCompactNode 0 b k v c
     in  result
     where
-      mapMaybeCompactNode _ (CollisionNode _ _) = error "impossible"
-      mapMaybeCompactNode !shift _node@(CompactNode !bitmap !keys !vals !children) =
+      extractCompactNode !shift !bitmap !keys !vals !children =
         -- Straightforward tactic:
         -- 1. Run the filter across the inline entries.
         -- 2. Go over children and run the filter across them.
@@ -1088,8 +1087,8 @@ extractInNode extractFrom node = case node of
 
           -- Traverse over children, keeping track of data we need to determine what
           -- variant of the map node we emit.
-          calcRemovedChild (!childSum, !childMask, !children', !keys', !vals', !dataBitmap) ix node =
-            let !filteredChild = mapMaybeCompactNode (nextShift shift) node
+          calcRemovedChild (!childSum, !childMask, !children', !keys', !vals', !dataBitmap) ix (CompactNode b k v c) =
+            let !filteredChild = extractCompactNode (nextShift shift) b k v c
             in  case filteredChild of
                   EmptyMap ->
                     ( childSum
@@ -1134,8 +1133,9 @@ extractInNode extractFrom node = case node of
                       , vals'
                       , dataBitmap
                       )
+          calcRemovedChild _ _ _ = error "impossible"
 
-          (!nrInChildren, !childMask, !children', !keys'', !vals'', !bitmapAllInlined) =
+          (nrInChildren, childMask, children', keys'', vals'', bitmapAllInlined) =
             Contiguous.ifoldl'
               calcRemovedChild
               ( 0
@@ -1169,16 +1169,15 @@ extractInNode extractFrom node = case node of
           -- If all subnodes were filtered out, we only need take into account
           -- subnodes that were inlined
           shortcut _ c | Contiguous.null c = matchOnKeys bitmapAllInlined keys'' vals'' nrInlineKeys''
-          shortcut _ _ =
+          shortcut _ !c =
             ManyMap
               ( let !total = nrInChildren + nrInlineKeys'' in total )
               ( let !bitmapComplete = bitmapAllInlined .|. bitmapRemovedChildren
-                    !children''' = children''
                 in CompactNode
                   bitmapComplete
                   keys''
                   vals''
-                  children'''
+                  c
               )
         in shortcut children children''
 
