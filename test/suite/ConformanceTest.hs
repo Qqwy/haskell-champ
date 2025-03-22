@@ -56,6 +56,16 @@ test_filterWithKey =
     , testProperty "filterWithKey conforms (HashMapUU)" $ propFilterWithKeyConforms @HashMapUU
     ]
 
+test_mapMaybeWithKey :: [TestTree]
+test_mapMaybeWithKey =
+    [ testProperty "filterWithKey conforms (HashMapBL)" $ propMapMaybeWithKeyConforms @HashMapBL
+    , testProperty "filterWithKey conforms (HashMapBB)" $ propMapMaybeWithKeyConforms @HashMapBB
+    , testProperty "filterWithKey conforms (HashMapBU)" $ propMapMaybeWithKeyConforms @HashMapBU
+    , testProperty "filterWithKey conforms (HashMapUL)" $ propMapMaybeWithKeyConforms @HashMapUL
+    , testProperty "filterWithKey conforms (HashMapUB)" $ propMapMaybeWithKeyConforms @HashMapUB
+    , testProperty "filterWithKey conforms (HashMapUU)" $ propMapMaybeWithKeyConforms @HashMapUU
+    ]
+
 propFromListToListConforms :: forall champmap keys vals. 
     (champmap ~ HashMap keys vals
     , MapRepr keys vals Int Int
@@ -136,6 +146,56 @@ propFilterWithKeyConforms = withTests tests $ property $ do
 
     let hsFiltered = Data.HashMap.Strict.filterWithKey fn hs
     let csFiltered = Champ.HashMap.filterWithKey fn cs
+    annotateShow hsFiltered
+    annotateShow csFiltered
+    annotate (Champ.Internal.debugShow csFiltered)
+
+    -- Check that the hashmaps contain the same things
+    sort (Data.HashMap.Strict.toList hsFiltered) === sort (Champ.HashMap.toList csFiltered)
+    -- Check that champ contains the correct structure.
+    forM_ ks $ \k -> do
+        Data.HashMap.Strict.lookup k hsFiltered === (Champ.HashMap.lookup k csFiltered)
+
+    -- Check that we didn't mutate anything the unfiltered pointed to.
+    sort (Data.HashMap.Strict.toList hs) === sort (Champ.HashMap.toList cs)
+    -- Check that champ contains the correct structure.
+    forM_ ks $ \k -> do
+        Data.HashMap.Strict.lookup k hs === (Champ.HashMap.lookup k cs)
+
+propMapMaybeWithKeyConforms :: forall champmap keys vals.
+    (champmap ~ HashMap keys vals
+    , MapRepr keys vals Int Int
+    , IsList (champmap Int Int)
+    , Item (champmap Int Int) ~ (Int, Int)
+    , Show (Champ.Internal.Storage.ArrayOf (Strict keys) Int)
+    , Show (Champ.Internal.Storage.ArrayOf vals Int)
+    )
+    => Property
+propMapMaybeWithKeyConforms = withTests tests $ property $ do
+    let n = 1024
+    listInp <- forAll $ Gen.list (Range.linear 0 n) $ do
+        x <- (Gen.int (Range.linear 1 n))
+        b <- Gen.bool
+        pure (x, b)
+
+    let ks = [x | (x, _) <- listInp]
+        kvs = zip ks ks
+        m = Data.HashMap.Strict.fromList listInp
+        fn k v = case Data.HashMap.Strict.lookup k m of
+            Just True -> Just v
+            _ -> Nothing
+
+    annotateShow kvs
+
+    let hs = fromList kvs
+    let cs = fromList kvs :: champmap Int Int
+
+    annotateShow hs
+    annotateShow cs
+    annotate (Champ.Internal.debugShow cs)
+
+    let hsFiltered = Data.HashMap.Strict.mapMaybeWithKey fn hs
+    let csFiltered = Champ.HashMap.mapMaybeWithKey fn cs
     annotateShow hsFiltered
     annotateShow csFiltered
     annotate (Champ.Internal.debugShow csFiltered)

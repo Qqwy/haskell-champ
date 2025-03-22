@@ -62,13 +62,8 @@ import Data.Primitive.Unlifted.Class (PrimUnlifted (..), Unlifted)
 import Data.Primitive.Unlifted.Class qualified as Unlifted
 import Data.Primitive.Unlifted.SmallArray (SmallMutableUnliftedArray_ (..), SmallUnliftedArray_ (..), mapSmallUnliftedArray, unsafeThawSmallUnliftedArray, shrinkSmallMutableUnliftedArray)
 import Data.Primitive.Unlifted.SmallArray.Primops (SmallMutableUnliftedArray# (SmallMutableUnliftedArray#), SmallUnliftedArray# (SmallUnliftedArray#))
-import Numeric (showBin)
-import Data.Word
-import Unsafe.Coerce
 import GHC.Exts (SmallArray#, SmallMutableArray#)
 import Prelude hiding (foldl, foldl', foldr, length, null, read)
-import Debug.Trace
-import qualified GHC.Exts as Exts
 
 -- | Helper newtype to implement `PrimUnlifted` for any datatype
 -- to turn it into a `Data.Elevator.Strict`

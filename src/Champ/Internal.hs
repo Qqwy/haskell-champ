@@ -286,7 +286,7 @@ bitposLocation node@(MapNode bitmap _ _ _) bitpos
   | (childrenBitmap node) .&. bitpos /= 0 = InChild
   | otherwise = Nowhere
 
--- \(O(n)\) Construct a map with the supplied key-value mappings.
+-- \(O(n \log32 n)\) Construct a map with the supplied key-value mappings.
 -- 
 -- If the list contains duplicate keys, later mappings take precedence.
 --
@@ -296,14 +296,14 @@ fromList :: (Hashable k, MapRepr keys vals k v) => [(k, v)] -> HashMap keys vals
 {-# INLINE fromList #-}
 fromList = Foldable.foldl' (\m (k, v) -> unsafeInsert k v m) empty
 
--- | \(O(n \log n)\) Construct a map from a list of elements.  Uses
+-- | \(O(n \log32 n)\) Construct a map from a list of elements.  Uses
 -- the provided function @f@ to merge duplicate entries with
 -- @(f newVal oldVal)@.
 fromListWith :: (Eq k, Hashable k, MapRepr keys vals k v) => (v -> v -> v) -> [(k, v)] -> HashMap keys vals k v
 {-# INLINE fromListWith #-}
 fromListWith f = List.foldl' (\m (k, v) -> unsafeInsertWith f k v m) empty
 
--- | \(O(n \log n)\) Construct a map from a list of elements.  Uses
+-- | \(O(n \log32 n)\) Construct a map from a list of elements.  Uses
 -- the provided function @f@ to merge duplicate entries with
 -- @(f key newVal oldVal)@.
 fromListWithKey :: (Eq k, Hashable k, MapRepr keys vals k v) => (k -> v -> v -> v) -> [(k, v)] -> HashMap keys vals k v
@@ -318,7 +318,7 @@ toList :: (MapRepr keys vals k v) => HashMap keys vals k v -> [(k, v)]
 {-# INLINE toList #-}
 toList hashmap = Exts.build (\fusedCons fusedNil -> foldrWithKey (\k v xs -> (k, v) `fusedCons` xs) fusedNil hashmap)
 
--- | \(O(\log n)\) Adjust the value tied to a given key in this map only
+-- | \(O(\log32 n)\) Adjust the value tied to a given key in this map only
 -- if it is present. Otherwise, leave the map alone.
 --
 -- The current implementation is very simple
@@ -332,7 +332,7 @@ adjust f k m =
       let v' = f v 
       in insert' Safe h k' v' m 
 
--- | \(O(\log n)\)  The expression @('alter' f k map)@ alters the value @x@ at @k@, or
+-- | \(O(\log32 n)\)  The expression @('alter' f k map)@ alters the value @x@ at @k@, or
 -- absence thereof.
 --
 -- 'alter' can be used to insert, delete, or update a value in a map.
@@ -357,14 +357,14 @@ alter f k m =
       Nothing -> delete' Safe h k' m
       Just v' -> if ptrEq v v' then m else insert' Safe h k' v' m
 
--- | \(O(\log n)\)  The expression @('update' f k map)@ updates the value @x@ at @k@
+-- | \(O(\log32 n)\)  The expression @('update' f k map)@ updates the value @x@ at @k@
 -- (if it is in the map). If @(f x)@ is 'Nothing', the element is deleted.
 -- If it is @('Just' y)@, the key @k@ is bound to the new value @y@.
 update :: (Eq k, Hashable k, MapRepr keys vals k v) => (v -> Maybe v) -> k -> HashMap keys vals k v -> HashMap keys vals k v
 {-# INLINABLE update #-}
 update f = alter (>>= f)
 
--- | \(O(\log n)\)  The expression @('alterF' f k map)@ alters the value @x@ at
+-- | \(O(\log32 n)\)  The expression @('alterF' f k map)@ alters the value @x@ at
 -- @k@, or absence thereof.
 --
 --  'alterF' can be used to insert, delete, or update a value in a map.
@@ -393,7 +393,7 @@ alterF f = \ !k !m ->
           Nothing -> delete' Safe h k' m
           Just v' -> insert' Safe h k' v' m
 
--- | \(O(n)\).
+-- | \(O(n \log32 n)\).
 -- @'mapKeys' f s@ is the map obtained by applying @f@ to each key of @s@.
 --
 -- The size of the result may be smaller if @f@ maps two or more distinct
@@ -971,30 +971,65 @@ mapWithKey' !f = \case
 -- | Transform this map by applying a function to every key-value pair
 -- and retaining only some of them.
 --
--- O(n log32(n)). Simple, naive, implementation. It is possible to write an O(n) implementation of this
--- by traversing the existing map instead.
+-- O(n).
 mapMaybeWithKey :: (Eq k, Hashable k, MapRepr keys vals k v, MapRepr keys vals k v') => (k -> v -> Maybe v') -> HashMap keys vals k v -> HashMap keys vals k v'
 {-# INLINE mapMaybeWithKey #-}
 mapMaybeWithKey = mapMaybeWithKey'
 
--- | Transform this map by applying a function to every key-value pair
+-- | \(O(n)\) Transform this map by applying a function to every key-value pair
 -- and retaining only some of them.
 --
 -- Allows changing the value storage type
 -- that is: you can switch between HashMapBL <-> HashMapBB <-> HashMapBU,
 -- or switch between HashMapUL <-> HashMapUB <-> HashMapUU.
---
--- O(n log32(n)). Simple, naive, implementation. It is possible to write an O(n) implementation of this
--- by traversing the existing map instead.
 mapMaybeWithKey' :: (Eq k, Hashable k, MapRepr keys vals k v, MapRepr keys vals' k v') => (k -> v -> Maybe v') -> HashMap keys vals k v -> HashMap keys vals' k v'
 {-# INLINE mapMaybeWithKey' #-}
-mapMaybeWithKey' f = Champ.Internal.fromList . Maybe.mapMaybe (\(k, v) -> (\r -> (k, r)) <$> f k v) . Champ.Internal.toList
+mapMaybeWithKey' f = \case
+  EmptyMap -> EmptyMap
+  SingletonMap h k v -> case f k v of
+    Nothing -> EmptyMap
+    Just v' -> SingletonMap h k v'
+  -- eta-expand because of https://gitlab.haskell.org/ghc/ghc/-/issues/23150
+  ManyMap _ node -> Exts.inline $ extractInNode (\k v hint -> mapMaybeKeysVals f k v hint) node
 
--- | Transform this map by applying a function to every value
+mapMaybeKeysVals
+  :: (MapRepr keys vals k v, MapRepr keys vals' k v')
+  => (k -> v -> Maybe v')
+  -> ArrayOf (Strict keys) k
+  -> ArrayOf vals v
+  -> Int
+  -> (Word32, ArrayOf (Strict keys) k, ArrayOf vals' v')
+{-# INLINE mapMaybeKeysVals #-}
+mapMaybeKeysVals !f !keys !vals !hint =
+  let
+    !(mask, vals') = mapMaybeMask f keys vals hint
+    !keys' = Array.filterUsingMask keys mask hint
+  in (mask, keys', vals')
+
+mapMaybeMask
+  :: ( Contiguous.Contiguous arr1, Element arr1 a
+     , Contiguous.Contiguous arr2, Element arr2 b
+     , Contiguous.ContiguousU arr3, Element arr3 c
+     , Bits bits
+     )
+  => (a -> b -> Maybe c) -> arr1 a -> arr2 b -> Int -> (bits, arr3 c)
+{-# INLINE mapMaybeMask #-}
+mapMaybeMask !f !keys !vals !hint = Contiguous.createT $ do
+  -- Preallocate a larger array
+  dst <- Contiguous.new (Contiguous.size vals + hint)
+  let
+    fillDestination ix (dstIx, mask) a b = case f a b of
+      Nothing -> pure (dstIx, mask)
+      Just c -> do
+        Contiguous.write dst dstIx c
+        pure (dstIx + 1, mask `setBit` ix)
+
+  (finalIx, !mask) <- Contiguous.ifoldlZipWithM' fillDestination (0, zeroBits) keys vals
+  !dst' <- Contiguous.resize dst finalIx
+  pure (mask, dst')
+
+-- | \(O(n)\) Transform this map by applying a function to every value
 -- and retaining only some of them.
---
--- O(n log32(n)). Simple, naive, implementation. It is possible to write an O(n) implementation of this
--- by traversing the existing map instead.
 mapMaybe :: (Eq k, Hashable k, MapRepr keys vals k v, MapRepr keys vals k v') => (v -> Maybe v') -> HashMap keys vals k v -> HashMap keys vals k v'
 {-# INLINE mapMaybe #-}
 mapMaybe f = mapMaybeWithKey' (const f)
@@ -1012,24 +1047,25 @@ filterWithKey !f = \case
   SingletonMap h k v -> if f k v
     then SingletonMap h k v
     else EmptyMap
-  ManyMap _ node -> filterInNode f node
+  -- eta-expand because of https://gitlab.haskell.org/ghc/ghc/-/issues/23150
+  ManyMap _ node -> Exts.inline $ extractInNode (\k v hint -> filterKeysVals f k v hint) node
 
-filterInNode
-  :: (Hashable k, MapRepr keys vals k v)
-  => (k -> v -> Bool)
+-- | Generic implementation of filterWithKey and mapMaybeWithKey
+extractInNode
+  :: (MapRepr keys vals k v, MapRepr keys vals' k v', Hashable k)
+  => (ArrayOf (Strict keys) k -> ArrayOf vals v -> Int -> (Word32, ArrayOf (Strict keys) k, ArrayOf vals' v'))
   -> MapNode keys vals k v
-  -> HashMap keys vals k v
-{-# INLINE filterInNode #-}
-filterInNode f node = case node of
+  -> HashMap keys vals' k v'
+{-# INLINE extractInNode #-}
+extractInNode !extractFrom !node = case node of
   CollisionNode keys vals ->
-    let (keptKeyIxs :: Word32, keys', vals') = filterKeysVals f keys vals 0
+    let (keptKeyIxs :: Word32, keys', vals') = extractFrom keys vals 0
     in  ManyMap (fromIntegral (popCount keptKeyIxs)) (CollisionNode keys' vals')
-  CompactNode _ _ _ _ ->
-    let !result = filterCompactNode 0 node
+  CompactNode b k v c ->
+    let !result = Exts.inline $ extractCompactNode 0 b k v c
     in  result
     where
-      filterCompactNode _ (CollisionNode _ _) = error "impossible"
-      filterCompactNode !shift _node@(CompactNode !bitmap !keys !vals !children) =
+      extractCompactNode !shift !bitmap !keys !vals !children =
         -- Straightforward tactic:
         -- 1. Run the filter across the inline entries.
         -- 2. Go over children and run the filter across them.
@@ -1039,7 +1075,7 @@ filterInNode f node = case node of
         let
           -- Go over inline values and see which survive.
           (booleanMask :: Word32, keys', vals') =
-            filterKeysVals f keys vals (Contiguous.size children)
+            extractFrom keys vals (Contiguous.size children)
           -- Notice that the relative 1 bit positions in the bitmap denote the
           -- locations of the entries within the arrays. Seeing as we already
           -- have a boolean bitmask on the entries, we can cross reference it
@@ -1051,8 +1087,8 @@ filterInNode f node = case node of
 
           -- Traverse over children, keeping track of data we need to determine what
           -- variant of the map node we emit.
-          calcRemovedChild (!childSum, !childMask, !children', !keys', !vals', !dataBitmap) ix node =
-            let !filteredChild = filterCompactNode (nextShift shift) node
+          calcRemovedChild (!childSum, !childMask, !children', !keys', !vals', !dataBitmap) ix (CompactNode b k v c) =
+            let !filteredChild = extractCompactNode (nextShift shift) b k v c
             in  case filteredChild of
                   EmptyMap ->
                     ( childSum
@@ -1097,8 +1133,9 @@ filterInNode f node = case node of
                       , vals'
                       , dataBitmap
                       )
+          calcRemovedChild _ _ _ = error "impossible"
 
-          (!nrInChildren, !childMask, !children', !keys'', !vals'', !bitmapAllInlined) =
+          (nrInChildren, childMask, children', keys'', vals'', bitmapAllInlined) =
             Contiguous.ifoldl'
               calcRemovedChild
               ( 0
@@ -1132,16 +1169,15 @@ filterInNode f node = case node of
           -- If all subnodes were filtered out, we only need take into account
           -- subnodes that were inlined
           shortcut _ c | Contiguous.null c = matchOnKeys bitmapAllInlined keys'' vals'' nrInlineKeys''
-          shortcut _ _ =
+          shortcut _ !c =
             ManyMap
               ( let !total = nrInChildren + nrInlineKeys'' in total )
               ( let !bitmapComplete = bitmapAllInlined .|. bitmapRemovedChildren
-                    !children''' = children''
                 in CompactNode
                   bitmapComplete
                   keys''
                   vals''
-                  children'''
+                  c
               )
         in shortcut children children''
 
