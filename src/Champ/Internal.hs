@@ -33,7 +33,6 @@ import Data.Foldable qualified as Foldable
 import Data.Function ((&))
 import Data.Hashable (Hashable)
 import Data.Hashable qualified as Hashable
-import Data.Maybe qualified as Maybe
 import Data.List qualified as List
 import Data.Primitive (Prim)
 import Data.Primitive.Contiguous (Element)
@@ -163,7 +162,10 @@ isNonZeroBitmap b = (# | b #)
 -- Conceptually, you can think of it as:
 --
 -- ```
--- data Map (keys :: StrictStorage) (vals :: Storage) k v = EmptyMap | SingletonMap !k v | ManyMap {size :: !Word, contents :: (MapNode k v)}
+-- data Map (keys :: StrictStorage) (vals :: Storage) k v
+--  = EmptyMap 
+--  | SingletonMap !k v 
+--  | ManyMap {size :: !Word, contents :: (MapNode k v)}
 --
 -- data MapNode keys vals k v
 --    = CollisionNode !(ArrayOf (Strict keys)) !(ArrayOf vals)
@@ -255,27 +257,34 @@ map_repr_instance(Unlifted_Unboxed, Unlifted, Strict Unboxed, (PrimUnlifted k, P
 map_repr_instance(Boxed_Unexistent, Boxed, Unexistent, (IsUnit v))
 map_repr_instance(Unboxed_Unexistent, Unboxed, Unexistent, (Prim k, IsUnit v))
 
+-- | \O(1)\ Return `True` if the map is empty, `False` otherwise
 null :: (MapRepr keys vals k v) => HashMap keys vals k v -> Bool
 {-# INLINE null #-}
 null EmptyMap = True
 null _ = False
 
+-- | \O(1)\ Return the number of key-value pairs in this map.
+--
+-- Since the map actually keeps track of the size while elements are inserted,
+-- this function runs in constant-time.
 size :: (MapRepr keys vals k v) => HashMap keys vals k v -> Int
 {-# INLINE size #-}
 size EmptyMap = 0
 size (SingletonMap _h _k _v) = 1
 size (ManyMap s _) = fromIntegral s
 
+-- | \O(1)\ Construct the empty map
 empty :: (MapRepr keys vals k v) => HashMap keys vals k v
 {-# INLINE empty #-}
 empty = EmptyMap
 
+-- | \O(1)\ Construct a one-element map
 singleton :: (Hashable k, MapRepr keys vals k v) => k -> v -> HashMap keys vals k v
 {-# INLINE singleton #-}
-singleton !k v = singleton' (hash k) k v
+singleton !k v = singletonKnownHash (hash k) k v
 
-singleton' :: (MapRepr keys vals k v) => Hash -> k -> v -> HashMap keys vals k v
-singleton' !h !k v = SingletonMap h k v
+singletonKnownHash :: (MapRepr keys vals k v) => Hash -> k -> v -> HashMap keys vals k v
+singletonKnownHash !h !k v = SingletonMap h k v
 
 data Location = Inline | InChild | Nowhere
 
@@ -432,7 +441,7 @@ insert' safety h !k v !m = case matchMap m of
   (# (# #) | | #) -> singleton k v
   (# | (# h', k', v' #) | #) ->
     if h == h' && k == k'
-      then singleton' h k' v
+      then singletonKnownHash h k' v
       else
         let !(# size, node #) =
               Contiguous.empty
@@ -692,6 +701,9 @@ deleteFromNode safety !h !k !shift = \case
               let node' = CompactNode bitmap' keys vals (Array.replaceAt safety children childIndex child')
               in (# | (# didIGrow, node' #) #)
 
+-- | Look up the value for a given key.
+--
+-- Returns `Nothing` if the key does not exist in the map.
 lookup :: (MapRepr keys vals k v, Eq k, Hashable k) => k -> HashMap keys vals k v -> Maybe v
 {-# INLINE lookup #-}
 lookup k m = case lookupKV# k m of
@@ -775,6 +787,7 @@ indexChild (CollisionNode _keys _vals) _ = error "Should only be called on Compa
 indexChild node@(CompactNode _bitmap _keys _vals children) bitpos =
     Contiguous.index children (childrenIndex node bitpos)
 
+-- | \O(log n)\ Return `True` if the specified key is present in the map, `False` otherwise.
 member :: (MapRepr keys vals k v, Eq k, Hashable k) => k -> HashMap keys vals k v -> Bool
 {-# INLINE member #-}
 member k m = case lookupKV# k m of 
@@ -1527,16 +1540,17 @@ unionWithKey :: (Hashable k, MapRepr keys vals k v) => (k -> v -> v -> v) -> Has
 {-# INLINE unionWithKey #-}
 unionWithKey f l r = Champ.Internal.fromListWithKey f (Champ.Internal.toList r <> Champ.Internal.toList l)
 
--- | The union of a list of maps.
+-- | The union of a list (or other foldable) of maps.
 --
 -- O((n * m) * log32(n * m)) for @n@ maps each having at most @m@ keys.
 -- 
 -- The current implementation is simple but not the most performant;
 -- performing repeated insertion
-unions :: (Hashable k, MapRepr keys vals k v) => [HashMap keys vals k v] -> HashMap keys vals k v
+unions :: (Foldable f, Hashable k, MapRepr keys vals k v) => f (HashMap keys vals k v) -> HashMap keys vals k v
 {-# INLINE unions #-}
 unions maps = 
   maps
+  & Foldable.toList
   & fmap Champ.Internal.toList
   & Control.Monad.join
   & Champ.Internal.fromList
@@ -1555,8 +1569,8 @@ difference a b = foldlWithKey' go empty a
                  False -> unsafeInsert k v m
                  _       -> m
 
--- | \(O(n \log m)\) Difference of two maps. Return elements of the first map
--- not existing in the second.
+-- | \(O(n \log m)\) Intersection of two maps. Return elements of the first map
+-- also existing in the second.
 --
 -- The current implementation is very simple but not the most performant,
 -- as we fold one map over the other instead of walking over the two maps in lock-step.
@@ -1612,6 +1626,34 @@ intersectionWithKey f a b = foldlWithKey' go empty a
                  (# (# #) | #) -> m
                  (# | (# k', w #) #) -> insert' Unsafe h k' (f k' v w) m
 {-# INLINABLE intersectionWithKey #-}
+
+-- | Inclusion of maps. A map is included in another map if the keys are subsets and the corresponding values are equal:
+--
+-- Complexity: \O(n log32(m))\, where \(n)\ and \(m)\ are the sizes of the two hashmaps.
+--
+-- The current implementation is very simple but not the most performant,
+-- as we fold one map over the other instead of walking over the two maps in lock-step.
+isSubmapOf :: (Hashable k, Eq v, MapRepr keys vals k v) => HashMap keys vals k v -> HashMap keys vals k v -> Bool
+{-# INLINABLE isSubmapOf #-}
+isSubmapOf a b = isSubmapOfBy (==) a b
+
+-- | Inclusion of maps using a custom value-equality function.
+--
+-- Generalization of `isSubmapOf`.
+--
+-- Complexity: \O(n log32(m))\, where \(n)\ and \(m)\ are the sizes of the two hashmaps.
+--
+-- The current implementation is very simple but not the most performant,
+-- as we fold one map over the other instead of walking over the two maps in lock-step.
+isSubmapOfBy :: forall keys k vals1 vals2 v1 v2. (Hashable k, MapRepr keys vals1 k v1, MapRepr keys vals2 k v2) => (v1 -> v2 -> Bool) -> HashMap keys vals1 k v1 -> HashMap keys vals2 k v2 -> Bool
+{-# INLINABLE isSubmapOfBy #-}
+isSubmapOfBy comp a b = foldrWithKey go True b
+  where
+    go :: k -> v2 -> Bool -> Bool
+    go k v bool = case lookupKV# k a of
+      (# (# #) | #) -> False
+      (# | (# _k, v' #) #) -> bool && comp v' v
+
 
 -- | Relate the keys of one map to the values of
 -- the other, by using the values of the former as keys for lookups

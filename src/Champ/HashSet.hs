@@ -26,7 +26,7 @@ module Champ.HashSet (
     insert,
     delete,
     lookup,
-    -- TODO isSubsetOf
+    isSubsetOf,
 
     -- * Transformations
     map,
@@ -106,26 +106,40 @@ toList :: (SetRepr elems e) => HashSet elems e -> [e]
 {-# INLINE toList #-}
 toList = Champ.Internal.keys . coerce
 
+-- | \O(1)\ Construct the empty set
 empty :: (SetRepr elems e) => HashSet elems e
 {-# INLINE empty #-}
 empty = coerce Champ.Internal.empty
 
+-- | \O(1)\ Return `True` if the set is empty, `False` otherwise
 null :: (SetRepr elems e) => HashSet elems e -> Bool
 {-# INLINE null #-}
 null = coerce Champ.Internal.null
 
+
+-- | \O(1)\ Return the number of elements in this set.
+--
+-- Since the set actually keeps track of the size while elements are inserted,
+-- this function runs in constant-time.
 size :: (SetRepr elems e) => HashSet elems e -> Int
 {-# INLINE size #-}
 size = coerce Champ.Internal.size
 
+-- | \O(1)\ Construct a one-element set
 singleton :: (Hashable e, SetRepr elems e) => e -> HashSet elems e
 {-# INLINE singleton #-}
 singleton e = coerce Champ.Internal.singleton e ()
 
+-- | \O(log n)\ Return `True` if the specified element is present in the set, `False` otherwise.
 member :: (SetRepr elems e, Hashable e) => e -> HashSet elems e -> Bool
 {-# INLINE member #-}
 member = coerce Champ.Internal.member
 
+-- | Look up whether a given element `e` exists in the set.
+--
+-- This is similar to `member`,
+-- but it can be useful to swap out an element that is _equal_
+-- with an element that is _identical_ (pointer-equality).
 lookup :: (SetRepr elems e, Hashable e) => e -> HashSet elems e -> Maybe e
 {-# INLINE lookup #-}
 lookup e set = fst <$> Champ.Internal.lookupKV e (coerce set)
@@ -147,45 +161,90 @@ map' :: (Hashable b, SetRepr as a, SetRepr bs b) => (a -> b) -> HashSet as a -> 
 {-# INLINE map' #-}
 map' fun = Champ.HashSet.fromList . Data.List.map fun . Champ.HashSet.toList
 
+-- | \(O(n)\) Lazy right-fold
+--
+-- Iteration order is unspecified, but is the opposite from `foldl`
 foldr :: (SetRepr elems e) => (e -> r -> r) -> r -> HashSet elems e -> r
 {-# INLINE foldr #-}
 foldr fun acc set = Champ.Internal.foldrWithKey (\e () r -> fun e r) acc (coerce set)
 
+-- | \(O(n)\) Strict right-fold
+--
+-- Iteration order is unspecified, but is the opposite from `foldl'`
 foldr' :: (SetRepr elems e) => (e -> r -> r) -> r -> HashSet elems e -> r
 {-# INLINE foldr' #-}
 foldr' fun acc set = Champ.Internal.foldrWithKey' (\e () r -> fun e r) acc (coerce set)
 
+-- | \(O(n)\) Lazy left-fold
+--
+-- Iteration order is unspecified, but is the opposite from `foldr`
 foldl :: (SetRepr elems e) => (r -> e -> r) -> r -> HashSet elems e -> r
 {-# INLINE foldl #-}
 foldl fun acc set = Champ.Internal.foldlWithKey (\r e () -> fun r e) acc (coerce set)
 
+-- | \(O(n)\) Strict left-fold
+--
+-- Iteration order is unspecified, but is the opposite from `foldr'`
 foldl' :: (SetRepr elems e) => (r -> e -> r) -> r -> HashSet elems e -> r
 {-# INLINE foldl' #-}
 foldl' fun acc set = Champ.Internal.foldlWithKey' (\r e () -> fun r e) acc (coerce set)
 
+-- | \(O(n)\) Reduce the set by applying a function to each element
+-- and combining the results with a monoid operation.
+--
+-- Iteration order is unspecified
 foldMap :: (Monoid m, SetRepr elems e) => (e -> m) -> HashSet elems e -> m
 {-# INLINE foldMap #-}
 foldMap f set = Champ.Internal.foldMapWithKey (\e () -> f e) (coerce set)
 
+-- | \(O(n + m)\) The union of two sets. If a key occurs in both sets, the
+-- element from the first will be the element in the result.
+--
+-- The current implementation is simple but not the most performant;
+-- performing repeated insertion
 union :: (Hashable e, SetRepr elems e) => HashSet elems e -> HashSet elems e -> HashSet elems e
 {-# INLINE union #-}
 union = coerce Champ.Internal.union
 
-unions :: (Hashable e, SetRepr elems e) => [HashSet elems e] -> HashSet elems e
+-- | The union of a list (or other foldable) of sets.
+--
+-- O((n * m) * log32(n * m)) for @n@ maps each having at most @m@ keys.
+-- 
+-- The current implementation is simple but not the most performant;
+-- performing repeated insertion
+unions :: (Foldable f, Hashable e, SetRepr elems e) => f (HashSet elems e) -> HashSet elems e
 {-# INLINE unions #-}
-unions = coerce Champ.Internal.unions
+unions = coerce . Champ.Internal.unions . fmap coerce . Data.Foldable.toList
 
 delete :: (Hashable e, SetRepr elems e) => e -> HashSet elems e -> HashSet elems e
 {-# INLINE delete #-}
 delete = coerce Champ.Internal.delete
 
+-- | \(O(n \log m)\) Difference of two sets. Return elements of the first set
+-- not existing in the second.
+--
+-- The current implementation is very simple but not the most performant,
+-- as we fold one set over the other instead of walking over the two sets in lock-step.
 difference :: (Hashable e, SetRepr elems e) => HashSet elems e -> HashSet elems e -> HashSet elems e
 {-# INLINE difference #-}
 difference = coerce Champ.Internal.difference
 
+-- | \(O(n \log m)\) Intersection of two sets. Return elements of the first set
+-- also existing in the second.
+--
+-- The current implementation is very simple but not the most performant,
+-- as we fold one map over the other instead of walking over the two maps in lock-step.
 intersection :: (Hashable e, SetRepr elems e) => HashSet elems e -> HashSet elems e -> HashSet elems e
 {-# INLINE intersection #-}
 intersection = coerce Champ.Internal.intersection
+
+-- | Set inclusion.
+--
+-- The current implementation is very simple but not the most performant,
+-- as we fold one set over the other instead of walking over the two sets in lock-step.
+isSubsetOf :: (Hashable e, SetRepr elems e) => HashSet elems e -> HashSet elems e -> Bool
+{-# INLINE isSubsetOf #-}
+isSubsetOf = coerce Champ.Internal.isSubmapOf
 
 -- TODO: Implement the other foldXWithKey's as well,
 -- so we can wrap them here

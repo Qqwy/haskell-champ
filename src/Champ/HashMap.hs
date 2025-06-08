@@ -36,8 +36,8 @@ module Champ.HashMap (
     Champ.Internal.update,
     Champ.Internal.alter,
     Champ.Internal.alterF,
-    -- TODO isSubmapOf
-    -- TODO isSubmapOfBy
+    Champ.Internal.isSubmapOf,
+    Champ.Internal.isSubmapOfBy,
     -- * Combine
     -- ** Union
     Champ.Internal.union,
