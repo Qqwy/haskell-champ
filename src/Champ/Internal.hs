@@ -79,21 +79,90 @@ import Control.DeepSeq
 #define BIT_PARTITION_MASK (HASH_CODE_LENGTH - 1)
 
 -- * Boxed keys: 
+
+-- | A HashMap with strict boxed keys and lazy boxed values
+-- 
+-- This behaves the same as `Data.HashMap.Lazy`
 type HashMapBL = HashMap Boxed Lazy
+
+-- | A HashMap with strict boxed keys and strict boxed values
+-- 
+-- This behaves the same as `Data.HashMap.Strict`
 type HashMapBB = HashMap Boxed (Strict Boxed)
+
+-- | A HashMap with strict boxed keys and unboxed values
+-- 
+-- This uses significantly less memory than the boxed versions
+-- but requires values to implement `Prim`.
 type HashMapBU = HashMap Boxed (Strict Unboxed)
+
+-- | A HashMap with strict boxed keys and unboxed values
+-- 
+-- This skips 'thunk checks'
+-- but requires values to implement `PrimUnlifted`.
 type HashMapBUl = HashMap Boxed (Strict Unlifted)
 
 -- * Unboxed keys:
+
+-- | A HashMap with unboxed keys and lazy boxed values
+--
+-- This uses significantly less memory for the keys 
+-- than the boxed versions
+-- but requires keys to implement `Prim`.
 type HashMapUL = HashMap Unboxed Lazy
+
+-- | A HashMap with unboxed keys and strict boxed values
+--
+-- This uses significantly less memory for the keys 
+-- than the boxed versions
+-- but requires keys to implement `Prim`.
 type HashMapUB = HashMap Unboxed (Strict Boxed)
+
+-- | A HashMap with unboxed keys and unboxed values
+--
+-- This uses significantly less memory for the keys and values
+-- than the boxed versions
+-- but requires the keys and values to implement `Prim`.
 type HashMapUU = HashMap Unboxed (Strict Unboxed)
+
+-- | A HashMap with unboxed keys and unboxed values
+--
+-- This uses significantly less memory for the keys 
+-- than the boxed versions
+-- but requires keys to implement `Prim`.
+-- 
+-- This skips 'thunk checks' for the values,
+-- but requires values to implement `PrimUnlifted`.
 type HashMapUUl = HashMap Unboxed (Strict Unlifted)
 
 -- * Unlifted keys:
+
+-- | A HashMap with unlifed keys and lazy boxed values
+-- 
+-- This skips 'thunk checks' for the keys,
+-- but requires keys to implement `PrimUnlifted`.
 type HashMapUlL = HashMap Unlifted Lazy
+
+-- | A HashMap with unlifed keys and strict boxed values
+-- 
+-- This skips 'thunk checks' for the keys,
+-- but requires keys to implement `PrimUnlifted`.
 type HashMapUlB = HashMap Unlifted (Strict Boxed)
+
+-- | A HashMap with unlifed keys and unboxed values
+-- 
+-- This skips 'thunk checks' for the keys,
+-- but requires keys to implement `PrimUnlifted`.
+--
+-- This uses significantly less memory for the values
+-- than the boxed versions
+-- but requires values to implement `Prim`.
 type HashMapUlU = HashMap Unlifted (Strict Unboxed)
+
+-- | A HashMap with unlifted keys and unlifed values
+--
+-- This skips 'thunk checks' for the keys and values,
+-- but requires the keys and values to implement `PrimUnlifted`.
 type HashMapUlUl = HashMap Unlifted (Strict Unlifted)
 
 pattern EmptyMap ::

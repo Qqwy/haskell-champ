@@ -6,6 +6,7 @@ module Champ.HashSet (
     -- ** Concrete types
     HashSetB,
     HashSetU,
+    HashSetUl,
     -- ** Generic type
     HashSet(..),
     Champ.Internal.Storage.Storage(Unexistent),
@@ -77,8 +78,24 @@ newtype HashSet elems e = HashSet { asMap :: Champ.Internal.HashMap elems Unexis
 type role HashSet nominal nominal
 
 type SetRepr elems e = Champ.Internal.MapRepr elems Unexistent e ()
+
+-- | A HashSet with strict boxed elements
+--
+-- This is a drop-in replacement for `Data.HashSet`
 type HashSetB e = HashSet Boxed e
+
+-- | A HashSet with unboxed elements
+--
+-- This uses significantly less memory for the elements
+-- than the boxed version
+-- but requires the elements to implement `Prim`
 type HashSetU e = HashSet Unboxed e
+
+-- | A HashSet with unlifted elements
+--
+-- This skips 'thunk checks' for the elements,
+-- but requires elements to implement `PrimUnlifted`.
+type HashSetUl e = HashSet Unlifted e
 
 instance (Show e, SetRepr elems e) => Show (HashSet elems e) where
     show set = "Champ.HashSet.fromList " <> show (Champ.HashSet.toList set)
