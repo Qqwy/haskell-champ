@@ -174,4 +174,4 @@ Part of this work was sponsored by [Channable](https://www.channable.com/)
 ## Development
 
 * Q: In my IDE, HLS does not work for some modules, saying "can't execute `cpphs`".
-  * A: Make sure `cpphs` is available in your path, for example using `cabal install cpphs` (and then restart your HLS). `cpphs` is a portable Haskell implementation of the C preproessor macro parser. (We use CPP to reduce boilerplate for the eight different kinds of hashmaps we support, and crucially rely on 'token pasting' which is done differently by different versions of `gcc`, `clang`, etc.).
+  * A: Make sure `cpphs` is available in your path, for example using `cabal install cpphs` (and then restart your HLS). `cpphs` is a portable Haskell implementation of the C preprocessor macro parser. (We use CPP to reduce boilerplate for the eight different kinds of hashmaps we support, and crucially rely on 'token pasting' which is done differently by different versions of `gcc`, `clang`, etc.).
