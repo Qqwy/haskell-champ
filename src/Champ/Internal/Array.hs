@@ -65,8 +65,8 @@ import Data.Primitive.Unlifted.SmallArray.Primops (SmallMutableUnliftedArray# (S
 import GHC.Exts (SmallArray#, SmallMutableArray#)
 import Prelude hiding (foldl, foldl', foldr, length, null, read)
 
--- | Helper newtype to implement `PrimUnlifted` for any datatype
--- to turn it into a `Data.Elevator.Strict`
+-- | Helper newtype to implement `PrimUnlifted` for any datatype,
+-- part of making `StrictSmallArray`/`StrictSmallMutableArray` work for any `a`.
 newtype Strictly a = Strictly {unStrictly :: a}
   deriving newtype (Show, Eq, Ord, Hashable, NFData)
 
@@ -75,7 +75,8 @@ instance PrimUnlifted (Strictly a) where
   toUnlifted# (Strictly a) = Strict a
   fromUnlifted# (Strict a) = (Strictly a)
 
--- | Array type whose elements are guaranteed to be in WHNF.
+-- | Array type whose elements are guaranteed to be in WHNF,
+-- therefore skipping the 'thunk check' whenever an element is read from it.
 --
 -- An easier to use version of `SmallUnliftedArray`,
 -- allowing storage of _any_ `a` by virtue of `Data.Elevator.Strict`
@@ -309,20 +310,19 @@ instance Contiguous.ContiguousU SmallUnliftedArray' where
   liftMut (MutableSmallUnliftedArray'# x) = MutableSmallUnliftedArray' (SmallMutableUnliftedArray x)
 
 
--- Array containing any number of `()`'s.
+-- | Array containing any number of `()`'s.
 --
--- The trick is tha we can forget and later produce as many `()`'s as we like from thin air.
+-- The trick is that we can forget and later produce as many `()`'s as we like from thin air.
 -- 
 -- These only keep track of their length (as unboxed Int).
 --
 -- This could be generalized to store any singleton type instances (c.f. `singletons`' SingI class),
 -- but we don't need that generality here.
 --
--- It may be possible to get rid of even this length field
--- if we are very careful with how we use them as backing store of the hashmap
--- since we already know how long the keys array is.
+-- For the purposes of Champ, where we are already tracking the lengths of the array members with a bitmap,
+-- it may be possible to get rid of even this length field if we are very careful.
 -- However, that would require re-implementing many higher-level functions such as `insertAt`, `deleteAt` and `convert`,
--- which was not worth it to do yet. (PRs accepted!)
+-- which was not worth it to do yet. (PRs welcome!)
 data UnitArray (a :: Type) where 
   UnitArray :: {-# UNPACK #-} !Int -> UnitArray a
   deriving Show
@@ -343,6 +343,7 @@ data UnitArray# (a :: Type) :: UnliftedType where
 data MutableUnitArray# s (a :: Type) :: UnliftedType where
   MutableUnitArray# :: {-# UNPACK #-} !Int -> MutableUnitArray# s a
 
+-- | Helper class to make `UnitArray` work
 class IsUnit a where
   produceUnit :: a
 
