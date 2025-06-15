@@ -15,7 +15,6 @@ module Champ.HashMap (
     Champ.Internal.HashMapUlUl,
     -- * Generic type
     Champ.Internal.HashMap,
-    Champ.Internal.Storage.Storage(..),
     Champ.Internal.MapRepr,
     -- * Construction
     Champ.Internal.empty,
@@ -102,7 +101,10 @@ module Champ.HashMap (
 
     -- ** HashSets
     Champ.HashSet.keysSet,
-    Champ.HashSet.keysSet'
+    Champ.HashSet.keysSet',
+    -- * Generic type details
+    Champ.Internal.Storage.Storage(..),
+    Champ.Internal.Storage.StrictStorage(..)
 ) where
 
 import GHC.Stack (HasCallStack)
