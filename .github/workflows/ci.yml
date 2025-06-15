@@ -20,7 +20,7 @@ jobs:
         id: set-matrix
         uses: kleidukos/get-tested@v0.1.7.0
         with:
-          cabal-file: champ.cabal
+          cabal-file: champ/champ.cabal
           ubuntu-version: "latest"
           macos-version: "latest"
           # windows-version: "latest"
