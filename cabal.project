@@ -1,4 +1,6 @@
-packages: .
+packages: 
+  champ-core
+  champ
 tests: True
 
 write-ghc-environment-files: always
