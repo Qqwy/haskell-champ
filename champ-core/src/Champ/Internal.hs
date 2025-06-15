@@ -445,10 +445,11 @@ toList hashmap = Exts.build (\fusedCons fusedNil -> foldrWithKey (\k v xs -> (k,
 -- but is not super performant as it will traverse the map twice.
 adjust :: (Hashable k, MapRepr keys vals k v) => (v -> v) -> k -> HashMap keys vals k v -> HashMap keys vals k v
 adjust f k m = 
-  let h = hash k in
-  case lookupKVKnownHash# h k m of
-    (# (# #) | #) -> m
-    (# | (# k', v #) #) -> 
+  lookupKVKnownHash# absent present h k m
+  where
+    h = hash k
+    absent (# #) = m
+    present k' v = 
       let v' = f v 
       in insert' Safe h k' v' m 
 
@@ -689,9 +690,11 @@ insertWith :: (Hashable k, MapRepr keys vals k v) => (v -> v -> v) -> k -> v -> 
 insertWith f k v m = 
   let h = hash k
   in
-  case lookupKVKnownHash# h k m of
-    (# (# #) | #) -> insert' Safe h k v m
-    (# | (# k', v' #) #) -> insert' Safe h k' (f v v') m
+  lookupKVKnownHash# absent present h k m
+  where
+    h = hash k
+    absent (# #) = insert' Safe h k v m
+    present k' v' = insert' Safe h k' (f v v') m
 
 unsafeInsertWith :: (Hashable k, MapRepr keys vals k v) => (v -> v -> v) -> k -> v -> HashMap keys vals k v -> HashMap keys vals k v
 {-# INLINE unsafeInsertWith #-}
@@ -704,12 +707,13 @@ unsafeInsertWithKey f = unsafeInsertWithKey# (\k' a b -> (# f k' a b #))
 unsafeInsertWithKey# :: (Hashable k, MapRepr keys vals k v) => (k -> v -> v -> (# v #)) -> k -> v -> HashMap keys vals k v -> HashMap keys vals k v
 {-# INLINE unsafeInsertWithKey# #-}
 unsafeInsertWithKey# f k v m = 
-  let h = hash k in
-  case lookupKVKnownHash# h k m of
-    (# (# #) | #) -> insert' Unsafe h k v m
-    (# | (# k2, v2 #) #) ->
-      case f k2 v v2 of
-        (# v3 #) -> insert' Unsafe h k2 v3 m
+  lookupKVKnownHash# absent present h k m
+    where
+      h = hash k
+      absent (# #) = insert' Unsafe h k v m
+      present k2 v2 = 
+        case f k2 v v2 of
+          (# v3 #) -> insert' Unsafe h k2 v3 m
 
 delete :: (Hashable k, MapRepr keys vals k v) => k -> HashMap keys vals k v -> HashMap keys vals k v
 {-# INLINE delete #-}
@@ -834,44 +838,56 @@ lookupKV !k = lookupKVKnownHash (hash k) k
 
 lookupKV# :: (MapRepr keys vals k v, Eq k, Hashable k) => k -> HashMap keys vals k v -> (# (# #) | (# k, v #) #)
 {-# INLINE lookupKV# #-}
-lookupKV# !k = lookupKVKnownHash# (hash k) k
+lookupKV# !k = lookupKVKnownHash# absent present (hash k) k
+  where
+    absent :: (# #) -> (# (# #) | (# k, v #) #)
+    absent (# #) = (# (# #) | #)
+    present :: k -> v -> (# (# #) | (# k, v #) #)
+    present k v = (# | (# k, v #) #)
 
 lookupKVKnownHash :: (MapRepr keys vals a b, Hashable a) => Hash -> a -> HashMap keys vals a b -> Maybe (a, b)
-lookupKVKnownHash h k m = case lookupKVKnownHash# h k m of
-  (# (# #) | #) -> Nothing
-  (# | (# k, v #) #) -> Just (k, v)
+{-# INLINE lookupKVKnownHash #-}
+lookupKVKnownHash = lookupKVKnownHash# absent present
+  where
+    absent (# #) = Nothing
+    present k v = Just (k, v)
 
-lookupKVKnownHash# :: (MapRepr keys vals k v, Eq k, Hashable k) => Hash -> k -> HashMap keys vals k v -> (# (# #) | (# k, v #) #)
+lookupKVKnownHash# 
+  :: forall rep (r :: Exts.TYPE rep) keys vals k v.
+  (MapRepr keys vals k v, Eq k, Hashable k)
+  => ((# #) -> r) -- Absent continuation
+  -> (k -> v -> r) -- Present continuation
+  -> Hash -> k -> HashMap keys vals k v -> r
 {-# INLINE lookupKVKnownHash# #-}
-lookupKVKnownHash# h !k m = case matchMap m of
-  (# (# #) | | #) -> (# (# #) | #)
-  (# | (# h', k', v #) | #) -> if h == h' && k == k' then (# | (# k', v #) #) else (# (# #) | #)
+lookupKVKnownHash# absent present h !k m = case matchMap m of
+  (# (# #) | | #) -> absent (# #)
+  (# | (# h', k', v #) | #) -> if h == h' && k == k' then present k' v else absent (# #)
   (# | | (# _size, node0 #) #) ->
     -- NOTE: Manually inlining the first iteration of lookup'
     -- (which will _never_ be in a collision node)
     -- results in a noticeable speedup for maps that have at most 32 elements.
     let !bitpos = maskToBitpos $ hashToMask 0 h
     in case bitposLocation node0 bitpos of
-        Nowhere -> (# (# #) | #)
+        Nowhere -> absent (# #)
         Inline ->
             let k' = indexKey node0 bitpos
                 (# v #) = indexVal# node0 bitpos
-            in if k == k' then (# | (# k', v #) #) else (# (# #) | #)
+            in if k == k' then present k' v else absent (# #)
         InChild -> lookup' (nextShift 0) (indexChild node0 bitpos)
             where
                 {-# INLINEABLE lookup' #-}
                 lookup' !_s !(CollisionNode keys vals) =
                   case findCollisionIndex# k keys of
-                    (# (# #) | #) -> (# (# #) | #)
-                    (# | idx #) -> (# | (# Contiguous.index keys idx, Contiguous.index vals idx #) #)
+                    (# (# #) | #) -> absent (# #)
+                    (# | idx #) -> present (Contiguous.index keys idx) (Contiguous.index vals idx)
                 lookup' !s !node@(CompactNode _bitmap _keys _vals _children) =
                     let !bitpos = maskToBitpos $ hashToMask s h
                     in case bitposLocation node bitpos of
-                            Nowhere -> (# (# #) | #) 
+                            Nowhere -> absent (# #)
                             Inline ->
                                 let k' = indexKey node bitpos
                                     (# v #) = indexVal# node bitpos
-                                in if k == k' then (# | (# k', v #) #) else (# (# #) | #)
+                                in if k == k' then present k' v else absent (# #)
                             InChild -> lookup' (nextShift s) (indexChild node bitpos)
 
 -- mylookup :: Int -> HashMapUU Int Int -> Maybe Int
@@ -1690,10 +1706,11 @@ intersection :: (Hashable k, MapRepr keys vals k v, MapRepr keys vals' k w) => H
 {-# INLINE intersection #-}
 intersection a b = foldlWithKey' go empty a
   where
-    go m k v = let h = hash k in 
-      case lookupKVKnownHash# h k b of
-        (# (# #) | #) -> m
-        (# | (# k', _ #) #) -> insert' Unsafe h k' v m
+    go m k v = lookupKVKnownHash# absent present h k b
+      where
+        h = hash k
+        absent (# #) = m
+        present k' _ = insert' Unsafe h k' v m
 
 -- | \(O(n \log m)\) Difference with a combining function. When two equal keys are
 -- encountered, the combining function is applied to the values of these keys.
@@ -1705,11 +1722,11 @@ intersection a b = foldlWithKey' go empty a
 differenceWith :: (Hashable k, MapRepr keys vals k v, MapRepr keys vals' k w) => (v -> w -> Maybe v) -> HashMap keys vals k v -> HashMap keys vals' k w -> HashMap keys vals k v
 differenceWith f a b = foldlWithKey' go empty a
   where
-    go m k v = 
-      let h = hash k in 
-      case lookupKVKnownHash# h k b of
-                 (# (# #) | #) -> insert' Unsafe h k v m
-                 (# | (# k', w #) #)  -> maybe m (\y -> insert' Unsafe h k' y m) (f v w)
+    go m k v =  lookupKVKnownHash# absent present h k b
+      where
+        h = hash k
+        absent (# #) = insert' Unsafe h k v m
+        present k' w = maybe m (\y -> insert' Unsafe h k' y m) (f v w)
 {-# INLINABLE differenceWith #-}
 
 -- | \(O(n \log m)\) Intersection with a combining function
@@ -1734,9 +1751,11 @@ intersectionWithKey f a b = foldlWithKey' go empty a
   where
     go m k v = 
       let h = hash k in
-      case lookupKVKnownHash# h k b of
-                 (# (# #) | #) -> m
-                 (# | (# k', w #) #) -> insert' Unsafe h k' (f k' v w) m
+      lookupKVKnownHash# absent present h k b
+        where
+          h = hash k
+          absent (# #) = m
+          present k' w = insert' Unsafe h k' (f k' v w) m
 {-# INLINABLE intersectionWithKey #-}
 
 -- | Inclusion of maps. A map is included in another map if the keys are subsets and the corresponding values are equal:
