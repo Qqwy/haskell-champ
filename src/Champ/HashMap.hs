@@ -1,6 +1,7 @@
 module Champ.HashMap (
     -- * Data types
     -- ** Concrete types
+    -- $concreteTypesComparison
     Champ.Internal.HashMapBL,
     Champ.Internal.HashMapBB,
     Champ.Internal.HashMapBU,
@@ -113,6 +114,37 @@ import Champ.Internal qualified
 import Champ.Internal.Storage qualified
 import Champ.HashSet qualified
 import Data.Hashable (Hashable)
+
+-- $concreteTypesComparison
+--
+-- Champ comes with a whole set of type aliases for HashMaps with different key and value types.
+--
+-- +--------------------------+-----------------------+-------------------------+----------------------+--------------------+
+-- |                          | Lazy boxed values (L) | Strict boxed values (B) | Unlifted values (Ul) | Unboxed values (U) |
+-- +==========================+=======================+=========================+======================+====================+
+-- | Strict boxed keys (B)    | `HashMapBL`           | `HashMapBB`             | `HashMapBUl`         | `HashMapBU`        |
+-- +--------------------------+-----------------------+-------------------------+----------------------+--------------------+
+-- | Unlifted keys (Ul)       | `HashMapUlL           | `HashMapUlB`            | `HashMapUlUl`        | `HashMapUlU`       |
+-- +--------------------------+-----------------------+-------------------------+----------------------+--------------------+
+-- | Unboxed keys (U)         | `HashMapUL            | `HashMapUB`             | `HashMapUUl          | `HashMapUU`        |
+-- +--------------------------+-----------------------+-------------------------+----------------------+--------------------+
+--
+--   [@L@]: Lazy boxed. Store any value without forcing it. 
+--     Implemented for all types. (No constraints). Not available for keys of the hashmap, since insertion requires evaluating the key to hash it.
+--   [@B@]: Strict boxed. Store any value after forcing it.
+--     Implemented for all types. (No constraints).
+--     We store the forced value using `UnliftedType`, which means that GHC will be able to skip the 'thunk check' when reading a value later.
+--   [@Ul@]: Unlifted. Store the internal primitive-but-boxed type in the array.
+--     Requires the `PrimUnlifted` typeclass to be implemented. For types where this is possible, removes one layer of boxing compared to 'Strict boxed'.
+--     Otherwise behaves the same.
+--   [@U@]: Unboxed. Store the internal unboxed primitive in the array.
+--     Requires the `Prim` typeclass to be implemented. Greatly reduces the memory usage compared to @B@ or @L@, but otherwise behaves the same.
+--
+-- Roughly speaking, for types like `Int` or `Word` or `Bool`, @Unboxed@ is the best implementation to choose.
+-- For types like `Text` or `ByteString`, strongly consider whether you can use `ShortText`/`ShortByteString` as these implement @Unlifed@.
+-- If not, use @Strict Boxed@. Use @Lazy Boxed@ iff you really require the laziness for your values (all common caveats with space leaks apply here).
+
+
 
 (!?) :: (Hashable k, MapRepr keys vals k v) => HashMap keys vals k v -> k -> Maybe v
 (!?) m k = Champ.Internal.lookup k m
