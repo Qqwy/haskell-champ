@@ -26,44 +26,44 @@ import Data.List (sort)
 tests :: TestLimit
 tests = 5000
 
-test_fromListToList :: [TestTree]
-test_fromListToList =
-    [ testProperty "toList . fromList conforms (HashMapBL)" $ propFromListToListConforms @HashMapBL
-    , testProperty "toList . fromList conforms (HashMapBB)" $ propFromListToListConforms @HashMapBB
-    , testProperty "toList . fromList conforms (HashMapBU)" $ propFromListToListConforms @HashMapBU
-    , testProperty "toList . fromList conforms (HashMapUL)" $ propFromListToListConforms @HashMapUL
-    , testProperty "toList . fromList conforms (HashMapUB)" $ propFromListToListConforms @HashMapUB
-    , testProperty "toList . fromList conforms (HashMapUU)" $ propFromListToListConforms @HashMapUU
+test_fromListToList :: TestTree
+test_fromListToList = testGroup "toList . fromList"
+    [ testProperty "conforms (HashMapBL)" $ propFromListToListConforms @HashMapBL
+    , testProperty "conforms (HashMapBB)" $ propFromListToListConforms @HashMapBB
+    , testProperty "conforms (HashMapBU)" $ propFromListToListConforms @HashMapBU
+    , testProperty "conforms (HashMapUL)" $ propFromListToListConforms @HashMapUL
+    , testProperty "conforms (HashMapUB)" $ propFromListToListConforms @HashMapUB
+    , testProperty "conforms (HashMapUU)" $ propFromListToListConforms @HashMapUU
     ]
 
-test_lookup :: [TestTree]
-test_lookup =
-    [ testProperty "lookup conforms (HashMapBL)" $ propLookupConforms @HashMapBL
-    , testProperty "lookup conforms (HashMapBB)" $ propLookupConforms @HashMapBB
-    , testProperty "lookup conforms (HashMapBU)" $ propLookupConforms @HashMapBU
-    , testProperty "lookup conforms (HashMapUL)" $ propLookupConforms @HashMapUL
-    , testProperty "lookup conforms (HashMapUB)" $ propLookupConforms @HashMapUB
-    , testProperty "lookup conforms (HashMapUU)" $ propLookupConforms @HashMapUU
+test_lookup :: TestTree
+test_lookup = testGroup "lookup"
+    [ testProperty "conforms (HashMapBL)" $ propLookupConforms @HashMapBL
+    , testProperty "conforms (HashMapBB)" $ propLookupConforms @HashMapBB
+    , testProperty "conforms (HashMapBU)" $ propLookupConforms @HashMapBU
+    , testProperty "conforms (HashMapUL)" $ propLookupConforms @HashMapUL
+    , testProperty "conforms (HashMapUB)" $ propLookupConforms @HashMapUB
+    , testProperty "conforms (HashMapUU)" $ propLookupConforms @HashMapUU
     ]
 
-test_filterWithKey :: [TestTree]
-test_filterWithKey =
-    [ testProperty "filterWithKey conforms (HashMapBL)" $ propFilterWithKeyConforms @HashMapBL
-    , testProperty "filterWithKey conforms (HashMapBB)" $ propFilterWithKeyConforms @HashMapBB
-    , testProperty "filterWithKey conforms (HashMapBU)" $ propFilterWithKeyConforms @HashMapBU
-    , testProperty "filterWithKey conforms (HashMapUL)" $ propFilterWithKeyConforms @HashMapUL
-    , testProperty "filterWithKey conforms (HashMapUB)" $ propFilterWithKeyConforms @HashMapUB
-    , testProperty "filterWithKey conforms (HashMapUU)" $ propFilterWithKeyConforms @HashMapUU
+test_filterWithKey :: TestTree
+test_filterWithKey = testGroup "filterWithKey"
+    [ testProperty "conforms (HashMapBL)" $ propFilterWithKeyConforms @HashMapBL
+    , testProperty "conforms (HashMapBB)" $ propFilterWithKeyConforms @HashMapBB
+    , testProperty "conforms (HashMapBU)" $ propFilterWithKeyConforms @HashMapBU
+    , testProperty "conforms (HashMapUL)" $ propFilterWithKeyConforms @HashMapUL
+    , testProperty "conforms (HashMapUB)" $ propFilterWithKeyConforms @HashMapUB
+    , testProperty "conforms (HashMapUU)" $ propFilterWithKeyConforms @HashMapUU
     ]
 
-test_mapMaybeWithKey :: [TestTree]
-test_mapMaybeWithKey =
-    [ testProperty "filterWithKey conforms (HashMapBL)" $ propMapMaybeWithKeyConforms @HashMapBL
-    , testProperty "filterWithKey conforms (HashMapBB)" $ propMapMaybeWithKeyConforms @HashMapBB
-    , testProperty "filterWithKey conforms (HashMapBU)" $ propMapMaybeWithKeyConforms @HashMapBU
-    , testProperty "filterWithKey conforms (HashMapUL)" $ propMapMaybeWithKeyConforms @HashMapUL
-    , testProperty "filterWithKey conforms (HashMapUB)" $ propMapMaybeWithKeyConforms @HashMapUB
-    , testProperty "filterWithKey conforms (HashMapUU)" $ propMapMaybeWithKeyConforms @HashMapUU
+test_mapMaybeWithKey :: TestTree
+test_mapMaybeWithKey = testGroup "mapMaybeWithKey"
+    [ testProperty "conforms (HashMapBL)" $ propMapMaybeWithKeyConforms @HashMapBL
+    , testProperty "conforms (HashMapBB)" $ propMapMaybeWithKeyConforms @HashMapBB
+    , testProperty "conforms (HashMapBU)" $ propMapMaybeWithKeyConforms @HashMapBU
+    , testProperty "conforms (HashMapUL)" $ propMapMaybeWithKeyConforms @HashMapUL
+    , testProperty "conforms (HashMapUB)" $ propMapMaybeWithKeyConforms @HashMapUB
+    , testProperty "conforms (HashMapUU)" $ propMapMaybeWithKeyConforms @HashMapUU
     ]
 
 propFromListToListConforms :: forall champmap keys vals. 
