@@ -119,25 +119,25 @@ import Data.Hashable (Hashable)
 --
 -- Champ comes with a whole set of type aliases for HashMaps with different key and value types.
 --
--- +--------------------------+-----------------------+-------------------------+----------------------+--------------------+
--- |                          | Lazy boxed values (L) | Strict boxed values (B) | Unlifted values (Ul) | Unboxed values (U) |
--- +==========================+=======================+=========================+======================+====================+
--- | Strict boxed keys (B)    | `HashMapBL`           | `HashMapBB`             | `HashMapBUl`         | `HashMapBU`        |
--- +--------------------------+-----------------------+-------------------------+----------------------+--------------------+
--- | Unlifted keys (Ul)       | `HashMapUlL           | `HashMapUlB`            | `HashMapUlUl`        | `HashMapUlU`       |
--- +--------------------------+-----------------------+-------------------------+----------------------+--------------------+
--- | Unboxed keys (U)         | `HashMapUL            | `HashMapUB`             | `HashMapUUl          | `HashMapUU`        |
--- +--------------------------+-----------------------+-------------------------+----------------------+--------------------+
+-- +--------------------------+-----------------------------+-----------------------------+---------------------------------+-----------------------------------+
+-- |                          | Lazy boxed values (L)       | Strict boxed values (B)     | Unlifted values (Ul)            | Unboxed values (U)                |
+-- +==========================+=============================+=============================+=================================+===================================+
+-- | Strict boxed keys (B)    | t`Champ.HashMap.HashMapBL`  | t`Champ.HashMap.HashMapBB`  | t`Champ.HashMap.HashMapBUl`     | t`Champ.HashMap.HashMapBU`        |
+-- +--------------------------+-----------------------------+-----------------------------+---------------------------------+-----------------------------------+
+-- | Unlifted keys (Ul)       | t`Champ.HashMap.HashMapUlL` | t`Champ.HashMap.HashMapUlB` | t`Champ.HashMap.HashMapUlUl`    | t`Champ.HashMap.HashMapUlU`       |
+-- +--------------------------+-----------------------------+-----------------------------+---------------------------------+-----------------------------------+
+-- | Unboxed keys (U)         | t`Champ.HashMap.HashMapUL`  | t`Champ.HashMap.HashMapUB`  | t`Champ.HashMap.HashMapUUl`     | t`Champ.HashMap.HashMapUU`        |
+-- +--------------------------+-----------------------------+-----------------------------+---------------------------------+-----------------------------------+
 --
---   [@L@]: Lazy boxed. Store any value without forcing it. 
+--   [@L@]: t`Champ.HashMap.Lazy` (always boxed). Store any value without forcing it. 
 --     Implemented for all types. (No constraints). Not available for keys of the hashmap, since insertion requires evaluating the key to hash it.
---   [@B@]: Strict boxed. Store any value after forcing it.
+--   [@B@]: t`Champ.HashMap.Strict` t`Champ.HashMap.Boxed`. Store any value after forcing it.
 --     Implemented for all types. (No constraints).
 --     We store the forced value using `UnliftedType`, which means that GHC will be able to skip the 'thunk check' when reading a value later.
---   [@Ul@]: Unlifted. Store the internal primitive-but-boxed type in the array.
+--   [@Ul@]: t`Champ.HashMap.Strict` t`Champ.HashMap.Unlifted`. Store the internal primitive-but-boxed type in the array.
 --     Requires the `PrimUnlifted` typeclass to be implemented. For types where this is possible, removes one layer of boxing compared to 'Strict boxed'.
 --     Otherwise behaves the same.
---   [@U@]: Unboxed. Store the internal unboxed primitive in the array.
+--   [@U@]: t`Champ.HashMap.Strict` t`Champ.HashMap.Unboxed`. Store the internal unboxed primitive in the array.
 --     Requires the `Prim` typeclass to be implemented. Greatly reduces the memory usage compared to @B@ or @L@, but otherwise behaves the same.
 --
 -- Roughly speaking, for types like `Int` or `Word` or `Bool`, @Unboxed@ is the best implementation to choose.

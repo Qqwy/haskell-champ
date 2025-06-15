@@ -24,27 +24,26 @@ import Data.Functor.Identity (Identity(..))
 
 -- | The different ways of storing data.
 --
--- In a way similar to `RuntimeRep`,
--- except that it makes more sense to combine strict boxed/unboxed together
--- (as keys are always strict)
--- whereas `RuntimeRep` combines boxed types together (regardless of levity).
+-- In a way similar to `GHC.Exts.RuntimeRep`,
+-- except that it makes more sense to combine strict boxed/unboxed together (as keys are always strict)
+-- whereas `GHC.Exts.RuntimeRep` combines boxed types together (regardless of levity).
 #if __GLASGOW_HASKELL__ >= 906
 type data Storage 
 #else
 data Storage
 #endif
-  = Lazy -- ^ It might be a thunk, and therefore is definitely boxed. (AKA of kind `Type` AKA `TYPE '(BoxedRep Lifted)`)
-  | Strict StrictStorage -- ^ It is definitely not a thunk, may or may not be boxed
-  | Unexistent -- ^ The value has no runtime representation; used as value type for `Set`.
+  = Lazy -- ^ The value might be a thunk, and therefore it is definitely boxed. (AKA any normal Haskell value of kind `Data.Kind.Type`, sometimes known as @TYPE '(BoxedRep Lifted)@)
+  | Strict StrictStorage -- ^ It is definitely not a thunk, may or may not be boxed depending on the `StrictStorage`.
+  | Unexistent -- ^ The value is a unit-like type which has no useful runtime representation. This is used as value type for `Set`.
 
 #if __GLASGOW_HASKELL__ >= 906
 type data StrictStorage 
 #else
 data StrictStorage
 #endif
-  = Boxed -- ^ The value is boxed (AKA of kind `UnliftedType` AKA `TYPE '(BoxedRep Unlifted)`), by forcing the value of any `Type` and wrapping it in a `Data.Elevator.Strict` wrapper.
-  | Unboxed -- ^ The value is of some unboxed kind, i.e. implement `Prim`.
-  | Unlifted -- ^ Similar to 'Boxed', but for types that have a natural `UnliftedType` equivalent, i.e. implement `PrimUnlifted`
+  = Boxed -- ^ The value is boxed but has already been evaluated (it can never be a thunk). Implemented for any type by forcing its value and wrapping it in a `Data.Elevator.Strict` wrapper (which is of kind `Data.Kind.UnliftedType`, sometimes known as @TYPE '(BoxedRep Unlifted)@)
+  | Unboxed -- ^ The value is of some unboxed kind, i.e. it implements `GHC.Prim` and therefore it can be passed around/manipulated without extra intermediate allocations.
+  | Unlifted -- ^ Similar to 'Boxed', but for types that have a natural `Data.Kind.UnliftedType` equivalent, i.e. implement `Data.Primitive.Unlifted.Class.PrimUnlifted`
 
 -- | Different kinds of values can be stored in different kinds of arrays:
 --
