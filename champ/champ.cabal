@@ -65,11 +65,6 @@ library
       Champ,
       Champ.HashMap,
       Champ.HashSet,
-      Champ.Internal,
-      Champ.Internal.Array,
-      Champ.Internal.Collision,
-      Champ.Internal.Storage,
-      Champ.Internal.Util,
 
     -- Modules included in this library but not exported.
     -- other-modules:
@@ -80,6 +75,7 @@ library
     -- Other library packages from which modules are imported.
     build-depends:    
       base,
+      champ-core,
       primitive,
       primitive-unlifted,
       contiguous,
@@ -113,7 +109,7 @@ executable champ
     -- Other library packages from which modules are imported.
     build-depends:
         base,
-        champ
+        champ,
 
     -- Directories containing source files.
     hs-source-dirs:   app
@@ -143,6 +139,7 @@ test-suite test
         tasty-discover:tasty-discover
     -- The entrypoint to the test suite.
     main-is:          Suite.hs
+    ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
 
     -- Test dependencies.
     build-depends:
@@ -150,6 +147,7 @@ test-suite test
         base,
         contiguous,
         unordered-containers,
+        champ-core,
         champ,
         -- Test framework:
         tasty,
@@ -175,6 +173,7 @@ test-suite doctest
   build-depends:
       base >=4.7 && <5
     , doctest-parallel
+    , champ-core
     , champ
   default-language: GHC2021
 
@@ -196,4 +195,5 @@ benchmark bench
         unordered-containers,
         deepseq,
         text-short,
+        champ-core,
         champ

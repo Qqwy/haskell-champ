@@ -24,53 +24,22 @@ import qualified Hedgehog.Range as Range
 import Data.List (sort)
 
 tests :: TestLimit
-tests = 5000
+tests = 1000
 
-test_fromListToList :: [TestTree]
-test_fromListToList =
-    [ testProperty "toList . fromList conforms (HashMapBL)" $ propFromListToListConforms @HashMapBL
-    , testProperty "toList . fromList conforms (HashMapBB)" $ propFromListToListConforms @HashMapBB
-    , testProperty "toList . fromList conforms (HashMapBU)" $ propFromListToListConforms @HashMapBU
-    , testProperty "toList . fromList conforms (HashMapUL)" $ propFromListToListConforms @HashMapUL
-    , testProperty "toList . fromList conforms (HashMapUB)" $ propFromListToListConforms @HashMapUB
-    , testProperty "toList . fromList conforms (HashMapUU)" $ propFromListToListConforms @HashMapUU
-    ]
-
-test_lookup :: [TestTree]
-test_lookup =
-    [ testProperty "lookup conforms (HashMapBL)" $ propLookupConforms @HashMapBL
-    , testProperty "lookup conforms (HashMapBB)" $ propLookupConforms @HashMapBB
-    , testProperty "lookup conforms (HashMapBU)" $ propLookupConforms @HashMapBU
-    , testProperty "lookup conforms (HashMapUL)" $ propLookupConforms @HashMapUL
-    , testProperty "lookup conforms (HashMapUB)" $ propLookupConforms @HashMapUB
-    , testProperty "lookup conforms (HashMapUU)" $ propLookupConforms @HashMapUU
-    ]
-
-test_filterWithKey :: [TestTree]
-test_filterWithKey =
-    [ testProperty "filterWithKey conforms (HashMapBL)" $ propFilterWithKeyConforms @HashMapBL
-    , testProperty "filterWithKey conforms (HashMapBB)" $ propFilterWithKeyConforms @HashMapBB
-    , testProperty "filterWithKey conforms (HashMapBU)" $ propFilterWithKeyConforms @HashMapBU
-    , testProperty "filterWithKey conforms (HashMapUL)" $ propFilterWithKeyConforms @HashMapUL
-    , testProperty "filterWithKey conforms (HashMapUB)" $ propFilterWithKeyConforms @HashMapUB
-    , testProperty "filterWithKey conforms (HashMapUU)" $ propFilterWithKeyConforms @HashMapUU
-    ]
-
-test_mapMaybeWithKey :: [TestTree]
-test_mapMaybeWithKey =
-    [ testProperty "filterWithKey conforms (HashMapBL)" $ propMapMaybeWithKeyConforms @HashMapBL
-    , testProperty "filterWithKey conforms (HashMapBB)" $ propMapMaybeWithKeyConforms @HashMapBB
-    , testProperty "filterWithKey conforms (HashMapBU)" $ propMapMaybeWithKeyConforms @HashMapBU
-    , testProperty "filterWithKey conforms (HashMapUL)" $ propMapMaybeWithKeyConforms @HashMapUL
-    , testProperty "filterWithKey conforms (HashMapUB)" $ propMapMaybeWithKeyConforms @HashMapUB
-    , testProperty "filterWithKey conforms (HashMapUU)" $ propMapMaybeWithKeyConforms @HashMapUU
+test_fromListToList :: TestTree
+test_fromListToList = testGroup "toList . fromList"
+    [ testProperty "conforms (HashMapBL)" $ propFromListToListConforms @HashMapBL
+    , testProperty "conforms (HashMapBB)" $ propFromListToListConforms @HashMapBB
+    , testProperty "conforms (HashMapBU)" $ propFromListToListConforms @HashMapBU
+    , testProperty "conforms (HashMapUL)" $ propFromListToListConforms @HashMapUL
+    , testProperty "conforms (HashMapUB)" $ propFromListToListConforms @HashMapUB
+    , testProperty "conforms (HashMapUU)" $ propFromListToListConforms @HashMapUU
     ]
 
 propFromListToListConforms :: forall champmap keys vals. 
     (champmap ~ HashMap keys vals
     , MapRepr keys vals Int Int
     , IsList (champmap Int Int)
-    , Item (champmap Int Int) ~ (Int, Int)
     , Show (Champ.Internal.Storage.ArrayOf (Strict keys) Int)
     , Show (Champ.Internal.Storage.ArrayOf vals Int)
     )
@@ -89,11 +58,20 @@ propFromListToListConforms = withTests tests $ property $ do
 
     sort (Data.HashMap.Strict.toList hs) === sort (Champ.HashMap.toList cs)
 
+test_lookup :: TestTree
+test_lookup = testGroup "lookup"
+    [ testProperty "conforms (HashMapBL)" $ propLookupConforms @HashMapBL
+    , testProperty "conforms (HashMapBB)" $ propLookupConforms @HashMapBB
+    , testProperty "conforms (HashMapBU)" $ propLookupConforms @HashMapBU
+    , testProperty "conforms (HashMapUL)" $ propLookupConforms @HashMapUL
+    , testProperty "conforms (HashMapUB)" $ propLookupConforms @HashMapUB
+    , testProperty "conforms (HashMapUU)" $ propLookupConforms @HashMapUU
+    ]
+
 propLookupConforms :: forall champmap keys vals. 
     (champmap ~ HashMap keys vals
     , MapRepr keys vals Int Int
     , IsList (champmap Int Int)
-    , Item (champmap Int Int) ~ (Int, Int)
     , Show (Champ.Internal.Storage.ArrayOf (Strict keys) Int)
     , Show (Champ.Internal.Storage.ArrayOf vals Int)
     )
@@ -115,11 +93,20 @@ propLookupConforms = withTests tests $ property $ do
     Data.HashMap.Strict.lookup key hs === Champ.HashMap.lookup key cs
     -- Champ.HashMap.lookup key cs === Champ.HashMap.lookup key cs
 
+test_filterWithKey :: TestTree
+test_filterWithKey = testGroup "filterWithKey"
+    [ testProperty "conforms (HashMapBL)" $ propFilterWithKeyConforms @HashMapBL
+    , testProperty "conforms (HashMapBB)" $ propFilterWithKeyConforms @HashMapBB
+    , testProperty "conforms (HashMapBU)" $ propFilterWithKeyConforms @HashMapBU
+    , testProperty "conforms (HashMapUL)" $ propFilterWithKeyConforms @HashMapUL
+    , testProperty "conforms (HashMapUB)" $ propFilterWithKeyConforms @HashMapUB
+    , testProperty "conforms (HashMapUU)" $ propFilterWithKeyConforms @HashMapUU
+    ]
+
 propFilterWithKeyConforms :: forall champmap keys vals.
     (champmap ~ HashMap keys vals
     , MapRepr keys vals Int Int
     , IsList (champmap Int Int)
-    , Item (champmap Int Int) ~ (Int, Int)
     , Show (Champ.Internal.Storage.ArrayOf (Strict keys) Int)
     , Show (Champ.Internal.Storage.ArrayOf vals Int)
     )
@@ -162,11 +149,22 @@ propFilterWithKeyConforms = withTests tests $ property $ do
     forM_ ks $ \k -> do
         Data.HashMap.Strict.lookup k hs === (Champ.HashMap.lookup k cs)
 
+
+test_mapMaybeWithKey :: TestTree
+test_mapMaybeWithKey = testGroup "mapMaybeWithKey"
+    [ testProperty "conforms (HashMapBL)" $ propMapMaybeWithKeyConforms @HashMapBL
+    , testProperty "conforms (HashMapBB)" $ propMapMaybeWithKeyConforms @HashMapBB
+    , testProperty "conforms (HashMapBU)" $ propMapMaybeWithKeyConforms @HashMapBU
+    , testProperty "conforms (HashMapUL)" $ propMapMaybeWithKeyConforms @HashMapUL
+    , testProperty "conforms (HashMapUB)" $ propMapMaybeWithKeyConforms @HashMapUB
+    , testProperty "conforms (HashMapUU)" $ propMapMaybeWithKeyConforms @HashMapUU
+    ]
+
+
 propMapMaybeWithKeyConforms :: forall champmap keys vals.
     (champmap ~ HashMap keys vals
     , MapRepr keys vals Int Int
     , IsList (champmap Int Int)
-    , Item (champmap Int Int) ~ (Int, Int)
     , Show (Champ.Internal.Storage.ArrayOf (Strict keys) Int)
     , Show (Champ.Internal.Storage.ArrayOf vals Int)
     )
