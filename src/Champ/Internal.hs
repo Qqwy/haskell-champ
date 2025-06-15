@@ -230,7 +230,7 @@ isNonZeroBitmap b = (# | b #)
 --
 -- Conceptually, you can think of it as:
 --
--- ```
+-- @
 -- data Map (keys :: StrictStorage) (vals :: Storage) k v
 --  = EmptyMap 
 --  | SingletonMap !k v 
@@ -239,7 +239,8 @@ isNonZeroBitmap b = (# | b #)
 -- data MapNode keys vals k v
 --    = CollisionNode !(ArrayOf (Strict keys)) !(ArrayOf vals)
 --    | CompactNode !Bitmap !Bitmap !(ArrayOf (Strict keys)) !(ArrayOf vals) !(StrictSmallArray (MapNode keys vals k v))
--- ```
+-- @
+--
 -- with the following tricks:
 -- - We only store a single 64-bit bitmap (taking up one word) rather than two separate 32-bit bitmaps,
 --  and use its lower/higher 32 bits using masking and shifting instead, saving one word per map node.

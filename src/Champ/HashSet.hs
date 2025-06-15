@@ -9,8 +9,6 @@ module Champ.HashSet (
     HashSetUl,
     -- ** Generic type
     HashSet(..),
-    Champ.Internal.Storage.Storage(Unexistent),
-    Champ.Internal.Storage.StrictStorage(..),
     SetRepr,
     -- * Construction
     empty,
@@ -54,7 +52,10 @@ module Champ.HashSet (
     toMap,
     fromMap,
     keysSet,
-    keysSet'
+    keysSet',
+    -- * Generic type details
+    Champ.Internal.Storage.Storage(Unexistent),
+    Champ.Internal.Storage.StrictStorage(..),
 ) where
 
 import Prelude hiding (map, foldr, lookup)
