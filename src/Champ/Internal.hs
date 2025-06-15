@@ -223,15 +223,16 @@ isNonZeroBitmap b = (# | b #)
 
 -- | A CHAMP-based Hashmap.
 --
--- This is implemented as a typeclass containing a data family called `Map`
--- rather than a plain datatype,
--- to ensure GHC can unbox all intermediate polymorphic constructors
--- (that depend on the concrete types of `keyStorage` and `valStorage`).
+-- Rather than implementing this as a plain datatype,
+-- it is implemented as a typeclass with an associated data family called `HashMap`.
 --
--- Conceptually, you can think of it as:
+-- This convinces GHC that all intermediate constructors are actually not polymorphic at all,
+-- and therefore can all be unboxed.
+--
+-- Conceptually, a `HashMap keys vals k v` you can think of it as:
 --
 -- @
--- data Map (keys :: StrictStorage) (vals :: Storage) k v
+-- data HashMap (keys :: StrictStorage) (vals :: Storage) k v
 --  = EmptyMap 
 --  | SingletonMap !k v 
 --  | ManyMap {size :: !Word, contents :: (MapNode k v)}
@@ -242,35 +243,75 @@ isNonZeroBitmap b = (# | b #)
 -- @
 --
 -- with the following tricks:
+--
 -- - We only store a single 64-bit bitmap (taking up one word) rather than two separate 32-bit bitmaps,
 --  and use its lower/higher 32 bits using masking and shifting instead, saving one word per map node.
 -- - There is no special `CollisionNode` variant.
 --  Instead, we disambiguate using the special bitmap value '0'
 --  which can never occur in a valid CompactNode as they are never empty.
 -- - As mentioned above, we make sure that GHC unpacks the intermediate array boxes,
---  so we store the `SmallArray#` resp `ByteArray#` pointers directly.
+--  so we store the `GHC.Exts.SmallArray#` resp `GHC.Exts.ByteArray#` pointers directly.
 --  This results in one word saved for the outer map and three more words saved per map node.
--- - We make sure that internal map nodes are stored as `UnliftedType` (AKA `TYPE 'BoxedRep 'Unlifted`)
+-- - We make sure that internal map nodes are stored as `Data.Kind.UnliftedType`
 --  inside their array, as we're always strict in the tree-spine of the CHAMP map.
 --  This means GHC will skip any thunk-forcing code whenever reading/recursing
 -- - We actually don't have `EmptyMap` and `SingletonMap` as separate variants of the outer map type.
 --   They are distinguishable by reading the size field. 
---   In the case of `EmptyMap`, only the size is filled in (`0`). We mark it as NOINLINE so all empty maps of a particular type share a single allocation
---   In the case of `SingletonMap`: 
---   - the hash of the single key is stored in place of the `Bitmap`.
---   - the single key is stored in place of the keys array
---   - the single value are stored in place of the values array. Iff the map is lazy in its values, it is wrapped in an extra `Solo` (c.f. `Soloist`).
---   Doing this simplifies some code, and allows us to support UNPACKing maps (they cost 5 inline words).
+--
+--      - In the case of `EmptyMap`, only the size is filled in (`0`). We mark it as NOINLINE so all empty maps of a particular type share a single allocation
+--      - In the case of `SingletonMap`: 
+--
+--          - the hash of the single key is stored in place of the `Bitmap`.
+--          - the single key is stored in place of the keys array
+--          - the single value are stored in place of the values array. Iff the map is lazy in its values, it is wrapped in an extra `Solo` (c.f. `Soloist`).
+--
+--     Doing this simplifies some code, and allows us to support UNPACKing maps (they cost 5 inline words).
+--
+-- So in actuality, the memory representation is:
+--
+-- @
+-- data MapNode (keys :: StrictStorage) (vals :: Storage) k v = MapNode 
+--   { bitmap :: !Bitmap
+--   , keys :: !(ArrayOf (Strict keys) k)
+--   , vals :: !(ArrayOf vals v)
+--   , children :: !(StrictSmallArray (MapNode keys vals k v))
+--   }
+--
+-- data HashMap (keys :: StrictStorage) (vals :: Storage) k v = HashMap
+--   { size :: !Word,
+--   , bitmap :: !Bitmap,
+--   , keyOrKeys :: !Any,
+--   , valOrVals :: !Any,
+--   , children :: !(StrictSmallArray (MapNode keys vals k v))
+--   }
+-- @
 class (Array (ArrayOf (Strict keyStorage)), Array (ArrayOf (valStorage)), Element (ArrayOf (Strict keyStorage)) k, Element (ArrayOf valStorage) v) => MapRepr (keyStorage :: StrictStorage) (valStorage :: Storage) k v where
+  -- | A CHAMP-based HashMap.
+  -- 
+  -- It is recommended to:
+  --
+  -- - Use one of [the concrete types]("Champ.HashMap#concreteTypesComparison") in your code. This will allow GHC to create an optimized implementation.
+  -- - If not possible or youŕe working on highly generic code, use this generic t`HashMap` type, and add @INLINABLE@ or @SPECIALIZE@ pragmas
+  --   to still give GHC the best opportunity to generate efficient code.
   data HashMap keyStorage valStorage k v
 
+
+  -- | Internal data family representing any map node other than the root of the map.
+  --
+  -- Only used internally, never as part of the external interface.
   data MapNode keyStorage valStorage k v
 
+  -- Constructs a `MapNode` from an unboxed tuple of its fields
   packNode :: (# Bitmap, ArrayOf (Strict keyStorage) k, (ArrayOf valStorage) v, StrictSmallArray (MapNode keyStorage valStorage k v) #) -> MapNode keyStorage valStorage k v
+  -- Destructs a `MapNode` into an unboxed tuple of its fields
   unpackNode :: MapNode keyStorage valStorage k v -> (# Bitmap, ArrayOf (Strict keyStorage) k, (ArrayOf valStorage) v, StrictSmallArray (MapNode keyStorage valStorage k v) #)
+  -- Constructs a `HashMap` with more than one element from its size and root MapNode
   manyMap :: Word -> MapNode keyStorage valStorage k v -> HashMap keyStorage valStorage k v
+  -- Constructs an empty `HashMap`
   emptyMap :: HashMap keyStorage valStorage k v
+  -- Constructs a `HashMap` with exactly one key-value pair
   singletonMap :: Hash -> k -> v -> HashMap keyStorage valStorage k v
+  -- Destructs a HashMap into either an empty hashmap, a singleton hashmap or a many-element hashmap
   matchMap :: HashMap keyStorage valStorage k v -> (# (# #) | (# Hash, k, v #) | (# Word, MapNode keyStorage valStorage k v #) #)
 
 #define MAP_NODE_NAME(name) MapNode/**/_/**/name

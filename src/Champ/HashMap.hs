@@ -16,7 +16,6 @@ module Champ.HashMap (
     Champ.Internal.HashMapUlUl,
     -- * Generic type
     Champ.Internal.HashMap,
-    Champ.Internal.MapRepr,
     -- * Construction
     Champ.Internal.empty,
     Champ.Internal.singleton,
@@ -105,7 +104,8 @@ module Champ.HashMap (
     Champ.HashSet.keysSet',
     -- * Generic type details
     Champ.Internal.Storage.Storage(..),
-    Champ.Internal.Storage.StrictStorage(..)
+    Champ.Internal.Storage.StrictStorage(..),
+    Champ.Internal.MapRepr
 ) where
 
 import GHC.Stack (HasCallStack)
@@ -118,6 +118,14 @@ import Data.Hashable (Hashable)
 -- $concreteTypesComparison
 --
 -- Champ comes with a whole set of type aliases for HashMaps with different key and value types.
+--
+-- It is recommended to:
+--
+-- - Use one of these concrete types in your code. This will allow GHC to create an optimized implementation.
+-- - If not possible or youŕe working on highly generic code, use the generic t`HashMap` type, and add @INLINABLE@ or @SPECIALIZE@ pragmas
+--   to still give GHC the best opportunity to generate efficient code.
+--
+-- /(See "Champ.HashSet" for a similar set of type aliases for sets.)/
 --
 -- +--------------------------+-----------------------------+-----------------------------+---------------------------------+-----------------------------------+
 -- |                          | Lazy boxed values (L)       | Strict boxed values (B)     | Unlifted values (Ul)            | Unboxed values (U)                |

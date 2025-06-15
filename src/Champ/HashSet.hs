@@ -4,6 +4,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 module Champ.HashSet (
     -- ** Concrete types
+    -- $concreteTypesComparison
     HashSetB,
     HashSetU,
     HashSetUl,
@@ -74,6 +75,32 @@ import GHC.IsList (IsList (..))
 -- >>> import Champ
 -- >>> import Champ.HashMap
 -- >>> import Data.Text.Short (ShortText)
+
+-- $concreteTypesComparison
+--
+-- Champ comes with a whole set of type aliases for HashSets with different element types.
+-- /(See "Champ.HashMap" for a similar set of type aliases for maps.)/
+
+--
+-- +---------------------------+----------------------------+
+-- | Strict boxed elements (B) | t`Champ.HashSet.HashSetB`  |
+-- +---------------------------+----------------------------+
+-- | Unlifted elements (Ul)    | t`Champ.HashSet.HashSetUl` |
+-- +---------------------------+----------------------------+
+-- | Unboxed elements (U)      | t`Champ.HashSet.HashSetU`  | 
+-- +---------------------------+----------------------------+
+-- 
+-- Since we need to hash an element on insertion,
+-- a HashSet is never lazy in its elements.
+--
+--   [@B@]: t`Champ.HashSet.Strict` t`Champ.HashSet.Boxed`. Store any element after forcing it.
+--     Implemented for all types. (No constraints).
+--     We store the forced value using `UnliftedType`, which means that GHC will be able to skip the 'thunk check' when reading a value later.
+--   [@Ul@]: t`Champ.HashSet.Strict` t`Champ.HashSet.Unlifted`. Store the internal primitive-but-boxed type in the array.
+--     Requires the `PrimUnlifted` typeclass to be implemented. For types where this is possible, removes one layer of boxing compared to 'Strict boxed'.
+--     Otherwise behaves the same.
+--   [@U@]: t`Champ.HashSet.Strict` t`Champ.HashSet.Unboxed`. Store the internal unboxed primitive in the array.
+--     Requires the `Prim` typeclass to be implemented. Greatly reduces the memory usage compared to @B@ or @L@, but otherwise behaves the same.
 
 newtype HashSet elems e = HashSet { asMap :: Champ.Internal.HashMap elems Unexistent e () }
 type role HashSet nominal nominal
