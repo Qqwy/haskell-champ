@@ -554,14 +554,12 @@ insert' safety h !k v !m = case matchMap m of
     if h == h' && k == k'
       then singletonKnownHash h k' v
       else
-        let !(# size, node #) =
-              Contiguous.empty
-                & MapNode (maskToBitpos (hashToMask 0 (hash k'))) (Array.singleton safety k') (Array.singleton safety v')
-                & insertInNode safety h k v 0
-         in ManyMap (1 + Exts.W# size) node
+          Contiguous.empty
+            & MapNode (maskToBitpos (hashToMask 0 (hash k'))) (Array.singleton safety k') (Array.singleton safety v')
+            & \node -> insertInNode safety h k v 0 node 
+              (\size node' -> ManyMap (1 + Exts.W# size) node')
   (# | | (# size, node0 #) #) ->
-    let !(# didIGrow, node' #) = insertInNode safety h k v 0 node0
-     in ManyMap (size + Exts.W# didIGrow) node'
+    insertInNode safety h k v 0 node0 (\didIGrow node' -> ManyMap (size + Exts.W# didIGrow) node')
 
 insertInNode :: (MapRepr keys vals k v, Hashable k) =>
                 Safety
@@ -570,24 +568,25 @@ insertInNode :: (MapRepr keys vals k v, Hashable k) =>
                 -> v
                 -> Word
                 -> MapNode keys vals k v
-                -> (# Exts.Word#, MapNode keys vals k v #)
+                -> (Exts.Word# -> MapNode keys vals k v -> r)
+                -> r
 {-# INLINEABLE insertInNode #-}
-insertInNode safety !h !k v !shift = \case
-  !node@(CollisionNode _ _) -> (# 1##, insertCollision safety k v node #)
+insertInNode safety !h !k v !shift node cont = case node of
+  !node@(CollisionNode _ _) -> cont 1## (insertCollision safety k v node)
   !node@(CompactNode !bitmap !keys !vals !children) ->
     let !bitpos = maskToBitpos $ hashToMask shift h
     in case bitposLocation node bitpos of
         Inline ->
           -- exists inline; potentially turn inline to subnode with two keys
-          insertMergeWithInline safety bitpos k v h shift node
+          insertMergeWithInline safety bitpos k v h shift node cont
         InChild ->
           -- Exists in child, insert in there and make sure this node contains the updated child
           let child = indexChild node bitpos
-              !(# didIGrow, child' #) = insertInNode safety h k v (nextShift shift) child
-           in (# didIGrow, CompactNode bitmap keys vals (Array.replaceAt safety children (childrenIndex node bitpos) child') #)
+          in insertInNode safety h k v (nextShift shift) child (\didIGrow child' -> 
+                  cont didIGrow (CompactNode bitmap keys vals (Array.replaceAt safety children (childrenIndex node bitpos) child')))
         Nowhere ->
           -- Doesn't exist yet, we can insert inline
-          (# 1##, insertNewInline safety bitpos k v node #)
+          cont 1## (insertNewInline safety bitpos k v node)
 
 -- {-# SPECIALIZE insert :: Hashable k => k -> v -> HashMapBL k v -> HashMapBL k v #-}
 -- {-# SPECIALIZE insert :: Hashable k => k -> v -> HashMapBB k v -> HashMapBB k v #-}
@@ -619,12 +618,12 @@ insertNewInline safety bitpos k v node@(MapNode bitmap keys vals children) =
    in MapNode bitmap' keys' vals' children
 
 {-# INLINE insertMergeWithInline #-}
-insertMergeWithInline :: (Hashable k, MapRepr keys vals k v) => Safety -> Bitmap -> k -> v -> Hash -> Word -> MapNode keys vals k v -> (# Exts.Word#, MapNode keys vals k v #)
-insertMergeWithInline safety bitpos k v h shift node@(MapNode bitmap keys vals children) =
+insertMergeWithInline :: (Hashable k, MapRepr keys vals k v) => Safety -> Bitmap -> k -> v -> Hash -> Word -> MapNode keys vals k v -> (Exts.Word# -> MapNode keys vals k v -> r) -> r
+insertMergeWithInline safety bitpos k v h shift node@(MapNode bitmap keys vals children) cont =
   let idx = dataIndex node bitpos
       existingKey = indexKey node bitpos
       (# existingVal #) = indexVal# node bitpos
-   in if existingKey == k then (# 1##, CompactNode bitmap keys (Array.replaceAt safety vals idx v) children #)
+   in if existingKey == k then cont 1## (CompactNode bitmap keys (Array.replaceAt safety vals idx v) children )
       else
           let newIdx = childrenIndex node bitpos
               -- SAFETY: The forcing of `child`/`pairNode` here is extremely important
@@ -636,7 +635,7 @@ insertMergeWithInline safety bitpos k v h shift node@(MapNode bitmap keys vals c
               vals' = Array.deleteAt safety vals idx
               !children' = Array.insertAt safety children newIdx child
               bitmap' = bitmap .^. bitpos .|. (bitpos `unsafeShiftL` HASH_CODE_LENGTH)
-            in (# 1##, CompactNode bitmap' keys' vals' children' #)
+            in cont 1## (CompactNode bitmap' keys' vals' children')
 
 {-# INLINE pairNode #-}
 pairNode :: (MapRepr keys vals k v) => Safety -> k -> v -> Hash -> k -> v -> Hash -> Word -> MapNode keys vals k v
@@ -804,10 +803,12 @@ deleteFromNode safety !h !k !shift = \case
           case deleteFromNode safety h k (nextShift shift) child of
             (# (# k', v' #) | #) ->
               -- Child became too small, replace with inline
-              (Array.deleteAt safety children childIndex)
-              & CompactNode bitmap' keys vals 
-              & insertNewInline safety bitpos k' v'
-              & (\node' -> (# | (# 1##, node' #) #) )
+              let 
+                arr = Array.deleteAt safety children childIndex
+                node = CompactNode bitmap' keys vals arr
+                node' = insertNewInline safety bitpos k' v' node
+              in
+                (# | (# 1##, node' #) #)
             (# | (# didIGrow, child' #) #) ->
               let node' = CompactNode bitmap' keys vals (Array.replaceAt safety children childIndex child')
               in (# | (# didIGrow, node' #) #)
