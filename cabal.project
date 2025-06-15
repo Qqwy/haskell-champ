@@ -12,3 +12,4 @@ source-repository-package
 
 package *
   ghc-options: -msse4.2 -mavx -mbmi -mbmi2 -optc=-march=native -optc-mtune=native
+  optimization: 2
