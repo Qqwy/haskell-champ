@@ -43,7 +43,7 @@ import GHC.IsList (IsList (..))
 import Numeric (showBin)
 import Prelude hiding (null, lookup, filter)
 import Data.Coerce (Coercible)
-import Data.Coerce qualified
+import Data.Type.Coercion qualified
 import Unsafe.Coerce (unsafeCoerce)
 import Data.Type.Coercion (Coercion(Coercion))
 import GHC.Exts (Any)
@@ -409,9 +409,6 @@ bitposLocation node@(MapNode bitmap _ _ _) bitpos
 -- \(O(n \log32 n)\) Construct a map with the supplied key-value mappings.
 -- 
 -- If the list contains duplicate keys, later mappings take precedence.
---
--- NOTE: Since there is no unsafeInsert yet,
--- the current implementation is slower than necessary.
 fromList :: (Hashable k, MapRepr keys vals k v) => [(k, v)] -> HashMap keys vals k v
 {-# INLINE fromList #-}
 fromList = Foldable.foldl' (\m (k, v) -> unsafeInsert k v m) empty
@@ -445,10 +442,11 @@ toList hashmap = Exts.build (\fusedCons fusedNil -> foldrWithKey (\k v xs -> (k,
 -- but is not super performant as it will traverse the map twice.
 adjust :: (Hashable k, MapRepr keys vals k v) => (v -> v) -> k -> HashMap keys vals k v -> HashMap keys vals k v
 adjust f k m = 
-  let h = hash k in
-  case lookupKVKnownHash# h k m of
-    (# (# #) | #) -> m
-    (# | (# k', v #) #) -> 
+  lookupKVKnownHash# absent present h k m
+  where
+    h = hash k
+    absent (# #) = m
+    present k' v = 
       let v' = f v 
       in insert' Safe h k' v' m 
 
@@ -689,9 +687,11 @@ insertWith :: (Hashable k, MapRepr keys vals k v) => (v -> v -> v) -> k -> v -> 
 insertWith f k v m = 
   let h = hash k
   in
-  case lookupKVKnownHash# h k m of
-    (# (# #) | #) -> insert' Safe h k v m
-    (# | (# k', v' #) #) -> insert' Safe h k' (f v v') m
+  lookupKVKnownHash# absent present h k m
+  where
+    h = hash k
+    absent (# #) = insert' Safe h k v m
+    present k' v' = insert' Safe h k' (f v v') m
 
 unsafeInsertWith :: (Hashable k, MapRepr keys vals k v) => (v -> v -> v) -> k -> v -> HashMap keys vals k v -> HashMap keys vals k v
 {-# INLINE unsafeInsertWith #-}
@@ -704,12 +704,13 @@ unsafeInsertWithKey f = unsafeInsertWithKey# (\k' a b -> (# f k' a b #))
 unsafeInsertWithKey# :: (Hashable k, MapRepr keys vals k v) => (k -> v -> v -> (# v #)) -> k -> v -> HashMap keys vals k v -> HashMap keys vals k v
 {-# INLINE unsafeInsertWithKey# #-}
 unsafeInsertWithKey# f k v m = 
-  let h = hash k in
-  case lookupKVKnownHash# h k m of
-    (# (# #) | #) -> insert' Unsafe h k v m
-    (# | (# k2, v2 #) #) ->
-      case f k2 v v2 of
-        (# v3 #) -> insert' Unsafe h k2 v3 m
+  lookupKVKnownHash# absent present h k m
+    where
+      h = hash k
+      absent (# #) = insert' Unsafe h k v m
+      present k2 v2 = 
+        case f k2 v v2 of
+          (# v3 #) -> insert' Unsafe h k2 v3 m
 
 delete :: (Hashable k, MapRepr keys vals k v) => k -> HashMap keys vals k v -> HashMap keys vals k v
 {-# INLINE delete #-}
@@ -834,44 +835,56 @@ lookupKV !k = lookupKVKnownHash (hash k) k
 
 lookupKV# :: (MapRepr keys vals k v, Eq k, Hashable k) => k -> HashMap keys vals k v -> (# (# #) | (# k, v #) #)
 {-# INLINE lookupKV# #-}
-lookupKV# !k = lookupKVKnownHash# (hash k) k
+lookupKV# !k = lookupKVKnownHash# absent present (hash k) k
+  where
+    absent :: (# #) -> (# (# #) | (# k, v #) #)
+    absent (# #) = (# (# #) | #)
+    present :: k -> v -> (# (# #) | (# k, v #) #)
+    present k v = (# | (# k, v #) #)
 
 lookupKVKnownHash :: (MapRepr keys vals a b, Hashable a) => Hash -> a -> HashMap keys vals a b -> Maybe (a, b)
-lookupKVKnownHash h k m = case lookupKVKnownHash# h k m of
-  (# (# #) | #) -> Nothing
-  (# | (# k, v #) #) -> Just (k, v)
+{-# INLINE lookupKVKnownHash #-}
+lookupKVKnownHash = lookupKVKnownHash# absent present
+  where
+    absent (# #) = Nothing
+    present k v = Just (k, v)
 
-lookupKVKnownHash# :: (MapRepr keys vals k v, Eq k, Hashable k) => Hash -> k -> HashMap keys vals k v -> (# (# #) | (# k, v #) #)
+lookupKVKnownHash# 
+  :: forall rep (r :: Exts.TYPE rep) keys vals k v.
+  (MapRepr keys vals k v, Eq k, Hashable k)
+  => ((# #) -> r) -- Absent continuation
+  -> (k -> v -> r) -- Present continuation
+  -> Hash -> k -> HashMap keys vals k v -> r
 {-# INLINE lookupKVKnownHash# #-}
-lookupKVKnownHash# h !k m = case matchMap m of
-  (# (# #) | | #) -> (# (# #) | #)
-  (# | (# h', k', v #) | #) -> if h == h' && k == k' then (# | (# k', v #) #) else (# (# #) | #)
+lookupKVKnownHash# absent present h !k m = case matchMap m of
+  (# (# #) | | #) -> absent (# #)
+  (# | (# h', k', v #) | #) -> if h == h' && k == k' then present k' v else absent (# #)
   (# | | (# _size, node0 #) #) ->
     -- NOTE: Manually inlining the first iteration of lookup'
     -- (which will _never_ be in a collision node)
     -- results in a noticeable speedup for maps that have at most 32 elements.
     let !bitpos = maskToBitpos $ hashToMask 0 h
     in case bitposLocation node0 bitpos of
-        Nowhere -> (# (# #) | #)
+        Nowhere -> absent (# #)
         Inline ->
             let k' = indexKey node0 bitpos
                 (# v #) = indexVal# node0 bitpos
-            in if k == k' then (# | (# k', v #) #) else (# (# #) | #)
+            in if k == k' then present k' v else absent (# #)
         InChild -> lookup' (nextShift 0) (indexChild node0 bitpos)
             where
                 {-# INLINEABLE lookup' #-}
                 lookup' !_s !(CollisionNode keys vals) =
                   case findCollisionIndex# k keys of
-                    (# (# #) | #) -> (# (# #) | #)
-                    (# | idx #) -> (# | (# Contiguous.index keys idx, Contiguous.index vals idx #) #)
+                    (# (# #) | #) -> absent (# #)
+                    (# | idx #) -> present (Contiguous.index keys idx) (Contiguous.index vals idx)
                 lookup' !s !node@(CompactNode _bitmap _keys _vals _children) =
                     let !bitpos = maskToBitpos $ hashToMask s h
                     in case bitposLocation node bitpos of
-                            Nowhere -> (# (# #) | #) 
+                            Nowhere -> absent (# #)
                             Inline ->
                                 let k' = indexKey node bitpos
                                     (# v #) = indexVal# node bitpos
-                                in if k == k' then (# | (# k', v #) #) else (# (# #) | #)
+                                in if k == k' then present k' v else absent (# #)
                             InChild -> lookup' (nextShift s) (indexChild node bitpos)
 
 -- mylookup :: Int -> HashMapUU Int Int -> Maybe Int
@@ -1369,9 +1382,6 @@ instance Foldable (HashMapBL k) where
   {-# INLINE length #-}
   length = Champ.Internal.size
 
--- TODO: manual impls of the other funs
--- as those are more efficient
-
 instance Foldable (HashMapBB k) where
   {-# INLINE foldr #-}
   foldr = Champ.Internal.foldr
@@ -1385,10 +1395,6 @@ instance Foldable (HashMapBB k) where
   null = Champ.Internal.null
   {-# INLINE length #-}
   length = Champ.Internal.size
-
--- TODO: manual impls of the other funs
--- as those are more efficient
-
 
 instance (Prim k) => Foldable (HashMapUL k) where
   {-# INLINE foldr #-}
@@ -1404,9 +1410,6 @@ instance (Prim k) => Foldable (HashMapUL k) where
   {-# INLINE length #-}
   length = Champ.Internal.size
 
--- TODO: manual impls of the other funs
--- as those are more efficient
-
 instance (Prim k) => Foldable (HashMapUB k) where
   {-# INLINE foldr #-}
   foldr = Champ.Internal.foldr
@@ -1421,24 +1424,6 @@ instance (Prim k) => Foldable (HashMapUB k) where
   {-# INLINE length #-}
   length = Champ.Internal.size
 
--- TODO: manual impls of the other funs
--- as those are more efficient
-
--- TODO: Would be nice to offer Foldable for
--- maps with unboxed values,
--- but without some tricksy workaround this is impossible.
-
--- instance Foldable (HashMapBU k) where
---   foldr = Champ.Internal.foldr
---   foldr' = Champ.Internal.foldr'
---   -- TODO: manual impls of the other funs
---   -- as those are more efficient
-
--- instance (Prim k) => Foldable (HashMapUU k) where
---   foldr = Champ.Internal.foldr
---   foldr' = Champ.Internal.foldr'
---   -- TODO: manual impls of the other funs
---   -- as those are more efficient
 
 {-# INLINE foldr #-}
 foldr :: (MapRepr keys vals k v) => (v -> r -> r) -> r -> HashMap keys vals k v -> r
@@ -1690,10 +1675,11 @@ intersection :: (Hashable k, MapRepr keys vals k v, MapRepr keys vals' k w) => H
 {-# INLINE intersection #-}
 intersection a b = foldlWithKey' go empty a
   where
-    go m k v = let h = hash k in 
-      case lookupKVKnownHash# h k b of
-        (# (# #) | #) -> m
-        (# | (# k', _ #) #) -> insert' Unsafe h k' v m
+    go m k v = lookupKVKnownHash# absent present h k b
+      where
+        h = hash k
+        absent (# #) = m
+        present k' _ = insert' Unsafe h k' v m
 
 -- | \(O(n \log m)\) Difference with a combining function. When two equal keys are
 -- encountered, the combining function is applied to the values of these keys.
@@ -1705,11 +1691,11 @@ intersection a b = foldlWithKey' go empty a
 differenceWith :: (Hashable k, MapRepr keys vals k v, MapRepr keys vals' k w) => (v -> w -> Maybe v) -> HashMap keys vals k v -> HashMap keys vals' k w -> HashMap keys vals k v
 differenceWith f a b = foldlWithKey' go empty a
   where
-    go m k v = 
-      let h = hash k in 
-      case lookupKVKnownHash# h k b of
-                 (# (# #) | #) -> insert' Unsafe h k v m
-                 (# | (# k', w #) #)  -> maybe m (\y -> insert' Unsafe h k' y m) (f v w)
+    go m k v =  lookupKVKnownHash# absent present h k b
+      where
+        h = hash k
+        absent (# #) = insert' Unsafe h k v m
+        present k' w = maybe m (\y -> insert' Unsafe h k' y m) (f v w)
 {-# INLINABLE differenceWith #-}
 
 -- | \(O(n \log m)\) Intersection with a combining function
@@ -1734,9 +1720,11 @@ intersectionWithKey f a b = foldlWithKey' go empty a
   where
     go m k v = 
       let h = hash k in
-      case lookupKVKnownHash# h k b of
-                 (# (# #) | #) -> m
-                 (# | (# k', w #) #) -> insert' Unsafe h k' (f k' v w) m
+      lookupKVKnownHash# absent present h k b
+        where
+          h = hash k
+          absent (# #) = m
+          present k' w = insert' Unsafe h k' (f k' v w) m
 {-# INLINABLE intersectionWithKey #-}
 
 -- | Inclusion of maps. A map is included in another map if the keys are subsets and the corresponding values are equal:
@@ -1855,23 +1843,24 @@ nextShift s = s + BIT_PARTITION_SIZE
 -- sumLazy :: HashMapBL Int Int -> Int
 -- sumLazy = foldr' (+) 0
 
--- | Simplified usage of `withCoercible` for the common case where you want to directly coerce the hashmap itself.
---
--- `Data.Coerce.coerce` but specialized to `Champ.HashMap`.
--- See `withCoercible` for more information.
+-- | `Data.Coerce.coerce` but specialized to `Champ.HashMap`
+-- See `Champ.HashMap.coercion` for more information.
 coerce :: forall v v' keys vals k. (Coercible v v', MapRepr keys vals k v, MapRepr keys vals k v') => HashMap keys vals k v -> HashMap keys vals k v'
-coerce x = withCoercible @(HashMap keys vals k v) @(HashMap keys vals k v') (Data.Coerce.coerce x)
+coerce = Data.Type.Coercion.coerceWith (coercion (Coercion @v @v'))
 
--- | Brings a `Coercible` instance in scope to coerce between two `Champ.HashMap`s
--- 
--- Because of the way Champ.HashMap is currently implemented (using associated data families),
--- the role annotation of the value type inside Champ.HashMap is `nominal` rather than `representational`.
+-- | Constructs a `Data.Type.Coercion.Coercion` to safely coerce between two `Champ.HashMap`s
 --
--- This is a problem when you want to use `Data.Coerce.coerce`.
--- This function allows an escape hatch to do so anyway.
+-- It is safe to coerce between two HashMaps when:
 --
--- You will need to specify the precise desired types `h1` and `h2`,
--- otherwise GHC will complain that the types might not match in representation.
-withCoercible :: forall h1 h2 {keys} {vals} {k} {v} {v'} r. (Coercible v v', h1 ~ HashMap keys vals k v, h2 ~ HashMap keys vals k v', MapRepr keys vals k v, MapRepr keys vals k v') => (Coercible h1 h2 => r) -> r
-withCoercible val = case (unsafeCoerce (Coercion @v @v') :: Coercion h1 h2) of
-  Coercion -> val
+-- - Their value type is coercible
+-- - Their key type remains the same
+-- - Their key storage and value storage remains the same
+--
+-- However, because of the way Champ.HashMap is implemented using associated data families,
+-- we cannot directly use 'type role annotations' that would give rise to the appropriate `Coercible` constraint.
+-- /(the role annotation of the value type inside Champ.HashMap is `nominal` rather than `representational`.)/
+--
+-- Instead, we use explicit t`Data.Type.Coercion.Coercion`s.
+coercion :: forall h1 h2 {keys} {vals} {k} {v} {v'}. (h1 ~ HashMap keys vals k v, h2 ~ HashMap keys vals k v', MapRepr keys vals k v, MapRepr keys vals k v') => Coercion v v' -> Coercion h1 h2
+coercion c@Coercion = unsafeCoerce c
+  
