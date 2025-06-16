@@ -43,7 +43,7 @@ import GHC.IsList (IsList (..))
 import Numeric (showBin)
 import Prelude hiding (null, lookup, filter)
 import Data.Coerce (Coercible)
-import Data.Coerce qualified
+import Data.Type.Coercion qualified
 import Unsafe.Coerce (unsafeCoerce)
 import Data.Type.Coercion (Coercion(Coercion))
 import GHC.Exts (Any)
@@ -409,9 +409,6 @@ bitposLocation node@(MapNode bitmap _ _ _) bitpos
 -- \(O(n \log32 n)\) Construct a map with the supplied key-value mappings.
 -- 
 -- If the list contains duplicate keys, later mappings take precedence.
---
--- NOTE: Since there is no unsafeInsert yet,
--- the current implementation is slower than necessary.
 fromList :: (Hashable k, MapRepr keys vals k v) => [(k, v)] -> HashMap keys vals k v
 {-# INLINE fromList #-}
 fromList = Foldable.foldl' (\m (k, v) -> unsafeInsert k v m) empty
@@ -1385,9 +1382,6 @@ instance Foldable (HashMapBL k) where
   {-# INLINE length #-}
   length = Champ.Internal.size
 
--- TODO: manual impls of the other funs
--- as those are more efficient
-
 instance Foldable (HashMapBB k) where
   {-# INLINE foldr #-}
   foldr = Champ.Internal.foldr
@@ -1401,10 +1395,6 @@ instance Foldable (HashMapBB k) where
   null = Champ.Internal.null
   {-# INLINE length #-}
   length = Champ.Internal.size
-
--- TODO: manual impls of the other funs
--- as those are more efficient
-
 
 instance (Prim k) => Foldable (HashMapUL k) where
   {-# INLINE foldr #-}
@@ -1420,9 +1410,6 @@ instance (Prim k) => Foldable (HashMapUL k) where
   {-# INLINE length #-}
   length = Champ.Internal.size
 
--- TODO: manual impls of the other funs
--- as those are more efficient
-
 instance (Prim k) => Foldable (HashMapUB k) where
   {-# INLINE foldr #-}
   foldr = Champ.Internal.foldr
@@ -1437,24 +1424,6 @@ instance (Prim k) => Foldable (HashMapUB k) where
   {-# INLINE length #-}
   length = Champ.Internal.size
 
--- TODO: manual impls of the other funs
--- as those are more efficient
-
--- TODO: Would be nice to offer Foldable for
--- maps with unboxed values,
--- but without some tricksy workaround this is impossible.
-
--- instance Foldable (HashMapBU k) where
---   foldr = Champ.Internal.foldr
---   foldr' = Champ.Internal.foldr'
---   -- TODO: manual impls of the other funs
---   -- as those are more efficient
-
--- instance (Prim k) => Foldable (HashMapUU k) where
---   foldr = Champ.Internal.foldr
---   foldr' = Champ.Internal.foldr'
---   -- TODO: manual impls of the other funs
---   -- as those are more efficient
 
 {-# INLINE foldr #-}
 foldr :: (MapRepr keys vals k v) => (v -> r -> r) -> r -> HashMap keys vals k v -> r
@@ -1874,23 +1843,24 @@ nextShift s = s + BIT_PARTITION_SIZE
 -- sumLazy :: HashMapBL Int Int -> Int
 -- sumLazy = foldr' (+) 0
 
--- | Simplified usage of `withCoercible` for the common case where you want to directly coerce the hashmap itself.
---
--- `Data.Coerce.coerce` but specialized to `Champ.HashMap`.
--- See `withCoercible` for more information.
+-- | `Data.Coerce.coerce` but specialized to `Champ.HashMap`
+-- See `Champ.HashMap.coercion` for more information.
 coerce :: forall v v' keys vals k. (Coercible v v', MapRepr keys vals k v, MapRepr keys vals k v') => HashMap keys vals k v -> HashMap keys vals k v'
-coerce x = withCoercible @(HashMap keys vals k v) @(HashMap keys vals k v') (Data.Coerce.coerce x)
+coerce = Data.Type.Coercion.coerceWith (coercion (Coercion @v @v'))
 
--- | Brings a `Coercible` instance in scope to coerce between two `Champ.HashMap`s
--- 
--- Because of the way Champ.HashMap is currently implemented (using associated data families),
--- the role annotation of the value type inside Champ.HashMap is `nominal` rather than `representational`.
+-- | Constructs a `Data.Type.Coercion.Coercion` to safely coerce between two `Champ.HashMap`s
 --
--- This is a problem when you want to use `Data.Coerce.coerce`.
--- This function allows an escape hatch to do so anyway.
+-- It is safe to coerce between two HashMaps when:
 --
--- You will need to specify the precise desired types `h1` and `h2`,
--- otherwise GHC will complain that the types might not match in representation.
-withCoercible :: forall h1 h2 {keys} {vals} {k} {v} {v'} r. (Coercible v v', h1 ~ HashMap keys vals k v, h2 ~ HashMap keys vals k v', MapRepr keys vals k v, MapRepr keys vals k v') => (Coercible h1 h2 => r) -> r
-withCoercible val = case (unsafeCoerce (Coercion @v @v') :: Coercion h1 h2) of
-  Coercion -> val
+-- - Their value type is coercible
+-- - Their key type remains the same
+-- - Their key storage and value storage remains the same
+--
+-- However, because of the way Champ.HashMap is implemented using associated data families,
+-- we cannot directly use 'type role annotations' that would give rise to the appropriate `Coercible` constraint.
+-- /(the role annotation of the value type inside Champ.HashMap is `nominal` rather than `representational`.)/
+--
+-- Instead, we use explicit t`Data.Type.Coercion.Coercion`s.
+coercion :: forall h1 h2 {keys} {vals} {k} {v} {v'}. (h1 ~ HashMap keys vals k v, h2 ~ HashMap keys vals k v', MapRepr keys vals k v, MapRepr keys vals k v') => Coercion v v' -> Coercion h1 h2
+coercion c@Coercion = unsafeCoerce c
+  

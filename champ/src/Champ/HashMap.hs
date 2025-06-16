@@ -14,7 +14,7 @@ module Champ.HashMap (
     Champ.Internal.HashMapUlB,
     Champ.Internal.HashMapUlU,
     Champ.Internal.HashMapUlUl,
-    -- * Generic type
+    -- ** Generic type
     Champ.Internal.HashMap,
     -- * Construction
     Champ.Internal.empty,
@@ -89,7 +89,7 @@ module Champ.HashMap (
 
     -- *** Coercions
     Champ.Internal.coerce,
-    Champ.Internal.withCoercible,
+    Champ.Internal.coercion,
 
     -- ** Lists
     Champ.Internal.fromList,
@@ -116,6 +116,7 @@ import Champ.HashSet qualified
 import Data.Hashable (Hashable)
 
 -- $concreteTypesComparison
+-- #concreteTypesComparison#
 --
 -- Champ comes with a whole set of type aliases for HashMaps with different key and value types.
 --
