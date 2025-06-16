@@ -920,23 +920,42 @@ findCollisionIndex# :: (Eq a, Array arr, Element arr a) => a -> arr a -> (# (# #
 {-# INLINE findCollisionIndex# #-}
 findCollisionIndex# k keys = Array.findIndex# (\existingKey -> existingKey `ptrEq` k || existingKey == k) keys
 
+-- indexKey :: MapRepr keys vals k v => MapNode keys vals k v -> Bitmap -> k
+-- {-# INLINE indexKey #-}
+-- indexKey (CollisionNode _keys _vals) _ = error "Should only be called on CompactNodes"
+-- indexKey node@(CompactNode _bitmap keys _vals _children) bitpos =
+--     Contiguous.index keys (dataIndex node bitpos)
+
+-- indexVal# :: MapRepr keys vals k v => MapNode keys vals k v -> Bitmap -> (# v #)
+-- {-# INLINE indexVal# #-}
+-- indexVal# (CollisionNode _keys _vals) _ = error "Should only be called on CompactNodes"
+-- indexVal# node@(CompactNode _bitmap _keys vals _children) bitpos =
+--     Contiguous.index# vals (dataIndex node bitpos)
+
+-- indexChild :: MapRepr keys vals k v => MapNode keys vals k v -> Bitmap -> MapNode keys vals k v
+-- {-# INLINE indexChild #-}
+-- indexChild (CollisionNode _keys _vals) _ = error "Should only be called on CompactNodes"
+-- indexChild node@(CompactNode _bitmap _keys _vals children) bitpos =
+--     Contiguous.index children (childrenIndex node bitpos)
+
+-- | Looks up a key in a MapNode. Should only be called if the node is a CompactNode
 indexKey :: MapRepr keys vals k v => MapNode keys vals k v -> Bitmap -> k
 {-# INLINE indexKey #-}
-indexKey (CollisionNode _keys _vals) _ = error "Should only be called on CompactNodes"
-indexKey node@(CompactNode _bitmap keys _vals _children) bitpos =
+indexKey node@(MapNode _bitmap keys _vals _children) bitpos =
     Contiguous.index keys (dataIndex node bitpos)
 
+-- | Looks up a value in a MapNode. Should only be called if the node is a CompactNode
 indexVal# :: MapRepr keys vals k v => MapNode keys vals k v -> Bitmap -> (# v #)
 {-# INLINE indexVal# #-}
-indexVal# (CollisionNode _keys _vals) _ = error "Should only be called on CompactNodes"
-indexVal# node@(CompactNode _bitmap _keys vals _children) bitpos =
+indexVal# node@(MapNode _bitmap _keys vals _children) bitpos =
     Contiguous.index# vals (dataIndex node bitpos)
 
+-- | Looks up a chidl in a MapNode. Should only be called if the node is a CompactNode
 indexChild :: MapRepr keys vals k v => MapNode keys vals k v -> Bitmap -> MapNode keys vals k v
 {-# INLINE indexChild #-}
-indexChild (CollisionNode _keys _vals) _ = error "Should only be called on CompactNodes"
-indexChild node@(CompactNode _bitmap _keys _vals children) bitpos =
+indexChild node@(MapNode _bitmap _keys _vals children) bitpos =
     Contiguous.index children (childrenIndex node bitpos)
+
 
 -- | \O(log n)\ Return `True` if the specified key is present in the map, `False` otherwise.
 member :: (MapRepr keys vals k v, Eq k, Hashable k) => k -> HashMap keys vals k v -> Bool
@@ -970,8 +989,8 @@ instance (MapRepr keys vals k v, Eq v, Eq k) => Eq (MapNode keys vals k v) where
       && (c1 `Contiguous.same` c2 || c1 `Contiguous.equals` c2) -- Here we recurse
   _ == _ = False
 
-myeq :: HashMapUU Int Int -> HashMapUU Int Int -> Bool
-myeq a b = a == b
+-- myeq :: HashMapUU Int Int -> HashMapUU Int Int -> Bool
+-- myeq a b = a == b
 
 instance (Hashable k, Eq k, MapRepr keys vals k v) => IsList (HashMap keys vals k v) where
   type Item (HashMap keys vals k v) = (k, v)
