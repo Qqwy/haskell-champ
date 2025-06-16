@@ -580,8 +580,13 @@ insertInNode safety !h !k v !shift node cont = case node of
         InChild ->
           -- Exists in child, insert in there and make sure this node contains the updated child
           let child = indexChild node bitpos
-          in insertInNode safety h k v (nextShift shift) child (\didIGrow child' -> 
-                  cont didIGrow (CompactNode bitmap keys vals (Array.replaceAt safety children (childrenIndex node bitpos) child')))
+          in insertInNode safety h k v (nextShift shift) child 
+          (\didIGrow child' -> 
+            child'
+            & Array.replaceAt safety children (childrenIndex node bitpos)
+            & CompactNode bitmap keys vals
+            & cont didIGrow
+          )
         Nowhere ->
           -- Doesn't exist yet, we can insert inline
           cont 1## (insertNewInline safety bitpos k v node)
@@ -599,12 +604,17 @@ insertInNode safety !h !k v !shift node cont = case node of
 -- (which would theoretically allow a binary search on lookup)
 -- because we don't have an `Ord` instance.
 {-# INLINE insertCollision #-}
-insertCollision :: (MapRepr keys vals k v) => Safety -> k -> v -> MapNode keys vals k v -> MapNode keys vals k v
+insertCollision :: (MapRepr keys vals k v, Eq k) => Safety -> k -> v -> MapNode keys vals k v -> MapNode keys vals k v
 insertCollision safety k v (MapNode _ keys vals _) =
-  let idx = Contiguous.size keys
-      keys' = Array.insertAt safety keys idx k
-      vals' = Array.insertAt safety vals idx v
-   in CollisionNode keys' vals'
+  keys
+  & Contiguous.findIndex (== k)
+  & replaceOrAppend
+  where
+    replaceOrAppend (Just idx) = 
+      CollisionNode (Array.replaceAt safety keys idx k) (Array.replaceAt safety vals idx v)
+    replaceOrAppend Nothing = 
+      let idx = Contiguous.size keys
+      in CollisionNode (Array.insertAt safety keys idx k) (Array.insertAt safety vals idx v)
 
 {-# INLINE insertNewInline #-}
 insertNewInline :: (MapRepr keys vals k v) => Safety -> Bitmap -> k -> v -> MapNode keys vals k v -> MapNode keys vals k v
@@ -638,19 +648,35 @@ insertMergeWithInline safety bitpos k v h shift node@(MapNode bitmap keys vals c
 {-# INLINE pairNode #-}
 pairNode :: (MapRepr keys vals k v) => Safety -> k -> v -> Hash -> k -> v -> Hash -> Word -> MapNode keys vals k v
 pairNode safety k1 v1 h1 k2 v2 h2 shift
-  | shift >= HASH_CODE_LENGTH = CollisionNode (Contiguous.doubleton k1 k2) (Contiguous.doubleton v1 v2)
-  | otherwise =
-      let mask1 = hashToMask shift h1
-          mask2 = hashToMask shift h2
-       in if mask1 /= mask2
-            then
-              -- Both fit on this level
-              mergeCompactInline safety k1 v1 h1 k2 v2 h2 shift
-            else
-              -- Both fit on the _next_ level
-              let child = mergeCompactInline safety k1 v1 h1 k2 v2 h2 (nextShift shift)
-                  bitmap = maskToBitpos mask1 `unsafeShiftL` HASH_CODE_LENGTH
-               in CompactNode bitmap Contiguous.empty Contiguous.empty (Array.singleton safety child)
+  | shift >= HASH_CODE_LENGTH = buildCollision k1 v1 k2 v2
+  | h1 == h2 = 
+    -- Hashing conflict, directly recurse
+    buildCollisionBranch safety h1 k1 v1 k2 v2 shift
+  | mask1 /= mask2 =
+    -- Both fit on this level
+    mergeCompactInline safety k1 v1 h1 k2 v2 h2 shift
+  | otherwise = 
+    -- Masks are the same but hashes are different: Both fit on the _next_ level
+    let child = mergeCompactInline safety k1 v1 h1 k2 v2 h2 (nextShift shift)
+      in CompactNode (childBitmap mask1) Contiguous.empty Contiguous.empty (Array.singleton safety child)
+  where
+    mask1 = hashToMask shift h1
+    mask2 = hashToMask shift h2
+    childBitmap mask = maskToBitpos mask `unsafeShiftL` HASH_CODE_LENGTH
+    buildCollision k1 v1 k2 v2 = CollisionNode (Contiguous.doubleton k1 k2) (Contiguous.doubleton v1 v2)
+
+    -- Implemented as separate recursive function
+    -- to ensure that `pairNode` itself can always be inlined.
+    -- We expect collisions to be rare, so this function should live out of the way
+    {-# INLINABLE buildCollisionBranch #-}
+    buildCollisionBranch safety h k1 v1 k2 v2 shift
+      | shift >= HASH_CODE_LENGTH = buildCollision k1 v1 k2 v2
+      | otherwise =
+        let child = buildCollisionBranch safety h k1 v1 k2 v2 (nextShift shift)
+            bitmap = childBitmap (hashToMask shift h)
+        in
+            CompactNode bitmap Contiguous.empty Contiguous.empty (Array.singleton safety child)
+
 
 mergeCompactInline :: MapRepr keyStorage valStorage k v =>
                             Safety

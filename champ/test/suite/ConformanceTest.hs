@@ -37,15 +37,6 @@ test_fromListToList = testGroup "toList . fromList"
     , testProperty "conforms (HashMapUU)" $ propFromListToListConforms @HashMapUU
     ]
 
-test_fromListToList' :: TestTree
-test_fromListToList' = testGroup "toList . fromList (with conflicts)"
-    [ testProperty "conforms (HashMapBL)" $ propFromListToListWithConflictsConforms @HashMapBL
-    , testProperty "conforms (HashMapBB)" $ propFromListToListWithConflictsConforms @HashMapBB
-    , testProperty "conforms (HashMapBU)" $ propFromListToListWithConflictsConforms @HashMapBU
-    ]
-
-
-
 propFromListToListConforms :: forall champmap keys vals. 
     (champmap ~ HashMap keys vals
     , MapRepr keys vals Int Int
@@ -67,6 +58,36 @@ propFromListToListConforms = withTests tests $ property $ do
     annotate (Champ.Internal.debugShow cs)
 
     sort (Data.HashMap.Strict.toList hs) === sort (Champ.HashMap.toList cs)
+
+test_fromListToList' :: TestTree
+test_fromListToList' = testGroup "toList . fromList (with conflicts)"
+    [ testProperty "conforms (HashMapBL)" $ propFromListToListWithConflictsConforms @HashMapBL
+    , testProperty "conforms (HashMapBB)" $ propFromListToListWithConflictsConforms @HashMapBB
+    , testProperty "conforms (HashMapBU)" $ propFromListToListWithConflictsConforms @HashMapBU
+    ]
+
+propFromListToListWithConflictsConforms :: forall champmap keys vals. 
+    (champmap ~ HashMap keys vals
+    , MapRepr keys vals (BadPair Int Int) Int
+    , IsList (champmap (BadPair Int Int) Int)
+    , Show (Champ.Internal.Storage.ArrayOf (Strict keys) (BadPair Int Int))
+    , Show (Champ.Internal.Storage.ArrayOf vals Int)
+    )
+    => Property
+propFromListToListWithConflictsConforms = withTests tests $ property $ do
+    list <- forAll $ Gen.list (Range.linear 0 200) (Gen.int (Range.linear 1 20))
+    let kvs = [((BadPair (x `div` 2) x), x) | x <- list]
+    annotateShow kvs
+
+    let hs = fromList kvs
+    let cs = fromList kvs :: champmap (BadPair Int Int) Int
+
+    annotateShow hs
+    annotateShow cs
+    annotate (Champ.Internal.debugShow cs)
+
+    sort (Data.HashMap.Strict.toList hs) === sort (Champ.HashMap.toList cs)
+
 
 test_lookup :: TestTree
 test_lookup = testGroup "lookup"
@@ -230,26 +251,6 @@ data BadPair a b = BadPair a b
 
 instance (Hashable a, Eq a, Eq b) => Hashable (BadPair a b) where
     hashWithSalt salt (BadPair a _) = hashWithSalt salt a
+    hash (BadPair a _) = hash a
 
 
-propFromListToListWithConflictsConforms :: forall champmap keys vals. 
-    (champmap ~ HashMap keys vals
-    , MapRepr keys vals (BadPair Int Int) Int
-    , IsList (champmap (BadPair Int Int) Int)
-    , Show (Champ.Internal.Storage.ArrayOf (Strict keys) (BadPair Int Int))
-    , Show (Champ.Internal.Storage.ArrayOf vals Int)
-    )
-    => Property
-propFromListToListWithConflictsConforms = withTests tests $ property $ do
-    list <- forAll $ Gen.list (Range.linear 0 200) (Gen.int (Range.linear 1 20))
-    let kvs = [((BadPair (x `div` 2) x), x) | x <- list]
-    annotateShow kvs
-
-    let hs = fromList kvs
-    let cs = fromList kvs :: champmap (BadPair Int Int) Int
-
-    annotateShow hs
-    annotateShow cs
-    annotate (Champ.Internal.debugShow cs)
-
-    sort (Data.HashMap.Strict.toList hs) === sort (Champ.HashMap.toList cs)
