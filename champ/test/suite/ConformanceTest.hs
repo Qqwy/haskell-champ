@@ -7,6 +7,7 @@
 module ConformanceTest where
 
 import Data.HashMap.Strict qualified
+import Data.Hashable (Hashable(..))
 import Control.Monad (forM_)
 import Champ
 import Champ.HashMap qualified
@@ -57,6 +58,36 @@ propFromListToListConforms = withTests tests $ property $ do
     annotate (Champ.Internal.debugShow cs)
 
     sort (Data.HashMap.Strict.toList hs) === sort (Champ.HashMap.toList cs)
+
+test_fromListToList' :: TestTree
+test_fromListToList' = testGroup "toList . fromList (with conflicts)"
+    [ testProperty "conforms (HashMapBL)" $ propFromListToListWithConflictsConforms @HashMapBL
+    , testProperty "conforms (HashMapBB)" $ propFromListToListWithConflictsConforms @HashMapBB
+    , testProperty "conforms (HashMapBU)" $ propFromListToListWithConflictsConforms @HashMapBU
+    ]
+
+propFromListToListWithConflictsConforms :: forall champmap keys vals. 
+    (champmap ~ HashMap keys vals
+    , MapRepr keys vals (BadPair Int Int) Int
+    , IsList (champmap (BadPair Int Int) Int)
+    , Show (Champ.Internal.Storage.ArrayOf (Strict keys) (BadPair Int Int))
+    , Show (Champ.Internal.Storage.ArrayOf vals Int)
+    )
+    => Property
+propFromListToListWithConflictsConforms = withTests tests $ property $ do
+    list <- forAll $ Gen.list (Range.linear 0 200) (Gen.int (Range.linear 1 20))
+    let kvs = [((BadPair (x `div` 2) x), x) | x <- list]
+    annotateShow kvs
+
+    let hs = fromList kvs
+    let cs = fromList kvs :: champmap (BadPair Int Int) Int
+
+    annotateShow hs
+    annotateShow cs
+    annotate (Champ.Internal.debugShow cs)
+
+    sort (Data.HashMap.Strict.toList hs) === sort (Champ.HashMap.toList cs)
+
 
 test_lookup :: TestTree
 test_lookup = testGroup "lookup"
@@ -209,3 +240,17 @@ propMapMaybeWithKeyConforms = withTests tests $ property $ do
     -- Check that champ contains the correct structure.
     forM_ ks $ \k -> do
         Data.HashMap.Strict.lookup k hs === (Champ.HashMap.lookup k cs)
+
+
+-- | A datatype with a bad Hashable instance
+--
+-- Used for testing that dealing with hash conflicts
+-- works correctly
+data BadPair a b = BadPair a b
+  deriving (Eq, Ord, Show)
+
+instance (Hashable a, Eq a, Eq b) => Hashable (BadPair a b) where
+    hashWithSalt salt (BadPair a _) = hashWithSalt salt a
+    hash (BadPair a _) = hash a
+
+
