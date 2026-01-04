@@ -139,6 +139,14 @@ instance (Eq e, SetRepr elems e) => Eq (HashSet elems e) where
     {-# INLINE (==) #-}
     (HashSet a) == (HashSet b) = a == b
 
+instance (Hashable e, SetRepr elems e) => Semigroup (HashSet elems e) where
+    {-# INLINE (<>) #-}
+    (<>) = union
+
+instance (Hashable e, SetRepr elems e) => Monoid (HashSet elems e) where
+    {-# INLINE mempty #-}
+    mempty = empty
+
 insert :: (Hashable e, SetRepr elems e) => e -> HashSet elems e -> HashSet elems e
 {-# INLINE insert #-}
 insert e = coerce Champ.Internal.insert e ()
