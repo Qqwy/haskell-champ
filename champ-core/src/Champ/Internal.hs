@@ -14,17 +14,21 @@
 {-# LANGUAGE UndecidableSuperClasses #-}
 {-# LANGUAGE MultiWayIf #-}
 {-# LANGUAGE TypeFamilies #-}
+
+-- Warning about name shadowing is turned off.
+-- This is a bit of a double-edged sword.
+-- There are many names that are top-level functions like `keys` and `bitmap`
+-- that also by far make for the clearest variable names.
+{-# OPTIONS_GHC -Wno-name-shadowing #-}
 module Champ.Internal where
 
 import Prelude hiding (lookup, null)
 import GHC.Exts (UnliftedType, Any)
 import GHC.Exts qualified as Exts
 import GHC.Word (Word64)
-import Data.Bits (Bits, FiniteBits)
 import Control.DeepSeq (NFData (rnf))
 import Champ.Internal.Storage (Storage(..), ArrayOf, StrictStorage (..), Soloist(..))
 import Champ.Internal.Array (StrictSmallArray, Array, PrimUnlifted, IsUnit, Safety (..))
-import Unsafe.Coerce (unsafeCoerce)
 import Data.Primitive.Contiguous qualified as Contiguous
 import Data.Kind (Type)
 import Data.Hashable (Hashable)
@@ -44,9 +48,19 @@ import Numeric (showBin)
 import qualified Control.Monad
 import Data.Word (Word32)
 
-#define BIT_PARTITION_SIZE 5
-#define HASH_CODE_LENGTH (1 `unsafeShiftL` BIT_PARTITION_SIZE)
-#define BIT_PARTITION_MASK (HASH_CODE_LENGTH - 1)
+bit_partition_size :: Num a => a
+{-# INLINE bit_partition_size #-}
+bit_partition_size = 5
+
+
+
+hash_code_length :: (Bits a , Num a) => a 
+{-# INLINE hash_code_length #-}
+hash_code_length = (1 `unsafeShiftL` bit_partition_size)
+
+bit_partition_mask :: (Bits a, Num a) => a
+{-# INLINE bit_partition_mask #-}
+bit_partition_mask = (hash_code_length - 1)
 
 newtype Box :: UnliftedType where
     Box :: Any @UnliftedType -> Box
@@ -100,7 +114,7 @@ instance Show Bitmap where
   -- \| Shows a bitmap in binary, with the lowest bit on the left
   -- and always padded to 32 bits
   show :: Bitmap -> String
-  show bitmap = "( " <> show32 bitmap <> ", " <> show32 (bitmap `unsafeShiftR` HASH_CODE_LENGTH) <> ")"
+  show bitmap = "( " <> show32 bitmap <> ", " <> show32 (bitmap `unsafeShiftR` hash_code_length) <> ")"
     where
       show32 b = take 32 $ reverse (showBin b "") <> repeat '0'
 
@@ -329,7 +343,7 @@ hash x = Hash $ fromIntegral $ Hashable.hash x
 
 {-# INLINE hashToMask #-}
 hashToMask :: Word -> Hash -> Mask
-hashToMask (fromIntegral -> depth) (Hash keyhash) = Mask $ (fromIntegral $ keyhash `unsafeShiftR` depth) .&. BIT_PARTITION_MASK
+hashToMask (fromIntegral -> depth) (Hash keyhash) = Mask $ (fromIntegral $ keyhash `unsafeShiftR` depth) .&. bit_partition_mask
 
 {-# INLINE maskToBitpos #-}
 maskToBitpos :: Mask -> Bitmap
@@ -364,8 +378,8 @@ childrenIndex :: Bitmap -> Bitmap -> Int
 childrenIndex bitmap bitpos =
   popCount $ (childrenBitmap bitmap) .&. (bitpos - 1)
 
-nextShift :: (Num a) => a -> a
-nextShift s = s + BIT_PARTITION_SIZE
+nextShift :: (Bits a, Num a) => a -> a
+nextShift s = s + bit_partition_mask
 
 data Location = Inline | InChild | Nowhere
 
@@ -477,7 +491,7 @@ insertMergeWithInline safety bitpos k v h shift bitmap keys vals children cont =
 {-# INLINE pairNode #-}
 pairNode :: (MapRepr keys vals k v) => Safety -> k -> v -> Hash -> k -> v -> Hash -> Word -> MapNode keys vals k v
 pairNode safety k1 v1 h1 k2 v2 h2 shift
-  | shift >= HASH_CODE_LENGTH = buildCollision k1 v1 k2 v2
+  | shift >= hash_code_length = buildCollision k1 v1 k2 v2
   | h1 == h2 = 
     -- Hashing conflict, directly recurse
     buildCollisionBranch safety h1 k1 v1 k2 v2 shift
@@ -491,7 +505,7 @@ pairNode safety k1 v1 h1 k2 v2 h2 shift
   where
     mask1 = hashToMask shift h1
     mask2 = hashToMask shift h2
-    childBitmap mask = maskToBitpos mask `unsafeShiftL` HASH_CODE_LENGTH
+    childBitmap mask = maskToBitpos mask `unsafeShiftL` hash_code_length
     buildCollision k1 v1 k2 v2 = CollisionNode (Contiguous.doubleton k1 k2) (Contiguous.doubleton v1 v2)
 
     -- Implemented as separate recursive function
@@ -499,7 +513,7 @@ pairNode safety k1 v1 h1 k2 v2 h2 shift
     -- We expect collisions to be rare, so this function should live out of the way
     {-# INLINABLE buildCollisionBranch #-}
     buildCollisionBranch safety h k1 v1 k2 v2 shift
-      | shift >= HASH_CODE_LENGTH = buildCollision k1 v1 k2 v2
+      | shift >= hash_code_length = buildCollision k1 v1 k2 v2
       | otherwise =
         let child = buildCollisionBranch safety h k1 v1 k2 v2 (nextShift shift)
             bitmap = childBitmap (hashToMask shift h)
@@ -1565,7 +1579,7 @@ extractInNode !extractFrom !node = case node of
 
           -- Same trick applied to the inline key bitmap.
           childBitmap = maskBitmap (childMask :: Word32) (bitmap !>>. 32)
-          bitmapRemovedChildren = childBitmap !<<. HASH_CODE_LENGTH
+          bitmapRemovedChildren = childBitmap !<<. hash_code_length
           children'' = Contiguous.create $ do
             dst <- Array.unsafeThaw children'
             Contiguous.resize dst (popCount childMask)
