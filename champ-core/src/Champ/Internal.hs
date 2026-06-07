@@ -583,7 +583,7 @@ lookupKV# !k = lookupKVKnownHash# absent present (hash k) k
     present k' v = (# | (# k', v #) #)
 
 lookupKVKnownHash :: (MapRepr keys vals a b, Hashable a) => Hash -> a -> HashMap keys vals a b -> Maybe (a, b)
-{-# INLINE lookupKVKnownHash #-}
+--{-# INLINE lookupKVKnownHash #-}
 lookupKVKnownHash = lookupKVKnownHash# absent present
   where
     absent (# #) = Nothing
@@ -604,7 +604,7 @@ lookupKVKnownHash# absent present h !k m = case m of
             k' = unBox singleKey
             v' = unSolo @vals (unBox singleVal)
         in
-            if h == h' && k == k' then present k v' else absent (# #)
+            if h == h' && k == k' then present k' v' else absent (# #)
   HashMap _ (MapNode bitmap (unBox @(ArrayOf (Strict keys) k) -> keys) (unBox @(ArrayOf vals v) -> vals) children) ->
 --   EmptyMap -> absent (# #)
 --   SingletonMap h' k' v' -> if h == h' && k == k' then present k' v' else absent (# #)
