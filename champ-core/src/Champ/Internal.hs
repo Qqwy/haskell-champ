@@ -631,8 +631,8 @@ lookupKVKnownHash# absent present h !k m = case m of
                     in case bitposLocation bitmap' bitpos of
                             Nowhere -> absent (# #)
                             Inline ->
-                                let k' = indexKey bitmap keys' bitpos
-                                    (# v #) = indexVal# bitmap vals' bitpos
+                                let k' = indexKey bitmap' keys' bitpos
+                                    (# v #) = indexVal# bitmap' vals' bitpos
                                 in if k == k' then present k' v else absent (# #)
                             InChild -> lookup' (nextShift s) (indexChild bitmap children' bitpos)
   -- ManyMap _ _ -> error "unreachable: A ManyMap can only contain a CompactNode at the root."
