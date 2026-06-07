@@ -87,9 +87,9 @@ module Champ.HashMap (
     -- ** Between map types
     Champ.Internal.convert,
 
-    -- *** Coercions
-    Champ.Internal.coerce,
-    Champ.Internal.coercion,
+    -- -- *** Coercions
+    -- Champ.Internal.coerce,
+    -- Champ.Internal.coercion,
 
     -- ** Lists
     Champ.Internal.fromList,
