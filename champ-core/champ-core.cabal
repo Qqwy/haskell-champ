@@ -54,7 +54,8 @@ build-type:         Simple
 tested-with: GHC == { 9.6.7, 9.8.4, 9.10.1, 9.12.2 }
 
 common warnings
-    ghc-options: -Wall -pgmPcpphs -optP--cpp
+    -- ghc-options: -Wall -pgmPcpphs -optP--cpp
+    ghc-options: -Wall
 
 library
     -- Import common warning flags.
@@ -86,7 +87,7 @@ library
       template-haskell,
       text-short,
 
-    build-tool-depends: cpphs:cpphs
+    -- build-tool-depends: cpphs:cpphs
 
     -- Directories containing source files.
     hs-source-dirs:   src

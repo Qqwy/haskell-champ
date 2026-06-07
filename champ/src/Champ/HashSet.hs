@@ -107,6 +107,10 @@ type role HashSet nominal nominal
 
 type SetRepr elems e = Champ.Internal.MapRepr elems Unexistent e ()
 
+-- class SetRepr elems e where
+
+-- instance (Champ.Internal.MapRepr elems Unexistent e ()) => SetRepr elems e where
+
 -- | A HashSet with strict boxed elements
 --
 -- This is a drop-in replacement for `Data.HashSet`
@@ -149,25 +153,25 @@ instance (Hashable e, SetRepr elems e) => Monoid (HashSet elems e) where
 
 insert :: (Hashable e, SetRepr elems e) => e -> HashSet elems e -> HashSet elems e
 {-# INLINE insert #-}
-insert e = coerce Champ.Internal.insert e ()
+insert e (HashSet h) = HashSet $ Champ.Internal.insert e () h
 
 fromList :: (Hashable e, SetRepr elems e) => [e] -> HashSet elems e
 {-# INLINE fromList #-}
-fromList = coerce Champ.Internal.fromList . fmap (\x -> (x, ()))
+fromList = HashSet . Champ.Internal.fromList . fmap (\x -> (x, ()))
 
 toList :: (SetRepr elems e) => HashSet elems e -> [e]
 {-# INLINE toList #-}
-toList = Champ.Internal.keys . coerce
+toList (HashSet h) = Champ.Internal.keys h
 
 -- | \O(1)\ Construct the empty set
 empty :: (SetRepr elems e) => HashSet elems e
 {-# INLINE empty #-}
-empty = coerce Champ.Internal.empty
+empty = HashSet Champ.Internal.empty
 
 -- | \O(1)\ Return `True` if the set is empty, `False` otherwise
 null :: (SetRepr elems e) => HashSet elems e -> Bool
 {-# INLINE null #-}
-null = coerce Champ.Internal.null
+null (HashSet h) = Champ.Internal.null h
 
 
 -- | \O(1)\ Return the number of elements in this set.
@@ -176,17 +180,17 @@ null = coerce Champ.Internal.null
 -- this function runs in constant-time.
 size :: (SetRepr elems e) => HashSet elems e -> Int
 {-# INLINE size #-}
-size = coerce Champ.Internal.size
+size (HashSet h) = Champ.Internal.size h
 
 -- | \O(1)\ Construct a one-element set
 singleton :: (Hashable e, SetRepr elems e) => e -> HashSet elems e
 {-# INLINE singleton #-}
-singleton e = coerce Champ.Internal.singleton e ()
+singleton e = HashSet $ Champ.Internal.singleton e ()
 
 -- | \O(log n)\ Return `True` if the specified element is present in the set, `False` otherwise.
 member :: (SetRepr elems e, Hashable e) => e -> HashSet elems e -> Bool
 {-# INLINE member #-}
-member = coerce Champ.Internal.member
+member e (HashSet h) = Champ.Internal.member e h
 
 -- | Look up whether a given element `e` exists in the set.
 --
@@ -195,7 +199,7 @@ member = coerce Champ.Internal.member
 -- with an element that is _identical_ (pointer-equality).
 lookup :: (SetRepr elems e, Hashable e) => e -> HashSet elems e -> Maybe e
 {-# INLINE lookup #-}
-lookup e set = fst <$> Champ.Internal.lookupKV e (coerce set)
+lookup e (HashSet h) = fst <$> Champ.Internal.lookupKV e h
 
 -- | \(O(n)\) Transform this set by applying a function to every value.
 -- The resulting set may be smaller than the source.
@@ -257,7 +261,7 @@ foldMap f set = Champ.Internal.foldMapWithKey (\e () -> f e) (coerce set)
 -- performing repeated insertion
 union :: (Hashable e, SetRepr elems e) => HashSet elems e -> HashSet elems e -> HashSet elems e
 {-# INLINE union #-}
-union = coerce Champ.Internal.union
+union (HashSet h1) (HashSet h2) = HashSet $ Champ.Internal.union h1 h2
 
 -- | The union of a list (or other foldable) of sets.
 --
@@ -267,11 +271,11 @@ union = coerce Champ.Internal.union
 -- performing repeated insertion
 unions :: (Foldable f, Hashable e, SetRepr elems e) => f (HashSet elems e) -> HashSet elems e
 {-# INLINE unions #-}
-unions = coerce . Champ.Internal.unions . fmap coerce . Data.Foldable.toList
+unions sets = HashSet $ Champ.Internal.unions $ fmap coerce $ Data.Foldable.toList sets
 
 delete :: (Hashable e, SetRepr elems e) => e -> HashSet elems e -> HashSet elems e
 {-# INLINE delete #-}
-delete = coerce Champ.Internal.delete
+delete e (HashSet h) = HashSet $ Champ.Internal.delete e h
 
 -- | \(O(n \log m)\) Difference of two sets. Return elements of the first set
 -- not existing in the second.
@@ -280,7 +284,7 @@ delete = coerce Champ.Internal.delete
 -- as we fold one set over the other instead of walking over the two sets in lock-step.
 difference :: (Hashable e, SetRepr elems e) => HashSet elems e -> HashSet elems e -> HashSet elems e
 {-# INLINE difference #-}
-difference = coerce Champ.Internal.difference
+difference (HashSet h1) (HashSet h2) = HashSet $ Champ.Internal.difference h1 h2
 
 -- | \(O(n \log m)\) Intersection of two sets. Return elements of the first set
 -- also existing in the second.
@@ -289,7 +293,7 @@ difference = coerce Champ.Internal.difference
 -- as we fold one map over the other instead of walking over the two maps in lock-step.
 intersection :: (Hashable e, SetRepr elems e) => HashSet elems e -> HashSet elems e -> HashSet elems e
 {-# INLINE intersection #-}
-intersection = coerce Champ.Internal.intersection
+intersection (HashSet h1) (HashSet h2) = HashSet $ Champ.Internal.intersection h1 h2
 
 -- | Set inclusion.
 --
@@ -297,7 +301,7 @@ intersection = coerce Champ.Internal.intersection
 -- as we fold one set over the other instead of walking over the two sets in lock-step.
 isSubsetOf :: (Hashable e, SetRepr elems e) => HashSet elems e -> HashSet elems e -> Bool
 {-# INLINE isSubsetOf #-}
-isSubsetOf = coerce Champ.Internal.isSubmapOf
+isSubsetOf (HashSet h1) (HashSet h2) = Champ.Internal.isSubmapOf h1 h2
 
 -- TODO: Implement the other foldXWithKey's as well,
 -- so we can wrap them here
@@ -319,7 +323,7 @@ instance Foldable (HashSet Boxed) where
     length = Champ.HashSet.size
 
 convert :: forall s1 s2 {es} {es'} {e}. (s1 ~ HashSet es, s2 ~ HashSet es', SetRepr es e, SetRepr es' e) => HashSet es e -> HashSet es' e
-convert = coerce Champ.Internal.convert
+convert (HashSet h) = HashSet (Champ.Internal.convert h)
 
 
 -- | \(O(1)\) Convert to set to the equivalent 'HashMap' with @()@ values.
